@@ -1,4 +1,8 @@
 <?php
+session_start();
+require_once __DIR__ . '/../config/database.php';
+$db = getDB();
+
 $fields = [
     'name' => '',
     'email' => '',
@@ -16,17 +20,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($fields['name'] === '') {
         $errors['name'] = 'Please enter your name.';
     }
-
     if ($fields['email'] === '') {
         $errors['email'] = 'Please enter your email address.';
     } elseif (!filter_var($fields['email'], FILTER_VALIDATE_EMAIL)) {
         $errors['email'] = 'Please enter a valid email address.';
     }
-
     if ($fields['subject'] === '') {
         $errors['subject'] = 'Please add a subject.';
     }
-
     if ($fields['message'] === '') {
         $errors['message'] = 'Please write your message.';
     }
@@ -34,6 +35,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $submitted = empty($errors);
 
     if ($submitted) {
+        $stmt = $db->prepare(
+            "INSERT INTO contact_messages (name, email, subject, message) VALUES (:name, :email, :subject, :message)"
+        );
+        $stmt->execute([
+            ':name' => $fields['name'],
+            ':email' => $fields['email'],
+            ':subject' => $fields['subject'],
+            ':message' => $fields['message'],
+        ]);
         $fields = array_fill_keys(array_keys($fields), '');
     }
 }
@@ -84,7 +94,7 @@ function field_error(string $field, array $errors): string
 
                 <?php if ($submitted): ?>
                     <div class="form-alert success" role="status">
-                        Thank you. Your message has been checked and is ready for our team to review.
+                        Thank you. Your message has been sent successfully.
                     </div>
                 <?php elseif (!empty($errors)): ?>
                     <div class="form-alert error" role="alert">
@@ -95,64 +105,33 @@ function field_error(string $field, array $errors): string
                 <form class="contact-form" method="post" action="contact.php#message-title" novalidate>
                     <div class="form-field">
                         <label for="name">Name</label>
-                        <input
-                            id="name"
-                            name="name"
-                            type="text"
-                            value="<?php echo old_value('name', $fields); ?>"
-                            placeholder="Enter your full name"
-                            aria-invalid="<?php echo isset($errors['name']) ? 'true' : 'false'; ?>"
-                            aria-describedby="<?php echo isset($errors['name']) ? 'name-error' : ''; ?>"
-                        >
+                        <input id="name" name="name" type="text" value="<?= old_value('name', $fields) ?>" placeholder="Enter your full name" aria-invalid="<?= isset($errors['name']) ? 'true' : 'false' ?>">
                         <?php if (isset($errors['name'])): ?>
-                            <p class="field-error" id="name-error"><?php echo field_error('name', $errors); ?></p>
+                            <p class="field-error"><?= field_error('name', $errors) ?></p>
                         <?php endif; ?>
                     </div>
 
                     <div class="form-field">
                         <label for="email">Email Address</label>
-                        <input
-                            id="email"
-                            name="email"
-                            type="email"
-                            value="<?php echo old_value('email', $fields); ?>"
-                            placeholder="Enter your email address"
-                            aria-invalid="<?php echo isset($errors['email']) ? 'true' : 'false'; ?>"
-                            aria-describedby="<?php echo isset($errors['email']) ? 'email-error' : ''; ?>"
-                        >
+                        <input id="email" name="email" type="email" value="<?= old_value('email', $fields) ?>" placeholder="Enter your email address" aria-invalid="<?= isset($errors['email']) ? 'true' : 'false' ?>">
                         <?php if (isset($errors['email'])): ?>
-                            <p class="field-error" id="email-error"><?php echo field_error('email', $errors); ?></p>
+                            <p class="field-error"><?= field_error('email', $errors) ?></p>
                         <?php endif; ?>
                     </div>
 
                     <div class="form-field">
                         <label for="subject">Subject</label>
-                        <input
-                            id="subject"
-                            name="subject"
-                            type="text"
-                            value="<?php echo old_value('subject', $fields); ?>"
-                            placeholder="What is this regarding?"
-                            aria-invalid="<?php echo isset($errors['subject']) ? 'true' : 'false'; ?>"
-                            aria-describedby="<?php echo isset($errors['subject']) ? 'subject-error' : ''; ?>"
-                        >
+                        <input id="subject" name="subject" type="text" value="<?= old_value('subject', $fields) ?>" placeholder="What is this regarding?" aria-invalid="<?= isset($errors['subject']) ? 'true' : 'false' ?>">
                         <?php if (isset($errors['subject'])): ?>
-                            <p class="field-error" id="subject-error"><?php echo field_error('subject', $errors); ?></p>
+                            <p class="field-error"><?= field_error('subject', $errors) ?></p>
                         <?php endif; ?>
                     </div>
 
                     <div class="form-field">
                         <label for="message">Message</label>
-                        <textarea
-                            id="message"
-                            name="message"
-                            rows="5"
-                            placeholder="Type your message here..."
-                            aria-invalid="<?php echo isset($errors['message']) ? 'true' : 'false'; ?>"
-                            aria-describedby="<?php echo isset($errors['message']) ? 'message-error' : ''; ?>"
-                        ><?php echo old_value('message', $fields); ?></textarea>
+                        <textarea id="message" name="message" rows="5" placeholder="Type your message here..." aria-invalid="<?= isset($errors['message']) ? 'true' : 'false' ?>"><?= old_value('message', $fields) ?></textarea>
                         <?php if (isset($errors['message'])): ?>
-                            <p class="field-error" id="message-error"><?php echo field_error('message', $errors); ?></p>
+                            <p class="field-error"><?= field_error('message', $errors) ?></p>
                         <?php endif; ?>
                     </div>
 
@@ -176,7 +155,6 @@ function field_error(string $field, array $errors): string
                             <p>123, Main Street, Negombo</p>
                         </div>
                     </div>
-
                     <div class="info-item">
                         <span class="material-symbols-outlined info-icon" aria-hidden="true">phone</span>
                         <div>
@@ -184,7 +162,6 @@ function field_error(string $field, array $errors): string
                             <p><a href="tel:+94112345678">+94 11 234 5678</a></p>
                         </div>
                     </div>
-
                     <div class="info-item">
                         <span class="material-symbols-outlined info-icon" aria-hidden="true">mail</span>
                         <div>

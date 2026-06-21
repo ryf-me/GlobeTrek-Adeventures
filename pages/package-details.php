@@ -1,30 +1,31 @@
 <?php
-$package = [
-    'id' => 1,
-    'title' => 'Island Escape',
-    'duration' => '5 Days / 4 Nights',
-    'location' => 'Sri Lanka',
-    'rating' => '4.8',
-    'reviews' => '124 Reviews',
-    'price' => 75999,
-    'categories' => ['Adventure', 'Beach', 'Nature'],
-    'hero_image' => 'https://images.unsplash.com/photo-1734279135115-6d8984e08206?q=80&w=1600&auto=format&fit=crop',
-    'gallery_image' => 'https://images.unsplash.com/photo-1519566335946-e6f65f0f4fdf?q=80&w=1100&auto=format&fit=crop',
-    'description' => "Immerse yourself in the breathtaking beauty of Sri Lanka with our exclusive Island Escape package. Designed for thrill-seekers and nature lovers alike, this 5-day journey takes you from pristine beaches to lush tropical jungles. Experience local culture, wildlife encounters, and unparalleled relaxation in carefully selected accommodations.",
-    'overview' => [
-        'Day 1: Arrival and coastal welcome',
-        'Day 2: Jungle trek and waterfall discovery',
-        'Day 3: Cultural heritage and temple visit',
-        'Day 4: Free time and sunset cruise',
-        'Day 5: Departure',
-    ],
-    'quick_info' => [
-        'Trip Type' => 'Guided Group',
-        'Max People' => '12',
-        'Difficulty' => 'Moderate',
-        'Best Season' => 'Nov - Apr',
-    ],
+require_once __DIR__ . '/../config/database.php';
+$db = getDB();
+
+$packageId = isset($_GET['id']) ? (int) $_GET['id'] : 0;
+
+$stmt = $db->prepare("SELECT * FROM packages WHERE id = :id AND is_active = 1");
+$stmt->execute([':id' => $packageId]);
+$package = $stmt->fetch();
+
+if (!$package) {
+    echo '<!DOCTYPE html><html><head><title>Not Found</title></head><body><h1>Package not found.</h1><a href="packages.php">Back to Packages</a></body></html>';
+    exit;
+}
+
+$overview = [
+    'Day 1: Arrival and coastal welcome',
+    'Day 2: Jungle trek and waterfall discovery',
+    'Day 3: Cultural heritage and temple visit',
+    'Day 4: Free time and sunset cruise',
+    'Day 5: Departure',
 ];
+if ($package['duration_days'] > 5) {
+    for ($i = 6; $i <= $package['duration_days']; $i++) {
+        $overview[] = "Day $i: Explore and discover";
+    }
+    $overview[] = "Day " . ($package['duration_days']) . ": Departure";
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -51,10 +52,10 @@ $package = [
 
         <section class="package-hero" aria-label="<?= htmlspecialchars($package['title']) ?> package summary">
             <div class="hero-media">
-                <img src="<?= htmlspecialchars($package['hero_image']) ?>" alt="Tropical Sri Lankan coastline for the Island Escape package">
+                <img src="<?= htmlspecialchars($package['image']) ?>" alt="<?= htmlspecialchars($package['title']) ?> package image">
                 <div class="hero-stamp">
-                    <span>Coastal route</span>
-                    <strong>5 curated days</strong>
+                    <span><?= htmlspecialchars($package['destination_category']) ?></span>
+                    <strong><?= htmlspecialchars($package['duration_days'] . ' curated days') ?></strong>
                 </div>
             </div>
 
@@ -62,41 +63,35 @@ $package = [
                 <p class="eyebrow">Signature escape</p>
                 <h1><?= htmlspecialchars($package['title']) ?></h1>
 
-                <div class="rating-row" aria-label="<?= htmlspecialchars($package['rating']) ?> out of 5 stars from <?= htmlspecialchars($package['reviews']) ?>">
-                    <span class="stars" aria-hidden="true">★★★★★</span>
-                    <span><?= htmlspecialchars($package['rating']) ?> (<?= htmlspecialchars($package['reviews']) ?>)</span>
-                </div>
-
                 <div class="meta-list">
                     <div>
                         <svg viewBox="0 0 24 24" aria-hidden="true">
                             <circle cx="12" cy="12" r="9"></circle>
                             <path d="M12 7v5l3 2"></path>
                         </svg>
-                        <span><?= htmlspecialchars($package['duration']) ?></span>
+                        <span><?= htmlspecialchars($package['duration_days'] . ' Days / ' . $package['duration_nights'] . ' Nights') ?></span>
                     </div>
                     <div>
                         <svg viewBox="0 0 24 24" aria-hidden="true">
                             <path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0z"></path>
                             <circle cx="12" cy="10" r="3"></circle>
                         </svg>
-                        <span><?= htmlspecialchars($package['location']) ?></span>
+                        <span>Sri Lanka</span>
                     </div>
                 </div>
 
                 <div class="category-group" aria-label="Categories">
                     <span class="section-label">Categories</span>
                     <div>
-                        <?php foreach ($package['categories'] as $category): ?>
-                            <span><?= htmlspecialchars($category) ?></span>
-                        <?php endforeach; ?>
+                        <span><?= htmlspecialchars($package['destination_category']) ?></span>
+                        <span><?= htmlspecialchars($package['difficulty_level']) ?></span>
                     </div>
                 </div>
 
                 <div class="price-box">
                     <span class="section-label">Starting From</span>
                     <p>Rs.<?= number_format($package['price']) ?><small>/ per person</small></p>
-                    <a class="primary-action" href="booking.php">
+                    <a class="primary-action" href="booking.php?id=<?= $package['id'] ?>">
                         Book Now
                         <svg viewBox="0 0 24 24" aria-hidden="true">
                             <path d="M5 12h14"></path>
@@ -136,18 +131,18 @@ $package = [
                         </span>
                         <div>
                             <p class="eyebrow">Journey Overview</p>
-                            <h3>Five days across coast, culture, and green country</h3>
+                            <h3> <?= htmlspecialchars($package['duration_days'] . ' days across coast, culture, and green country') ?></h3>
                         </div>
                     </div>
 
                     <ol class="day-list">
-                        <?php foreach ($package['overview'] as $day): ?>
+                        <?php foreach ($overview as $day): ?>
                             <li><?= htmlspecialchars($day) ?></li>
                         <?php endforeach; ?>
                     </ol>
 
-                    <div class="route-visual" aria-label="Route visualization from coast to jungle and heritage sites">
-                        <img src="<?= htmlspecialchars($package['gallery_image']) ?>" alt="Sri Lankan beach and ocean route highlight">
+                    <div class="route-visual" aria-label="Route visualization">
+                        <img src="<?= htmlspecialchars($package['image']) ?>" alt="<?= htmlspecialchars($package['title']) ?> route highlight">
                         <div class="route-line" aria-hidden="true">
                             <span>Negombo</span>
                             <span>Rainforest</span>
@@ -160,12 +155,22 @@ $package = [
             <aside class="side-stack" aria-label="Package quick information">
                 <section class="quick-info">
                     <h2>Quick Info</h2>
-                    <?php foreach ($package['quick_info'] as $label => $value): ?>
-                        <div>
-                            <span><?= htmlspecialchars($label) ?></span>
-                            <strong><?= htmlspecialchars($value) ?></strong>
-                        </div>
-                    <?php endforeach; ?>
+                    <div>
+                        <span>Trip Type</span>
+                        <strong>Guided Group</strong>
+                    </div>
+                    <div>
+                        <span>Max People</span>
+                        <strong><?= htmlspecialchars($package['max_group_size']) ?></strong>
+                    </div>
+                    <div>
+                        <span>Difficulty</span>
+                        <strong><?= htmlspecialchars($package['difficulty_level']) ?></strong>
+                    </div>
+                    <div>
+                        <span>Price Range</span>
+                        <strong><?= htmlspecialchars($package['price_range']) ?></strong>
+                    </div>
                 </section>
 
                 <section class="support-card">

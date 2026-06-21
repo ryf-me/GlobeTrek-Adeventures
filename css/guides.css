@@ -1,7 +1,7 @@
 :root {
     --guide-ink: #151515;
     --guide-muted: #68645d;
-    --guide-paper: #fbfaf6;
+    --guide-paper: #f5f7fa;
     --guide-panel: #ffffff;
     --guide-line: #d8d2c5;
     --guide-field: #f4f0e7;
@@ -12,10 +12,7 @@
 }
 
 .guides-page {
-    background:
-        linear-gradient(135deg, rgba(15, 91, 77, 0.08), transparent 34rem),
-        linear-gradient(315deg, rgba(217, 149, 53, 0.12), transparent 30rem),
-        var(--guide-paper);
+    background: var(--guide-paper);
     color: var(--guide-ink);
 }
 

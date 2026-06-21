@@ -1,19 +1,10 @@
 <!DOCTYPE html>
 <?php
-$newsletterMessage = '';
-$newsletterMessageClass = '';
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['newsletter_email'])) {
-    $email = filter_var(trim($_POST['newsletter_email']), FILTER_SANITIZE_EMAIL);
+require_once __DIR__ . '/config/database.php';
+$db = getDB();
 
-    if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $safeEmail = htmlspecialchars($email, ENT_QUOTES, 'UTF-8');
-        $newsletterMessage = "Thank you! $safeEmail has been subscribed.";
-        $newsletterMessageClass = 'success';
-    } else {
-        $newsletterMessage = 'Please enter a valid email address.';
-        $newsletterMessageClass = 'error';
-    }
-}
+$stmt = $db->query("SELECT * FROM packages WHERE is_active = 1 AND is_featured = 1 ORDER BY id ASC LIMIT 4");
+$featuredPackages = $stmt->fetchAll();
 ?>
 <html lang="en">
 <head>
@@ -26,7 +17,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['newsletter_email'])) 
     <link rel="stylesheet" href="css/footer.css" />
 </head>
 <body class="home-page">
-    <!-- Navbar -->
     <?php $basePath = ''; include 'includes/navbar.php'; ?>
     
     <!-- Hero Section -->
@@ -45,53 +35,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['newsletter_email'])) 
     <section id="packages" class="packages">
         <div class="section-heading">
             <h2>Popular Tour Packages</h2>
-            <a class="view-all-btn" href="packages">View All</a>
+            <a class="view-all-btn" href="pages/packages.php">View All</a>
         </div>
         <div class="cards">
-            <div class="card">
-                <img src="https://images.unsplash.com/photo-1734279135115-6d8984e08206?q=80&w=1074&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Island" />
-                <div class="card-content">
-                    <h3>Island Escape</h3>
-                    <p class="duration">5 Days / 4 Nights</p>
-                    <div class="package-actions">
-                        <p class="price">From Rs.75999</p>
-                        <a href="pages/package-details.php?id=1" class="details-btn">View Details</a>
+            <?php foreach ($featuredPackages as $pkg): ?>
+                <div class="card">
+                    <img src="<?= htmlspecialchars($pkg['image']) ?>" alt="<?= htmlspecialchars($pkg['title']) ?>" />
+                    <div class="card-content">
+                        <h3><?= htmlspecialchars($pkg['title']) ?></h3>
+                        <p class="duration"><?= htmlspecialchars($pkg['duration_days'] . ' Days / ' . $pkg['duration_nights'] . ' Nights') ?></p>
+                        <div class="package-actions">
+                            <p class="price">From Rs.<?= number_format($pkg['price']) ?></p>
+                            <a href="pages/package-details.php?id=<?= $pkg['id'] ?>" class="details-btn">View Details</a>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div class="card">
-                <img src="https://images.unsplash.com/photo-1609681980718-340e7f4b11d7?q=80&w=840&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Mountains" />
-                <div class="card-content">
-                    <h3>Mountain Explorer</h3>
-                    <p class="duration">6 Days / 5 Nights</p>
-                    <div class="package-actions">
-                        <p class="price">From Rs.65999</p>
-                        <a href="packages" class="details-btn">View Details</a>
-                    </div>
-                </div>
-            </div>
-            <div class="card">
-                <img src="https://images.unsplash.com/photo-1519566335946-e6f65f0f4fdf?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Beach" />
-                <div class="card-content">
-                    <h3>Beach Paradise</h3>
-                    <p class="duration">4 Days / 3 Nights</p>
-                    <div class="package-actions">
-                        <p class="price">From Rs.39990</p>
-                        <a href="packages" class="details-btn">View Details</a>
-                    </div>
-                </div>
-            </div>
-            <div class="card">
-                <img src="https://images.unsplash.com/photo-1556525185-fc8a5a7aaa6b?q=80&w=727&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Culture"/>
-                <div class="card-content">
-                    <h3>Cultural Discovery</h3>
-                    <p class="duration">7 Days / 6 Nights</p>
-                    <div class="package-actions">
-                        <p class="price">From Rs.55990</p>
-                        <a href="packages" class="details-btn">View Details</a>
-                    </div>
-                </div>
-            </div>
+            <?php endforeach; ?>
         </div>
     </section>
 
@@ -150,16 +109,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['newsletter_email'])) 
                     <input id="newsletter-email" type="email" name="newsletter_email" placeholder="Enter your email" required />
                     <button type="submit">Subscribe</button>
                 </form>
-                <?php if ($newsletterMessage !== ''): ?>
-                    <p class="newsletter-message <?php echo $newsletterMessageClass; ?>"><?php echo $newsletterMessage; ?></p>
-                <?php endif; ?>
             </div>
         </div>
     </section>
 
-<!-- Footer Section-->
     <?php $basePath = ''; include 'includes/footer.php'; ?>
-    
     
     <script src="js/script.js"></script>
 </body>

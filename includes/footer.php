@@ -1,3 +1,34 @@
+<?php
+$newsletterMessage = '';
+$newsletterMessageClass = '';
+
+if (session_status() === PHP_SESSION_NONE) session_start();
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['newsletter_email'])) {
+    require_once __DIR__ . '/../config/database.php';
+    $db = getDB();
+
+    $email = filter_var(trim($_POST['newsletter_email']), FILTER_SANITIZE_EMAIL);
+
+    if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $checkStmt = $db->prepare("SELECT id FROM newsletter_subscriptions WHERE email = :email LIMIT 1");
+        $checkStmt->execute([':email' => $email]);
+        if ($checkStmt->fetch()) {
+            $newsletterMessage = 'This email is already subscribed.';
+            $newsletterMessageClass = 'error';
+        } else {
+            $insertStmt = $db->prepare("INSERT INTO newsletter_subscriptions (email) VALUES (:email)");
+            $insertStmt->execute([':email' => $email]);
+            $safeEmail = htmlspecialchars($email, ENT_QUOTES, 'UTF-8');
+            $newsletterMessage = "Thank you! $safeEmail has been subscribed.";
+            $newsletterMessageClass = 'success';
+        }
+    } else {
+        $newsletterMessage = 'Please enter a valid email address.';
+        $newsletterMessageClass = 'error';
+    }
+}
+?>
 <!-- Footer Section-->
     <footer class="site-footer">
         <div class="footer-main">
@@ -20,6 +51,8 @@
                     <li><a href="<?php echo $basePath; ?>pages/packages.php">Packages</a></li>
                     <li><a href="<?php echo $basePath; ?>pages/destinations.php">Destinations</a></li>
                     <li><a href="<?php echo $basePath; ?>pages/guides.php">Guides</a></li>
+                    <li><a href="<?php echo $basePath; ?>pages/accommodations.php">Accommodations</a></li>
+                    <li><a href="<?php echo $basePath; ?>pages/transportation.php">Transportation</a></li>
                 </ul>
             </div>
 
@@ -36,7 +69,15 @@
             <div class="footer-column footer-newsletter">
                 <h2>Newsletter</h2>
                 <p>Stay updated with our latest offers.</p>
-                <div class="footer-socials" aria-label="Newsletter links">
+                <form class="newsletter-form-footer" method="post" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>">
+                    <label class="sr-only" for="footer-newsletter-email">Email address</label>
+                    <input id="footer-newsletter-email" type="email" name="newsletter_email" placeholder="Enter your email" required />
+                    <button type="submit">Subscribe</button>
+                </form>
+                <?php if ($newsletterMessage !== ''): ?>
+                    <p class="newsletter-message <?php echo $newsletterMessageClass; ?>"><?php echo $newsletterMessage; ?></p>
+                <?php endif; ?>
+                <div class="footer-socials" aria-label="Social links">
                     <a href="#" aria-label="Share GlobeTrek">
                         <svg viewBox="0 0 24 24" aria-hidden="true">
                             <circle cx="18" cy="5" r="3" />

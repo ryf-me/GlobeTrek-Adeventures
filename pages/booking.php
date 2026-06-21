@@ -1,17 +1,22 @@
 <?php
-$package = [
-    'id' => 1,
-    'title' => 'Island Escape',
-    'duration' => '5 Days / 4 Nights',
-    'price' => 75999,
-    'image' => 'https://images.unsplash.com/photo-1734279135115-6d8984e08206?q=80&w=400&auto=format&fit=crop',
-    'date' => '10 Jun 2025',
-    'guests' => '2 Adults',
-];
+session_start();
+require_once __DIR__ . '/../config/database.php';
+$db = getDB();
+
+$packageId = isset($_GET['id']) ? (int) $_GET['id'] : 0;
+
+$stmt = $db->prepare("SELECT * FROM packages WHERE id = :id AND is_active = 1");
+$stmt->execute([':id' => $packageId]);
+$package = $stmt->fetch();
+
+if (!$package) {
+    echo '<!DOCTYPE html><html><head><title>Not Found</title></head><body><h1>Package not found.</h1><a href="packages.php">Back to Packages</a></body></html>';
+    exit;
+}
 
 $guestCount = 2;
 $subtotal = $package['price'] * $guestCount;
-$taxes = 15550;
+$taxes = round($subtotal * 0.10);
 $total = $subtotal + $taxes;
 
 $fields = [
@@ -33,21 +38,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($fields['firstName'] === '') {
         $errors['firstName'] = 'Please enter your first name.';
     }
-
     if ($fields['lastName'] === '') {
         $errors['lastName'] = 'Please enter your last name.';
     }
-
     if ($fields['email'] === '') {
         $errors['email'] = 'Please enter your email address.';
     } elseif (!filter_var($fields['email'], FILTER_VALIDATE_EMAIL)) {
         $errors['email'] = 'Please enter a valid email address.';
     }
-
     if ($fields['phone'] === '') {
         $errors['phone'] = 'Please enter your phone number.';
     }
-
     if ($fields['nationality'] === '') {
         $errors['nationality'] = 'Please select your nationality.';
     }
@@ -55,7 +56,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $submitted = empty($errors);
 
     if ($submitted) {
-        $fields = array_fill_keys(array_keys($fields), '');
+        $bookingRef = 'GT-' . strtoupper(uniqid());
+        $userId = $_SESSION['user_id'] ?? null;
+
+        $insertStmt = $db->prepare(
+            "INSERT INTO bookings (user_id, package_id, booking_reference, first_name, last_name, email, phone, nationality, special_requests, num_travellers, total_price, status)
+             VALUES (:user_id, :package_id, :booking_reference, :first_name, :last_name, :email, :phone, :nationality, :special_requests, :num_travellers, :total_price, 'pending')"
+        );
+        $insertStmt->execute([
+            ':user_id' => $userId,
+            ':package_id' => $package['id'],
+            ':booking_reference' => $bookingRef,
+            ':first_name' => $fields['firstName'],
+            ':last_name' => $fields['lastName'],
+            ':email' => $fields['email'],
+            ':phone' => $fields['phone'],
+            ':nationality' => $fields['nationality'],
+            ':special_requests' => $fields['specialRequests'],
+            ':num_travellers' => $guestCount,
+            ':total_price' => $total,
+        ]);
+
+        $_SESSION['payment_booking_ref'] = $bookingRef;
+        header('Location: payment.php?ref=' . urlencode($bookingRef));
+        exit;
     }
 }
 
@@ -126,7 +150,7 @@ function field_error(string $field, array $errors): string
 
                 <?php if ($submitted): ?>
                     <div class="form-alert success" role="status">
-                        Your booking details have been submitted. You will be redirected to the next step shortly.
+                        Your booking has been submitted successfully. Booking reference: <strong><?= htmlspecialchars($bookingRef ?? '') ?></strong>
                     </div>
                 <?php elseif (!empty($errors)): ?>
                     <div class="form-alert error" role="alert">
@@ -134,37 +158,20 @@ function field_error(string $field, array $errors): string
                     </div>
                 <?php endif; ?>
 
-                <form id="booking-form" class="booking-form" method="post" action="booking.php" novalidate>
+                <form id="booking-form" class="booking-form" method="post" action="booking.php?id=<?= $package['id'] ?>" novalidate>
                     <div class="form-row">
                         <div class="form-field">
                             <label for="firstName">First Name</label>
-                            <input
-                                id="firstName"
-                                name="firstName"
-                                type="text"
-                                value="<?php echo old_value('firstName', $fields); ?>"
-                                placeholder="e.g. Jane"
-                                aria-invalid="<?php echo isset($errors['firstName']) ? 'true' : 'false'; ?>"
-                                aria-describedby="<?php echo isset($errors['firstName']) ? 'firstName-error' : ''; ?>"
-                            >
+                            <input id="firstName" name="firstName" type="text" value="<?= old_value('firstName', $fields) ?>" placeholder="e.g. Jane" aria-invalid="<?= isset($errors['firstName']) ? 'true' : 'false' ?>">
                             <?php if (isset($errors['firstName'])): ?>
-                                <p class="field-error" id="firstName-error"><?php echo field_error('firstName', $errors); ?></p>
+                                <p class="field-error"><?= field_error('firstName', $errors) ?></p>
                             <?php endif; ?>
                         </div>
-
                         <div class="form-field">
                             <label for="lastName">Last Name</label>
-                            <input
-                                id="lastName"
-                                name="lastName"
-                                type="text"
-                                value="<?php echo old_value('lastName', $fields); ?>"
-                                placeholder="e.g. Doe"
-                                aria-invalid="<?php echo isset($errors['lastName']) ? 'true' : 'false'; ?>"
-                                aria-describedby="<?php echo isset($errors['lastName']) ? 'lastName-error' : ''; ?>"
-                            >
+                            <input id="lastName" name="lastName" type="text" value="<?= old_value('lastName', $fields) ?>" placeholder="e.g. Doe" aria-invalid="<?= isset($errors['lastName']) ? 'true' : 'false' ?>">
                             <?php if (isset($errors['lastName'])): ?>
-                                <p class="field-error" id="lastName-error"><?php echo field_error('lastName', $errors); ?></p>
+                                <p class="field-error"><?= field_error('lastName', $errors) ?></p>
                             <?php endif; ?>
                         </div>
                     </div>
@@ -172,68 +179,39 @@ function field_error(string $field, array $errors): string
                     <div class="form-row">
                         <div class="form-field">
                             <label for="email">Email</label>
-                            <input
-                                id="email"
-                                name="email"
-                                type="email"
-                                value="<?php echo old_value('email', $fields); ?>"
-                                placeholder="jane@example.com"
-                                aria-invalid="<?php echo isset($errors['email']) ? 'true' : 'false'; ?>"
-                                aria-describedby="<?php echo isset($errors['email']) ? 'email-error' : ''; ?>"
-                            >
+                            <input id="email" name="email" type="email" value="<?= old_value('email', $fields) ?>" placeholder="jane@example.com" aria-invalid="<?= isset($errors['email']) ? 'true' : 'false' ?>">
                             <?php if (isset($errors['email'])): ?>
-                                <p class="field-error" id="email-error"><?php echo field_error('email', $errors); ?></p>
+                                <p class="field-error"><?= field_error('email', $errors) ?></p>
                             <?php endif; ?>
                         </div>
-
                         <div class="form-field">
                             <label for="phone">Phone Number</label>
-                            <input
-                                id="phone"
-                                name="phone"
-                                type="tel"
-                                value="<?php echo old_value('phone', $fields); ?>"
-                                placeholder="+1 (555) 000-0000"
-                                aria-invalid="<?php echo isset($errors['phone']) ? 'true' : 'false'; ?>"
-                                aria-describedby="<?php echo isset($errors['phone']) ? 'phone-error' : ''; ?>"
-                            >
+                            <input id="phone" name="phone" type="tel" value="<?= old_value('phone', $fields) ?>" placeholder="+1 (555) 000-0000" aria-invalid="<?= isset($errors['phone']) ? 'true' : 'false' ?>">
                             <?php if (isset($errors['phone'])): ?>
-                                <p class="field-error" id="phone-error"><?php echo field_error('phone', $errors); ?></p>
+                                <p class="field-error"><?= field_error('phone', $errors) ?></p>
                             <?php endif; ?>
                         </div>
                     </div>
 
                     <div class="form-field full-width">
                         <label for="nationality">Nationality</label>
-                        <select
-                            id="nationality"
-                            name="nationality"
-                            aria-invalid="<?php echo isset($errors['nationality']) ? 'true' : 'false'; ?>"
-                            aria-describedby="<?php echo isset($errors['nationality']) ? 'nationality-error' : ''; ?>"
-                        >
-                            <option value="" disabled <?php echo old_value('nationality', $fields) === '' ? 'selected' : ''; ?>>Select your nationality</option>
-                            <option value="us" <?php echo old_value('nationality', $fields) === 'us' ? 'selected' : ''; ?>>United States</option>
-                            <option value="ca" <?php echo old_value('nationality', $fields) === 'ca' ? 'selected' : ''; ?>>Canada</option>
-                            <option value="uk" <?php echo old_value('nationality', $fields) === 'uk' ? 'selected' : ''; ?>>United Kingdom</option>
-                            <option value="au" <?php echo old_value('nationality', $fields) === 'au' ? 'selected' : ''; ?>>Australia</option>
-                            <option value="lk" <?php echo old_value('nationality', $fields) === 'lk' ? 'selected' : ''; ?>>Sri Lanka</option>
+                        <select id="nationality" name="nationality" aria-invalid="<?= isset($errors['nationality']) ? 'true' : 'false' ?>">
+                            <option value="" disabled <?= old_value('nationality', $fields) === '' ? 'selected' : '' ?>>Select your nationality</option>
+                            <option value="us" <?= old_value('nationality', $fields) === 'us' ? 'selected' : '' ?>>United States</option>
+                            <option value="ca" <?= old_value('nationality', $fields) === 'ca' ? 'selected' : '' ?>>Canada</option>
+                            <option value="uk" <?= old_value('nationality', $fields) === 'uk' ? 'selected' : '' ?>>United Kingdom</option>
+                            <option value="au" <?= old_value('nationality', $fields) === 'au' ? 'selected' : '' ?>>Australia</option>
+                            <option value="lk" <?= old_value('nationality', $fields) === 'lk' ? 'selected' : '' ?>>Sri Lanka</option>
                         </select>
                         <?php if (isset($errors['nationality'])): ?>
-                            <p class="field-error" id="nationality-error"><?php echo field_error('nationality', $errors); ?></p>
+                            <p class="field-error"><?= field_error('nationality', $errors) ?></p>
                         <?php endif; ?>
                     </div>
 
                     <div class="form-field full-width">
                         <label for="specialRequests">Special Requests <span class="optional">(Optional)</span></label>
-                        <textarea
-                            id="specialRequests"
-                            name="specialRequests"
-                            rows="4"
-                            class="dashed"
-                            placeholder="Any dietary requirements, accessibility needs, etc."
-                        ><?php echo old_value('specialRequests', $fields); ?></textarea>
+                        <textarea id="specialRequests" name="specialRequests" rows="4" class="dashed" placeholder="Any dietary requirements, accessibility needs, etc."><?= old_value('specialRequests', $fields) ?></textarea>
                     </div>
-
                 </form>
             </div>
 
@@ -244,7 +222,7 @@ function field_error(string $field, array $errors): string
                         <img class="package-thumb" src="<?= htmlspecialchars($package['image']) ?>" alt="<?= htmlspecialchars($package['title']) ?> package image">
                         <div class="package-info">
                             <span class="package-title"><?= htmlspecialchars($package['title']) ?></span>
-                            <span class="package-duration"><?= htmlspecialchars($package['duration']) ?></span>
+                            <span class="package-duration"><?= htmlspecialchars($package['duration_days'] . ' Days / ' . $package['duration_nights'] . ' Nights') ?></span>
                         </div>
                     </div>
                     <div class="summary-details">
@@ -255,7 +233,7 @@ function field_error(string $field, array $errors): string
                                 <line x1="8" y1="2" x2="8" y2="6"></line>
                                 <line x1="3" y1="10" x2="21" y2="10"></line>
                             </svg>
-                            <span><?= htmlspecialchars($package['date']) ?></span>
+                            <span><?= date('d M Y') ?></span>
                         </div>
                         <div class="detail-row">
                             <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -264,7 +242,7 @@ function field_error(string $field, array $errors): string
                                 <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
                                 <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
                             </svg>
-                            <span><?= htmlspecialchars($package['guests']) ?></span>
+                            <span><?= $guestCount ?> Adults</span>
                         </div>
                     </div>
                 </div>

@@ -24,9 +24,6 @@
                     experiencing different cultures, and discovering yourself along the way.
                 </p>
             </div>
-            <div class="about-hero-image" aria-label="Sweeping mountain landscape">
-                <img src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1400&h=600&auto=format&fit=crop" alt="Dramatic mountain range under a cloudy sky">
-            </div>
         </section>
 
         <section class="values-section" aria-labelledby="values-title">
@@ -103,7 +100,7 @@
 
         <section class="team-section" aria-labelledby="team-title">
             <div class="team-inner">
-                <h2 id="team-title">Meet The Team</h2>
+                <h2 id="team-title">Meet The Team</h2><br>
                 <div class="team-grid">
                     <article class="team-member">
                         <div class="team-photo">
@@ -140,12 +137,16 @@
             </div>
         </section>
 
+        <br>>
+
         <section class="about-cta" aria-labelledby="cta-title">
             <h2 id="cta-title">Work With Us</h2>
             <p>Join our passionate team and help us build the future of authentic, sustainable travel.</p>
             <a href="guides.php">View Careers</a>
         </section>
     </main>
+
+    <br>
 
     <?php $basePath = '../'; include '../includes/footer.php'; ?>
 

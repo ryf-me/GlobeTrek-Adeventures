@@ -1,4 +1,8 @@
 <?php
+session_start();
+require_once __DIR__ . '/../config/database.php';
+$db = getDB();
+
 $errors = [];
 $successMessage = '';
 $values = [
@@ -16,28 +20,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($values['full_name'] === '') {
         $errors['full_name'] = 'Please enter your full name.';
     }
-
     if (!filter_var($values['email'], FILTER_VALIDATE_EMAIL)) {
         $errors['email'] = 'Please enter a valid email address.';
     }
-
     if ($password === '') {
         $errors['password'] = 'Please enter a password.';
+    } elseif (strlen($password) < 6) {
+        $errors['password'] = 'Password must be at least 6 characters.';
     }
-
     if ($confirmPassword === '') {
         $errors['confirm_password'] = 'Please confirm your password.';
     } elseif ($password !== $confirmPassword) {
         $errors['confirm_password'] = 'Passwords must match.';
     }
-
     if (!$acceptedTerms) {
         $errors['terms'] = 'Please accept the terms before continuing.';
     }
 
-    if ($errors === []) {
+    if (empty($errors)) {
+        $checkStmt = $db->prepare("SELECT id FROM users WHERE email = :email LIMIT 1");
+        $checkStmt->execute([':email' => $values['email']]);
+        if ($checkStmt->fetch()) {
+            $errors['email'] = 'An account with this email already exists.';
+        }
+    }
+
+    if (empty($errors)) {
+        $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+        $insertStmt = $db->prepare(
+            "INSERT INTO users (full_name, email, password) VALUES (:full_name, :email, :password)"
+        );
+        $insertStmt->execute([
+            ':full_name' => $values['full_name'],
+            ':email' => $values['email'],
+            ':password' => $hashedPassword,
+        ]);
+
         $safeEmail = htmlspecialchars($values['email'], ENT_QUOTES, 'UTF-8');
-        $successMessage = "Account demo created for $safeEmail.";
+        $successMessage = "Account created for $safeEmail. You can now log in.";
+        $values = array_fill_keys(array_keys($values), '');
     }
 }
 ?>
@@ -78,102 +99,56 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <form class="login-form" action="signup.php" method="post" novalidate>
                 <div class="form-group<?php echo isset($errors['full_name']) ? ' has-error' : ''; ?>">
                     <label for="full-name">Full Name</label>
-                    <input
-                        id="full-name"
-                        name="full_name"
-                        type="text"
-                        placeholder="Enter your full name"
-                        autocomplete="name"
-                        value="<?php echo htmlspecialchars($values['full_name'], ENT_QUOTES, 'UTF-8'); ?>"
-                        aria-invalid="<?php echo isset($errors['full_name']) ? 'true' : 'false'; ?>"
-                        <?php echo isset($errors['full_name']) ? 'aria-describedby="full-name-error"' : ''; ?>
-                        required
-                    >
+                    <input id="full-name" name="full_name" type="text" placeholder="Enter your full name" autocomplete="name" value="<?php echo htmlspecialchars($values['full_name'], ENT_QUOTES, 'UTF-8'); ?>" aria-invalid="<?php echo isset($errors['full_name']) ? 'true' : 'false'; ?>" required>
                     <?php if (isset($errors['full_name'])): ?>
-                        <p class="field-error" id="full-name-error"><?php echo $errors['full_name']; ?></p>
+                        <p class="field-error"><?php echo $errors['full_name']; ?></p>
                     <?php endif; ?>
                 </div>
 
                 <div class="form-group<?php echo isset($errors['email']) ? ' has-error' : ''; ?>">
                     <label for="signup-email">Email Address</label>
-                    <input
-                        id="signup-email"
-                        name="email"
-                        type="email"
-                        placeholder="Enter your email"
-                        autocomplete="email"
-                        value="<?php echo htmlspecialchars($values['email'], ENT_QUOTES, 'UTF-8'); ?>"
-                        aria-invalid="<?php echo isset($errors['email']) ? 'true' : 'false'; ?>"
-                        <?php echo isset($errors['email']) ? 'aria-describedby="signup-email-error"' : ''; ?>
-                        required
-                    >
+                    <input id="signup-email" name="email" type="email" placeholder="Enter your email" autocomplete="email" value="<?php echo htmlspecialchars($values['email'], ENT_QUOTES, 'UTF-8'); ?>" aria-invalid="<?php echo isset($errors['email']) ? 'true' : 'false'; ?>" required>
                     <?php if (isset($errors['email'])): ?>
-                        <p class="field-error" id="signup-email-error"><?php echo $errors['email']; ?></p>
+                        <p class="field-error"><?php echo $errors['email']; ?></p>
                     <?php endif; ?>
                 </div>
 
                 <div class="form-group<?php echo isset($errors['password']) ? ' has-error' : ''; ?>">
                     <label for="signup-password">Password</label>
                     <div class="password-wrapper">
-                        <input
-                            id="signup-password"
-                            name="password"
-                            type="password"
-                            placeholder="Create a password"
-                            autocomplete="new-password"
-                            aria-invalid="<?php echo isset($errors['password']) ? 'true' : 'false'; ?>"
-                            <?php echo isset($errors['password']) ? 'aria-describedby="signup-password-error"' : ''; ?>
-                            required
-                        >
+                        <input id="signup-password" name="password" type="password" placeholder="Create a password" autocomplete="new-password" aria-invalid="<?php echo isset($errors['password']) ? 'true' : 'false'; ?>" required>
                         <button type="button" class="password-toggle" data-target="signup-password" aria-label="Toggle password visibility">
                             <span class="material-symbols-outlined icon-visible">visibility</span>
                             <span class="material-symbols-outlined icon-hidden">visibility_off</span>
                         </button>
                     </div>
                     <?php if (isset($errors['password'])): ?>
-                        <p class="field-error" id="signup-password-error"><?php echo $errors['password']; ?></p>
+                        <p class="field-error"><?php echo $errors['password']; ?></p>
                     <?php endif; ?>
                 </div>
 
                 <div class="form-group<?php echo isset($errors['confirm_password']) ? ' has-error' : ''; ?>">
                     <label for="confirm-password">Confirm Password</label>
                     <div class="password-wrapper">
-                        <input
-                            id="confirm-password"
-                            name="confirm_password"
-                            type="password"
-                            placeholder="Repeat your password"
-                            autocomplete="new-password"
-                            aria-invalid="<?php echo isset($errors['confirm_password']) ? 'true' : 'false'; ?>"
-                            <?php echo isset($errors['confirm_password']) ? 'aria-describedby="confirm-password-error"' : ''; ?>
-                            required
-                        >
+                        <input id="confirm-password" name="confirm_password" type="password" placeholder="Repeat your password" autocomplete="new-password" aria-invalid="<?php echo isset($errors['confirm_password']) ? 'true' : 'false'; ?>" required>
                         <button type="button" class="password-toggle" data-target="confirm-password" aria-label="Toggle password visibility">
                             <span class="material-symbols-outlined icon-visible">visibility</span>
                             <span class="material-symbols-outlined icon-hidden">visibility_off</span>
                         </button>
                     </div>
                     <?php if (isset($errors['confirm_password'])): ?>
-                        <p class="field-error" id="confirm-password-error"><?php echo $errors['confirm_password']; ?></p>
+                        <p class="field-error"><?php echo $errors['confirm_password']; ?></p>
                     <?php endif; ?>
                 </div>
 
                 <div class="terms-group<?php echo isset($errors['terms']) ? ' has-error' : ''; ?>">
-                    <input
-                        id="terms"
-                        name="terms"
-                        type="checkbox"
-                        value="1"
-                        aria-invalid="<?php echo isset($errors['terms']) ? 'true' : 'false'; ?>"
-                        <?php echo isset($errors['terms']) ? 'aria-describedby="terms-error"' : ''; ?>
-                        <?php echo isset($_POST['terms']) ? 'checked' : ''; ?>
-                    >
+                    <input id="terms" name="terms" type="checkbox" value="1" aria-invalid="<?php echo isset($errors['terms']) ? 'true' : 'false'; ?>" <?php echo isset($_POST['terms']) ? 'checked' : ''; ?>>
                     <label for="terms">
                         I agree to the <a href="#">Terms and Conditions</a> and <a href="#">Privacy Policy</a>.
                     </label>
                 </div>
                 <?php if (isset($errors['terms'])): ?>
-                    <p class="field-error terms-error" id="terms-error"><?php echo $errors['terms']; ?></p>
+                    <p class="field-error terms-error"><?php echo $errors['terms']; ?></p>
                 <?php endif; ?>
 
                 <button class="login-submit" type="submit">Sign Up</button>

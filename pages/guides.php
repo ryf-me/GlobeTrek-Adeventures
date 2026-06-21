@@ -1,54 +1,6 @@
 <?php
-$guides = [
-    [
-        'name'         => 'Alex Rivera',
-        'specialty'    => 'Mountain Climbing & Hiking',
-        'region'       => 'Andes',
-        'description'  => 'Alex has over 15 years of experience leading expeditions across the Andes and the Himalayas. Passionate about safety and high-altitude endurance.',
-        'image'        => 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=face',
-        'profile_link' => '#'
-    ],
-    [
-        'name'         => 'Mei Lin',
-        'specialty'    => 'Cultural Heritage & Photography',
-        'region'       => 'Southeast Asia',
-        'description'  => 'Specializing in deep-dive cultural tours across Southeast Asia. Mei provides unique photographic opportunities off the beaten path.',
-        'image'        => 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop&crop=face',
-        'profile_link' => '#'
-    ],
-    [
-        'name'         => 'Samir Patel',
-        'specialty'    => 'Wildlife & Safari',
-        'region'       => 'Africa',
-        'description'  => 'An expert tracker and wildlife conservationist, Samir leads transformative safari experiences ensuring minimal ecological impact.',
-        'image'        => 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&h=400&fit=crop&crop=face',
-        'profile_link' => '#'
-    ],
-    [
-        'name'         => 'Elena Rossi',
-        'specialty'    => 'Culinary & Wine Tours',
-        'region'       => 'Europe',
-        'description'  => 'Born in Tuscany, Elena brings travelers into local kitchens and vineyards, offering an authentic taste of European gastronomic traditions.',
-        'image'        => 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop&crop=face',
-        'profile_link' => '#'
-    ],
-    [
-        'name'         => 'David Chen',
-        'specialty'    => 'Urban Exploration & Architecture',
-        'region'       => 'North America',
-        'description'  => 'David uncovers the hidden architectural marvels of the world\'s most dense cities, contrasting modern skylines with historical roots.',
-        'image'        => 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=400&fit=crop&crop=face',
-        'profile_link' => '#'
-    ],
-    [
-        'name'         => 'Sarah Jenkins',
-        'specialty'    => 'Marine & Diving',
-        'region'       => 'Southeast Asia',
-        'description'  => 'A marine biologist turned guide, Sarah leads scuba and snorkeling trips focused on reef conservation and marine life education.',
-        'image'        => 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=400&fit=crop&crop=face',
-        'profile_link' => '#'
-    ]
-];
+require_once __DIR__ . '/../config/database.php';
+$db = getDB();
 
 $specialties = [
     'All Specialties',
@@ -70,13 +22,6 @@ $regions = [
     'North America'
 ];
 
-$guideOfMonth = [
-    'name'        => 'Alex Rivera',
-    'specialty'   => 'Mountain Climbing & Hiking',
-    'description' => 'Alex recently completed a record-setting traversal of the Patagonian ice fields, guiding a group safely through some of the most unpredictable weather on earth. His dedication to preparation and deep respect for nature embodies the GlobeTrek spirit.',
-    'image'       => 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&h=600&fit=crop&crop=face'
-];
-
 $searchQuery = trim($_GET['q'] ?? '');
 $selectedSpecialty = $_GET['specialty'] ?? 'All Specialties';
 $selectedRegion = $_GET['region'] ?? 'All Regions';
@@ -84,24 +29,34 @@ $selectedRegion = $_GET['region'] ?? 'All Regions';
 if (!in_array($selectedSpecialty, $specialties, true)) {
     $selectedSpecialty = 'All Specialties';
 }
-
 if (!in_array($selectedRegion, $regions, true)) {
     $selectedRegion = 'All Regions';
 }
 
-$filteredGuides = array_filter($guides, function ($guide) use ($searchQuery, $selectedSpecialty, $selectedRegion) {
-    $matchesSearch = true;
+$sql = "SELECT * FROM guides WHERE is_active = 1";
+$params = [];
 
-    if ($searchQuery !== '') {
-        $haystack = $guide['name'] . ' ' . $guide['specialty'] . ' ' . $guide['description'];
-        $matchesSearch = stripos($haystack, $searchQuery) !== false;
-    }
+if ($searchQuery !== '') {
+    $sql .= " AND (name LIKE :search OR specialty LIKE :search OR description LIKE :search)";
+    $params[':search'] = '%' . $searchQuery . '%';
+}
+if ($selectedSpecialty !== 'All Specialties') {
+    $sql .= " AND specialty = :specialty";
+    $params[':specialty'] = $selectedSpecialty;
+}
+if ($selectedRegion !== 'All Regions') {
+    $sql .= " AND region = :region";
+    $params[':region'] = $selectedRegion;
+}
 
-    $matchesSpecialty = $selectedSpecialty === 'All Specialties' || $guide['specialty'] === $selectedSpecialty;
-    $matchesRegion = $selectedRegion === 'All Regions' || $guide['region'] === $selectedRegion;
+$sql .= " ORDER BY is_featured DESC, id ASC";
+$stmt = $db->prepare($sql);
+$stmt->execute($params);
+$filteredGuides = $stmt->fetchAll();
 
-    return $matchesSearch && $matchesSpecialty && $matchesRegion;
-});
+$guideOfMonth = null;
+$stmtGom = $db->query("SELECT * FROM guides WHERE is_featured = 1 LIMIT 1");
+$guideOfMonth = $stmtGom->fetch();
 
 function e($value)
 {
@@ -195,6 +150,7 @@ function e($value)
             <?php endif; ?>
         </section>
 
+        <?php if ($guideOfMonth): ?>
         <section class="featured-guide" aria-labelledby="featured-guide-title">
             <img src="<?= e($guideOfMonth['image']) ?>" alt="<?= e($guideOfMonth['name']) ?>">
             <div class="featured-content">
@@ -205,6 +161,7 @@ function e($value)
                 <a href="#">Read Full Interview</a>
             </div>
         </section>
+        <?php endif; ?>
 
         <section class="join-guides" aria-labelledby="join-title">
             <p class="eyebrow">Join the network</p>
