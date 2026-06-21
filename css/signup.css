@@ -24,33 +24,6 @@
     font-family: "Manrope", sans-serif;
 }
 
-.signup-page .navbar {
-    position: sticky;
-    top: 0;
-    background: rgba(14, 58, 50, 0.84);
-    border-bottom: 1px solid rgba(255, 250, 240, 0.18);
-}
-
-.signup-page .login-btn {
-    border-color: rgba(255, 250, 240, 0.74);
-    background: rgba(255, 250, 240, 0.12);
-    color: #fffaf0;
-}
-
-.signup-page .signup-btn {
-    border-color: rgba(255, 250, 240, 0.74);
-    background: #fffaf0;
-    color: var(--signup-forest);
-}
-
-.signup-page .navbar .nav-links a.signup-btn {
-    color: var(--signup-forest);
-}
-
-.signup-page .navbar .nav-links a.login-btn {
-    color: #fffaf0;
-}
-
 .signup-page section {
     max-width: none;
     margin: 0;

@@ -19,13 +19,6 @@
     color: var(--guide-ink);
 }
 
-.guides-page .navbar {
-    position: sticky;
-    top: 0;
-    background: rgba(13, 22, 18, 0.78);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.16);
-}
-
 .guides-shell {
     max-width: 1280px;
     margin: 0 auto;

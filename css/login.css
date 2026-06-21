@@ -21,24 +21,6 @@
     font-family: "Manrope", sans-serif;
 }
 
-.login-page .navbar {
-    position: sticky;
-    top: 0;
-    background: rgba(14, 58, 50, 0.84);
-    border-bottom: 1px solid rgba(255, 250, 240, 0.18);
-}
-
-.login-page .login-btn {
-    border-color: rgba(255, 250, 240, 0.74);
-    background: #fffaf0;
-    color: var(--login-forest);
-}
-
-.login-page .signup-btn {
-    border-color: rgba(255, 250, 240, 0.36);
-    background: rgba(255, 250, 240, 0.12);
-}
-
 .login-page section {
     max-width: none;
     margin: 0;

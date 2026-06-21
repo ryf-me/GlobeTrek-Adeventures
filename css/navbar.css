@@ -1,27 +1,33 @@
 /* Navigation */
 .navbar {
-    background: rgba(0, 0, 0, 0.25);
+    background: rgba(255, 255, 255, 0.2);
     backdrop-filter: blur(8px);
-    color: #fff;
+    color: #222;
     padding: 1rem 2rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    position: absolute;
+    position: sticky;
     top: 0;
     left: 0;
     width: 100%;
     z-index: 10;
+    font-family: 'Segoe UI', Roboto, system-ui, -apple-system, sans-serif;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 .navbar .logo {
     display: flex;
     align-items: center;
     gap: 1rem;
-    color: #fff;
+    color: #222;
     text-decoration: none;
     font-size: 1.5rem;
     font-weight: bold;
+}
+
+.navbar .logo span {
+    color: #222;
 }
 
 .navbar .logo img {
@@ -37,7 +43,7 @@
     gap: 1.5rem;
 }
 .navbar .nav-links a {
-    color: #fff;
+    color: #222;
     text-decoration: none;
     font-weight: 500;
 }
@@ -58,14 +64,14 @@
     transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
 }
 .login-btn {
-    border: 2px solid #9a9a9a;
+    border: 2px solid #ccc;
     background: #fff;
     color: #222;
 }
 .signup-btn {
     margin-left: -0.75rem;
-    border: 2px solid #555;
-    background: #5a5a5a;
+    border: 2px solid #0e3a32;
+    background: #0e3a32;
     color: #fff;
 }
 .navbar .nav-links a.login-btn {
@@ -73,19 +79,19 @@
 }
 .login-btn:hover,
 .login-btn:focus-visible {
-    border-color: #555;
-    background: #f5f5f5;
+    border-color: #0e3a32;
+    background: #f0f0f0;
     transform: translateY(-1px);
 }
 .signup-btn:hover,
 .signup-btn:focus-visible {
-    border-color: #333;
-    background: #3f3f3f;
+    border-color: #092b25;
+    background: #092b25;
     transform: translateY(-1px);
 }
 .login-btn:focus-visible,
 .signup-btn:focus-visible {
-    outline: 2px solid #fff;
+    outline: 2px solid #222;
     outline-offset: 3px;
 }
 
@@ -94,7 +100,7 @@
     display: none;
     border: 0;
     background: transparent;
-    color: #fff;
+    color: #222;
     font-size: 2rem;
     cursor: pointer;
 }
@@ -147,12 +153,50 @@
     }
 }
 
-.packages-page .navbar,
-.contact-page .navbar,
-.about-page .navbar,
-.destinations-page .navbar,
-.guides-page .navbar {
-    position: sticky;
-    top: 0;
-    background: rgba(0, 0, 0, 0.35);
+/* Homepage hero overlay navbar */
+.home-page .navbar {
+    position: absolute;
+    background: transparent;
+    backdrop-filter: none;  /* remove blur/dark effect*/
+    -webkit-backdrop-filter: none; /*ensures the blur is fully killed */
+    border-bottom: none;   /* remove the bottom dark line */
+}
+
+.home-page .navbar .logo,
+.home-page .navbar .logo span,
+.home-page .navbar .nav-links a {
+    color: #fff;
+}
+
+.home-page .menu-toggle {
+    color: #fff;
+}
+
+.home-page .login-btn {
+    border-color: rgba(255, 255, 255, 0.5);
+    background: transparent;
+    color: #fff;
+}
+
+.home-page .signup-btn {
+    border-color: rgba(255,255,255,0.5);
+    background: rgba(255,255,255,0.15);
+    color: #fff;
+}
+
+.home-page .login-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: #fff;
+}
+
+.home-page .signup-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    border-color:#fff;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+    .home-page .navbar .nav-links {
+        background: rgba(0, 0, 0, 0.85);
+    }
 }

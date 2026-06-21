@@ -25,12 +25,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['newsletter_email'])) 
     <link rel="stylesheet" href="css/navbar.css" />
     <link rel="stylesheet" href="css/footer.css" />
 </head>
-<body>
+<body class="home-page">
     <!-- Navbar -->
     <?php $basePath = ''; include 'includes/navbar.php'; ?>
     
     <!-- Hero Section -->
     <section id="home" class="hero">
+        <video class="hero-video" autoplay muted loop playsinline>
+            <source src="videos/hero-video.mp4" type="video/mp4"/>
+        </video>
         <div class="hero-content">
             <h1>Discover Your Next Adventure</h1>
             <p>From pristine beaches to bustling cityscapes – we bring the world to you.</p>
