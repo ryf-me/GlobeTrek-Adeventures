@@ -1,0 +1,158 @@
+/* Navigation */
+.navbar {
+    background: rgba(0, 0, 0, 0.25);
+    backdrop-filter: blur(8px);
+    color: #fff;
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 10;
+}
+
+.navbar .logo {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    color: #fff;
+    text-decoration: none;
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
+.navbar .logo img {
+    width: 50px;
+    height: 50px;
+    object-fit: contain;
+}
+
+.navbar .nav-links {
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+.navbar .nav-links a {
+    color: #fff;
+    text-decoration: none;
+    font-weight: 500;
+}
+.login-btn,
+.signup-btn {
+    min-width: 82px;
+    height: 38px;
+    padding: 0 18px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 700;
+    line-height: 1;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+.login-btn {
+    border: 2px solid #9a9a9a;
+    background: #fff;
+    color: #222;
+}
+.signup-btn {
+    margin-left: -0.75rem;
+    border: 2px solid #555;
+    background: #5a5a5a;
+    color: #fff;
+}
+.navbar .nav-links a.login-btn {
+    color: #222;
+}
+.login-btn:hover,
+.login-btn:focus-visible {
+    border-color: #555;
+    background: #f5f5f5;
+    transform: translateY(-1px);
+}
+.signup-btn:hover,
+.signup-btn:focus-visible {
+    border-color: #333;
+    background: #3f3f3f;
+    transform: translateY(-1px);
+}
+.login-btn:focus-visible,
+.signup-btn:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 3px;
+}
+
+/* Mobile Navbar Menu */
+.menu-toggle {
+    display: none;
+    border: 0;
+    background: transparent;
+    color: #fff;
+    font-size: 2rem;
+    cursor: pointer;
+}
+
+@media (max-width: 768px) {
+    .navbar {
+        padding: 1rem;
+        position: absolute;
+    }
+
+    .navbar .logo span {
+        font-size: 1.15rem;
+    }
+
+    .menu-toggle {
+        display: block;
+    }
+
+    .navbar .nav-links {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        width: 100%;
+        padding: 1rem;
+        background: rgba(0, 0, 0, 0.9);
+        backdrop-filter: blur(10px);
+        display: none;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+    }
+
+    .navbar .nav-links.active {
+        display: flex;
+    }
+
+    .navbar .nav-links li {
+        width: 100%;
+    }
+
+    .navbar .nav-links a,
+    .navbar .nav-links button {
+        width: 100%;
+        display: block;
+        text-align: center;
+    }
+
+    .signup-btn {
+        margin-left: 0;
+    }
+}
+
+.packages-page .navbar,
+.contact-page .navbar,
+.about-page .navbar,
+.destinations-page .navbar,
+.guides-page .navbar {
+    position: sticky;
+    top: 0;
+    background: rgba(0, 0, 0, 0.35);
+}
