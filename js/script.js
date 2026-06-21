@@ -25,3 +25,15 @@ if (menuToggle && navLinks) {
     menuToggle.textContent = isOpen ? '×' : '☰';
   });
 }
+
+document.querySelectorAll('.password-toggle').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    const targetId = btn.getAttribute('data-target');
+    const input = document.getElementById(targetId);
+    if (!input) return;
+
+    const isPassword = input.type === 'password';
+    input.type = isPassword ? 'text' : 'password';
+    btn.classList.toggle('active', isPassword);
+  });
+});

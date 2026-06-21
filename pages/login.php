@@ -14,62 +14,43 @@
 <body class="login-page">
     <?php $basePath = '../'; include '../includes/navbar.php'; ?>
 
-    <main class="login-shell" aria-labelledby="login-title">
-        <section class="login-card">
-            <div class="login-panel" aria-hidden="true">
-                <div class="login-panel-overlay">
-                    <img src="../images/logo.png" alt="">
-                    <p>Globe Trek</p>
-                </div>
-                <div class="login-trip-note">
-                    <span>Next departure</span>
-                    <strong>Ella sunrise trail</strong>
-                </div>
+    <main class="login-shell">
+        <div class="login-card">
+            <div class="login-header">
+                <h1>Welcome Back</h1>
+                <p>Please enter your details to sign in.</p>
             </div>
 
-            <section class="login-form-panel" aria-label="Account login">
-                <a class="login-brand" href="../index.php#home" aria-label="Go to GlobeTrek home">
-                    <img src="../images/logo.png" alt="">
-                    <span>GlobeTrek</span>
-                </a>
-
-                <div class="login-copy">
-                    <p class="login-eyebrow">Traveler access</p>
-                    <h1 id="login-title">Welcome back</h1>
-                    <p>Sign in to review saved routes, bookings, and upcoming travel details.</p>
+            <form class="login-form" action="#" method="post">
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input id="email" name="email" type="email" placeholder="Enter your email" autocomplete="email" required>
                 </div>
 
-                <form class="login-form" action="#" method="post">
-                    <div class="form-group">
-                        <label for="email">Email address</label>
-                        <input id="email" name="email" type="email" placeholder="you@example.com" autocomplete="email" required>
+                <div class="form-group">
+                    <div class="password-row">
+                        <label for="password">Password</label>
+                        <a href="#">Forgot Password?</a>
                     </div>
-
-                    <div class="form-group">
-                        <div class="password-row">
-                            <label for="password">Password</label>
-                            <a href="#">Forgot password?</a>
-                        </div>
-                        <input id="password" name="password" type="password" placeholder="Enter your password" autocomplete="current-password" required>
-                    </div>
-
-                    <button class="login-submit" type="submit">Login</button>
-                </form>
-
-                <div class="login-divider" aria-hidden="true">
-                    <span></span>
-                    <p>Or continue with</p>
-                    <span></span>
+                    <input id="password" name="password" type="password" placeholder="Enter your password" autocomplete="current-password" required>
                 </div>
 
-                <button class="google-login" type="button">
-                    <span class="google-mark" aria-hidden="true">G</span>
-                    <span>Google</span>
-                </button>
+                <button class="login-submit" type="submit">Login</button>
+            </form>
 
-                <p class="signup-prompt">Do not have an account? <a href="signup.php">Sign Up</a></p>
-            </section>
-        </section>
+            <div class="login-divider" aria-hidden="true">
+                <span></span>
+                <p>Or continue with</p>
+                <span></span>
+            </div>
+
+            <button class="google-btn" type="button">
+                <span class="google-mark" aria-hidden="true">G</span>
+                <span>Google</span>
+            </button>
+
+            <p class="signup-prompt">Don't have an account? <a href="signup.php">Sign Up</a></p>
+        </div>
     </main>
 
     <script src="../js/script.js"></script>

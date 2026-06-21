@@ -55,7 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['newsletter_email'])) 
                     <p class="duration">5 Days / 4 Nights</p>
                     <div class="package-actions">
                         <p class="price">From Rs.75999</p>
-                        <a href="packages" class="details-btn">View Details</a>
+                        <a href="pages/package-details.php?id=1" class="details-btn">View Details</a>
                     </div>
                 </div>
             </div>

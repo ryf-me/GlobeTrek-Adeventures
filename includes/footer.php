@@ -4,7 +4,7 @@
             <div class="footer-brand">
                 <div class="footer-logo">
                     <img src="<?php echo $basePath; ?>images/logo.png" alt="Globe Trek Adventures logo" />
-                    <span>GlobeTrek</span>
+                    <span class="brand">GlobeTrek</span>
                 </div>
                 <address>
                     123, Main Street, Negombo<br />

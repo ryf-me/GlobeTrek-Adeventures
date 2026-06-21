@@ -6,7 +6,7 @@ $packages = [
         'title'       => 'Island Escape',
         'duration'    => '5 Days / 4 Nights',
         'price'       => 75999,
-        'image'       => 'https://picsum.photos/seed/island/400/250',
+        'image'       => 'https://images.unsplash.com/photo-1734279135115-6d8984e08206?q=80&w=800&auto=format&fit=crop',
         'destination' => 'Beaches & Coastal Getaways',
         'duration_days' => 5,
         'price_range' => '50000+'
@@ -149,6 +149,7 @@ $tripDurations = [
             <!-- Package Cards -->
             <main class="packages-grid">
                 <?php foreach ($packages as $pkg): ?>
+                    <?php $detailsUrl = $pkg['id'] === 1 ? 'package-details.php?id=1' : '#'; ?>
                     <div class="package-card">
                         <img src="<?= htmlspecialchars($pkg['image']) ?>" alt="<?= htmlspecialchars($pkg['title']) ?>">
                         <div class="card-content">
@@ -157,7 +158,7 @@ $tripDurations = [
                             <div class="price">
                                 From Rs.<?= number_format($pkg['price']) ?>
                             </div>
-                            <a href="#" class="view-btn">View Details</a>
+                            <a href="<?= htmlspecialchars($detailsUrl) ?>" class="view-btn">View Details</a>
                         </div>
                     </div>
                 <?php endforeach; ?>

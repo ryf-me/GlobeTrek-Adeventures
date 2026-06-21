@@ -1,7 +1,11 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Bungee&family=Rubik+Doodle+Shadow&family=Unkempt:wght@400;700&family=Winky+Sans:ital,wght@0,300..900;1,300..900&display=swap');
+
 /* Footer */
 .site-footer {
     background: #f3f3f3;
     color: #111;
+    font-family: 'Winky Sans', sans-serif;
 }
 .footer-main {
     max-width: 1160px;
@@ -11,12 +15,16 @@
     grid-template-columns: 1.35fr 1fr 1.15fr 1.1fr;
     gap: 4rem;
 }
-.footer-logo {
+.footer-logo{
     margin-bottom: 1.55rem;
     display: flex;
     align-items: center;
     gap: 0.8rem;
-    color: #111;
+}
+
+.footer-logo .brand{
+    color:#111;
+    font-family:'Rubik Doodle Shadow', cursive;
     font-size: 1.45rem;
     font-weight: 800;
     line-height: 1;

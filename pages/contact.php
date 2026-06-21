@@ -56,7 +56,8 @@ function field_error(string $field, array $errors): string
     <title>Contact GlobeTrek Adventures</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700;9..144,800&family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="../css/navbar.css">
     <link rel="stylesheet" href="../css/contact.css">
@@ -67,16 +68,11 @@ function field_error(string $field, array $errors): string
 
     <main>
         <section class="contact-hero" aria-labelledby="contact-title">
-            <div class="contact-hero-copy">
-                <p class="contact-eyebrow">Plan with a local team</p>
-                <h1 id="contact-title">Get in Touch</h1>
-                <p>
-                    Tell us what kind of Sri Lanka journey you are dreaming about. Our team will help shape the route,
-                    timing, guide support, and small details that make the trip feel personal.
-                </p>
-            </div>
-
-            <div class="contact-hero-card" aria-label="GlobeTrek response promise">
+            <h1 id="contact-title">Get in Touch</h1>
+            <p class="contact-hero-desc">
+                We're here to help you plan your next great adventure. Reach out to our team with any questions or inquiries.
+            </p>
+            <div class="contact-hero-card" aria-label="Response time">
                 <span>24h</span>
                 <p>Typical response time for new travel inquiries.</p>
             </div>
@@ -84,10 +80,7 @@ function field_error(string $field, array $errors): string
 
         <section class="contact-workspace" aria-labelledby="message-title">
             <div class="contact-form-panel">
-                <div class="contact-section-heading">
-                    <p class="contact-eyebrow">Send a message</p>
-                    <h2 id="message-title">Start the conversation.</h2>
-                </div>
+                <h2 id="message-title">Send a Message</h2>
 
                 <?php if ($submitted): ?>
                     <div class="form-alert success" role="status">
@@ -100,38 +93,36 @@ function field_error(string $field, array $errors): string
                 <?php endif; ?>
 
                 <form class="contact-form" method="post" action="contact.php#message-title" novalidate>
-                    <div class="form-row">
-                        <div class="form-field">
-                            <label for="name">Name</label>
-                            <input
-                                id="name"
-                                name="name"
-                                type="text"
-                                value="<?php echo old_value('name', $fields); ?>"
-                                placeholder="Your full name"
-                                aria-invalid="<?php echo isset($errors['name']) ? 'true' : 'false'; ?>"
-                                aria-describedby="<?php echo isset($errors['name']) ? 'name-error' : ''; ?>"
-                            >
-                            <?php if (isset($errors['name'])): ?>
-                                <p class="field-error" id="name-error"><?php echo field_error('name', $errors); ?></p>
-                            <?php endif; ?>
-                        </div>
+                    <div class="form-field">
+                        <label for="name">Name</label>
+                        <input
+                            id="name"
+                            name="name"
+                            type="text"
+                            value="<?php echo old_value('name', $fields); ?>"
+                            placeholder="Enter your full name"
+                            aria-invalid="<?php echo isset($errors['name']) ? 'true' : 'false'; ?>"
+                            aria-describedby="<?php echo isset($errors['name']) ? 'name-error' : ''; ?>"
+                        >
+                        <?php if (isset($errors['name'])): ?>
+                            <p class="field-error" id="name-error"><?php echo field_error('name', $errors); ?></p>
+                        <?php endif; ?>
+                    </div>
 
-                        <div class="form-field">
-                            <label for="email">Email Address</label>
-                            <input
-                                id="email"
-                                name="email"
-                                type="email"
-                                value="<?php echo old_value('email', $fields); ?>"
-                                placeholder="you@example.com"
-                                aria-invalid="<?php echo isset($errors['email']) ? 'true' : 'false'; ?>"
-                                aria-describedby="<?php echo isset($errors['email']) ? 'email-error' : ''; ?>"
-                            >
-                            <?php if (isset($errors['email'])): ?>
-                                <p class="field-error" id="email-error"><?php echo field_error('email', $errors); ?></p>
-                            <?php endif; ?>
-                        </div>
+                    <div class="form-field">
+                        <label for="email">Email Address</label>
+                        <input
+                            id="email"
+                            name="email"
+                            type="email"
+                            value="<?php echo old_value('email', $fields); ?>"
+                            placeholder="Enter your email address"
+                            aria-invalid="<?php echo isset($errors['email']) ? 'true' : 'false'; ?>"
+                            aria-describedby="<?php echo isset($errors['email']) ? 'email-error' : ''; ?>"
+                        >
+                        <?php if (isset($errors['email'])): ?>
+                            <p class="field-error" id="email-error"><?php echo field_error('email', $errors); ?></p>
+                        <?php endif; ?>
                     </div>
 
                     <div class="form-field">
@@ -141,7 +132,7 @@ function field_error(string $field, array $errors): string
                             name="subject"
                             type="text"
                             value="<?php echo old_value('subject', $fields); ?>"
-                            placeholder="Trip planning, booking support, or guide inquiry"
+                            placeholder="What is this regarding?"
                             aria-invalid="<?php echo isset($errors['subject']) ? 'true' : 'false'; ?>"
                             aria-describedby="<?php echo isset($errors['subject']) ? 'subject-error' : ''; ?>"
                         >
@@ -155,8 +146,8 @@ function field_error(string $field, array $errors): string
                         <textarea
                             id="message"
                             name="message"
-                            rows="7"
-                            placeholder="Share your travel dates, interests, group size, or any questions."
+                            rows="5"
+                            placeholder="Type your message here..."
                             aria-invalid="<?php echo isset($errors['message']) ? 'true' : 'false'; ?>"
                             aria-describedby="<?php echo isset($errors['message']) ? 'message-error' : ''; ?>"
                         ><?php echo old_value('message', $fields); ?></textarea>
@@ -171,21 +162,15 @@ function field_error(string $field, array $errors): string
 
             <aside class="contact-info-panel" aria-labelledby="info-title">
                 <div>
-                    <p class="contact-eyebrow">Contact information</p>
-                    <h2 id="info-title">Talk to GlobeTrek.</h2>
+                    <h2 id="info-title">Contact Information</h2>
                     <p class="info-intro">
-                        We are based in Negombo and work with guides, hosts, and travel partners across Sri Lanka.
+                        Our dedicated support team is available to assist you Monday through Friday, 9:00 AM to 6:00 PM IST.
                     </p>
                 </div>
 
                 <div class="info-list">
                     <div class="info-item">
-                        <div class="info-icon" aria-hidden="true">
-                            <svg viewBox="0 0 24 24">
-                                <path d="M12 21s7-5.3 7-12a7 7 0 0 0-14 0c0 6.7 7 12 7 12z"></path>
-                                <circle cx="12" cy="9" r="2.5"></circle>
-                            </svg>
-                        </div>
+                        <span class="material-symbols-outlined info-icon" aria-hidden="true">location_on</span>
                         <div>
                             <h3>Office Address</h3>
                             <p>123, Main Street, Negombo</p>
@@ -193,11 +178,7 @@ function field_error(string $field, array $errors): string
                     </div>
 
                     <div class="info-item">
-                        <div class="info-icon" aria-hidden="true">
-                            <svg viewBox="0 0 24 24">
-                                <path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 2 .7 2.9a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.2-1.2a2 2 0 0 1 2.1-.5c.9.3 1.9.6 2.9.7a2 2 0 0 1 1.7 2z"></path>
-                            </svg>
-                        </div>
+                        <span class="material-symbols-outlined info-icon" aria-hidden="true">phone</span>
                         <div>
                             <h3>Phone Number</h3>
                             <p><a href="tel:+94112345678">+94 11 234 5678</a></p>
@@ -205,12 +186,7 @@ function field_error(string $field, array $errors): string
                     </div>
 
                     <div class="info-item">
-                        <div class="info-icon" aria-hidden="true">
-                            <svg viewBox="0 0 24 24">
-                                <rect x="3" y="5" width="18" height="14" rx="2"></rect>
-                                <path d="M4 7l8 6 8-6"></path>
-                            </svg>
-                        </div>
+                        <span class="material-symbols-outlined info-icon" aria-hidden="true">mail</span>
                         <div>
                             <h3>Email Address</h3>
                             <p><a href="mailto:info@globetrek.lk">info@globetrek.lk</a></p>
@@ -222,16 +198,35 @@ function field_error(string $field, array $errors): string
                     <span>Office Hours</span>
                     <p>Monday to Friday, 9:00 AM - 6:00 PM</p>
                 </div>
+
+                <div class="social-links">
+                    <span class="social-label">Follow Us</span>
+                    <div class="social-icons">
+                        <a href="#" aria-label="Facebook" class="social-icon">
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+                        </a>
+                        <a href="#" aria-label="Instagram" class="social-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="5"/><circle cx="17.5" cy="6.5" r="1.5" fill="currentColor" stroke="none"/></svg>
+                        </a>
+                        <a href="#" aria-label="Twitter" class="social-icon">
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                        </a>
+                    </div>
+                </div>
             </aside>
         </section>
 
-        <section class="support-teaser" aria-labelledby="support-title">
-            <p class="contact-eyebrow">Need quick answers?</p>
-            <h2 id="support-title">We can help with bookings, routes, guide availability, and travel requirements.</h2>
-            <div class="support-actions">
-                <a href="packages.php">Browse Packages</a>
-                <a href="guides.php">Meet Our Guides</a>
+        <section class="contact-map" aria-label="Office location map">
+            <div class="map-placeholder">
+                <span class="material-symbols-outlined map-icon">map</span>
+                <span class="map-label">Interactive Map View</span>
             </div>
+        </section>
+
+        <section class="faq-teaser" aria-labelledby="faq-title">
+            <h3 id="faq-title">Have questions? Check out our help center</h3>
+            <p>Find quick answers to common questions about bookings, cancellations, and travel requirements.</p>
+            <a href="#" class="faq-btn">Visit Help Center</a>
         </section>
     </main>
 
