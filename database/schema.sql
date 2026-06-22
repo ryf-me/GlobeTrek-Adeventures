@@ -14,7 +14,8 @@ CREATE TABLE IF NOT EXISTS users (
     city VARCHAR(100) DEFAULT NULL,
     bio TEXT DEFAULT NULL,
     profile_photo VARCHAR(500) DEFAULT NULL,
-    role ENUM('user', 'admin') DEFAULT 'user',
+    role ENUM('user', 'staff', 'admin') DEFAULT 'user',
+    notification_preferences JSON DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
@@ -115,6 +116,9 @@ CREATE TABLE IF NOT EXISTS accommodations (
     has_spa TINYINT(1) DEFAULT 0,
     has_restaurant TINYINT(1) DEFAULT 0,
     has_fitness TINYINT(1) DEFAULT 0,
+    provider_name VARCHAR(150) DEFAULT NULL,
+    provider_email VARCHAR(150) DEFAULT NULL,
+    provider_phone VARCHAR(30) DEFAULT NULL,
     is_featured TINYINT(1) DEFAULT 0,
     is_active TINYINT(1) DEFAULT 1,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -136,6 +140,9 @@ CREATE TABLE IF NOT EXISTS transportations (
     has_driver TINYINT(1) DEFAULT 0,
     has_insurance TINYINT(1) DEFAULT 0,
     is_available TINYINT(1) DEFAULT 1,
+    provider_name VARCHAR(150) DEFAULT NULL,
+    provider_email VARCHAR(150) DEFAULT NULL,
+    provider_phone VARCHAR(30) DEFAULT NULL,
     is_featured TINYINT(1) DEFAULT 0,
     is_active TINYINT(1) DEFAULT 1,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -191,4 +198,45 @@ CREATE TABLE IF NOT EXISTS custom_trip_requests (
     additional_details TEXT DEFAULT NULL,
     status ENUM('pending', 'reviewed', 'completed') DEFAULT 'pending',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+-- Wishlist table
+CREATE TABLE IF NOT EXISTS wishlist (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    package_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (package_id) REFERENCES packages(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_wishlist_item (user_id, package_id)
+) ENGINE=InnoDB;
+
+-- Payments table
+CREATE TABLE IF NOT EXISTS payments (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    booking_id INT NOT NULL,
+    user_id INT DEFAULT NULL,
+    amount DECIMAL(10,2) NOT NULL,
+    payment_method VARCHAR(20) NOT NULL,
+    card_last_four VARCHAR(4) DEFAULT NULL,
+    card_brand VARCHAR(30) DEFAULT NULL,
+    transaction_id VARCHAR(50) NOT NULL,
+    status ENUM('pending', 'completed', 'failed', 'refunded') DEFAULT 'completed',
+    billing_address TEXT DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (booking_id) REFERENCES bookings(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+-- Activity logs table
+CREATE TABLE IF NOT EXISTS activity_logs (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT DEFAULT NULL,
+    action VARCHAR(100) NOT NULL,
+    entity_type VARCHAR(50) NOT NULL,
+    entity_id INT DEFAULT NULL,
+    details TEXT DEFAULT NULL,
+    ip_address VARCHAR(45) DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB;

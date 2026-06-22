@@ -97,7 +97,7 @@ function mb_format_date_range(?string $travelDate, ?int $days): string
 
 function mb_format_price(float $price): string
 {
-    return '$' . number_format($price, 2);
+    return 'Rs.' . number_format($price, 2);
 }
 ?>
 <!DOCTYPE html>
@@ -124,6 +124,19 @@ function mb_format_price(float $price): string
             <?php $activePage = 'bookings'; include '../includes/user-sidebar.php'; ?>
 
             <div class="usr-canvas">
+                <?php if (isset($_GET['cancelled'])): ?>
+                    <div class="mb-alert mb-alert-success">
+                        <span class="material-symbols-outlined">check_circle</span>
+                        Booking has been cancelled successfully.
+                    </div>
+                <?php endif; ?>
+                <?php if (isset($_GET['error']) && $_GET['error'] === 'only_pending'): ?>
+                    <div class="mb-alert mb-alert-error">
+                        <span class="material-symbols-outlined">error</span>
+                        Only pending bookings can be cancelled.
+                    </div>
+                <?php endif; ?>
+
                 <div class="usr-page-header">
                     <h1>My Bookings</h1>
                     <p>View and manage your current and past travel arrangements.</p>
@@ -204,24 +217,24 @@ function mb_format_price(float $price): string
                                     <!-- Actions -->
                                     <div class="mb-card-actions">
                                         <?php if ($badgeClass === 'confirmed'): ?>
-                                            <a href="booking-details.php?ref=<?= urlencode($booking['booking_reference']) ?>" class="mb-btn mb-btn-primary">View Details</a>
+                                            <a href="booking-detail.php?ref=<?= urlencode($booking['booking_reference']) ?>" class="mb-btn mb-btn-primary">View Details</a>
                                             <a href="payment.php?ref=<?= urlencode($booking['booking_reference']) ?>" class="mb-btn mb-btn-outline">Modify Booking</a>
                                             <button class="mb-btn-text" onclick="alert('Invoice download coming soon')">
                                                 <span class="material-symbols-outlined">download</span>
                                                 Invoice
                                             </button>
                                         <?php elseif ($badgeClass === 'pending'): ?>
-                                            <a href="booking-details.php?ref=<?= urlencode($booking['booking_reference']) ?>" class="mb-btn mb-btn-primary">View Details</a>
+                                            <a href="booking-detail.php?ref=<?= urlencode($booking['booking_reference']) ?>" class="mb-btn mb-btn-primary">View Details</a>
                                             <a href="payment.php?ref=<?= urlencode($booking['booking_reference']) ?>" class="mb-btn mb-btn-outline">Complete Payment</a>
                                             <button class="mb-btn-text danger" onclick="if(confirm('Are you sure you want to cancel this booking?')) window.location.href='cancel-booking.php?ref=<?= urlencode($booking['booking_reference']) ?>'">
                                                 <span class="material-symbols-outlined">cancel</span>
                                                 Cancel
                                             </button>
                                         <?php elseif ($badgeClass === 'completed'): ?>
-                                            <a href="booking-details.php?ref=<?= urlencode($booking['booking_reference']) ?>" class="mb-btn mb-btn-outline">Review Experience</a>
+                                            <a href="booking-detail.php?ref=<?= urlencode($booking['booking_reference']) ?>" class="mb-btn mb-btn-outline">Review Experience</a>
                                             <a href="packages.php?rebook=<?= urlencode($booking['package_id']) ?>" class="mb-btn mb-btn-outline">Rebook Package</a>
                                         <?php elseif ($badgeClass === 'cancelled'): ?>
-                                            <a href="booking-details.php?ref=<?= urlencode($booking['booking_reference']) ?>" class="mb-btn mb-btn-outline">View Details</a>
+                                            <a href="booking-detail.php?ref=<?= urlencode($booking['booking_reference']) ?>" class="mb-btn mb-btn-outline">View Details</a>
                                         <?php endif; ?>
                                     </div>
                                 </div>

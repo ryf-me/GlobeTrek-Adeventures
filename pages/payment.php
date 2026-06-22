@@ -111,10 +111,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($submitted) {
         $cardLastFour = '';
+        $cardBrand = '';
         if ($fields['paymentMethod'] === 'credit_card') {
             $cleanCard = preg_replace('/\s+/', '', $fields['cardNumber']);
             $cardLastFour = substr($cleanCard, -4);
+            $firstDigit = substr($cleanCard, 0, 1);
+            if ($firstDigit === '4') $cardBrand = 'Visa';
+            elseif ($firstDigit === '5') $cardBrand = 'Mastercard';
+            elseif ($firstDigit === '3') $cardBrand = 'Amex';
+            else $cardBrand = 'Card';
         }
+
+        $transactionId = 'TXN-' . strtoupper(bin2hex(random_bytes(8)));
 
         $updateStmt = $db->prepare(
             "UPDATE bookings
@@ -128,6 +136,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ':card_last_four' => $cardLastFour,
             ':ref' => $bookingRef,
             ':user_id' => $_SESSION['user_id'],
+        ]);
+
+        $billingAddress = trim($fields['addressLine1'] . ', ' . $fields['addressLine2'] . ', ' . $fields['city'] . ', ' . $fields['state'] . ' ' . $fields['zip'] . ', ' . $fields['country']);
+        $billingAddress = preg_replace('/,\s*,/', ',', $billingAddress);
+
+        $payStmt = $db->prepare(
+            "INSERT INTO payments (booking_id, user_id, amount, payment_method, card_last_four, card_brand, transaction_id, status, billing_address)
+             VALUES (:booking_id, :user_id, :amount, :method, :card_four, :card_brand, :txn_id, 'completed', :billing)"
+        );
+        $payStmt->execute([
+            ':booking_id' => $booking['id'],
+            ':user_id' => $_SESSION['user_id'],
+            ':amount' => $total,
+            ':method' => $fields['paymentMethod'],
+            ':card_four' => $cardLastFour,
+            ':card_brand' => $cardBrand,
+            ':txn_id' => $transactionId,
+            ':billing' => $billingAddress,
         ]);
 
         $paymentSuccess = true;

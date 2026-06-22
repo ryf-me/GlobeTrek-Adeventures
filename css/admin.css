@@ -1,0 +1,1284 @@
+/* ============================================
+   Admin Panel - Global Styles
+   ============================================ */
+
+:root {
+    --adm-primary: #000000;
+    --adm-on-primary: #ffffff;
+    --adm-surface: #f5f7fa;
+    --adm-surface-bright: #f9f9f9;
+    --adm-surface-container: #eeeeee;
+    --adm-surface-container-high: #e8e8e8;
+    --adm-surface-container-low: #f3f3f4;
+    --adm-surface-container-lowest: #ffffff;
+    --adm-on-surface: #1a1c1c;
+    --adm-on-surface-variant: #5e5e5e;
+    --adm-secondary: #5e5e5e;
+    --adm-outline: #747878;
+    --adm-outline-variant: #c4c7c8;
+    --adm-error: #ba1a1a;
+    --adm-error-container: #ffdad6;
+    --adm-success-bg: #dfe9df;
+    --adm-success-border: rgba(18, 61, 53, 0.28);
+    --adm-success-text: #123d35;
+    --adm-warning: #c77c00;
+    --adm-warning-bg: #fff3e0;
+    --adm-info: #0066cc;
+    --adm-info-bg: #e3f2fd;
+    --adm-sidebar-width: 260px;
+    --adm-sidebar-collapsed: 0px;
+    --adm-topbar-height: 64px;
+}
+
+/* --------------------------------------------
+   Reset / Base
+   -------------------------------------------- */
+.adm-page {
+    background: var(--adm-surface);
+    color: var(--adm-on-surface);
+    font-family: "Hanken Grotesk", sans-serif;
+    overflow-x: hidden;
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+}
+
+.adm-page * {
+    box-sizing: border-box;
+}
+
+.adm-page h1, .adm-page h2, .adm-page h3, .adm-page h4 {
+    font-family: "Hanken Grotesk", sans-serif;
+    color: var(--adm-on-surface);
+    letter-spacing: 0;
+    margin: 0;
+}
+
+a { color: inherit; text-decoration: none; }
+
+/* --------------------------------------------
+   Sidebar
+   -------------------------------------------- */
+.adm-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: var(--adm-sidebar-width);
+    height: 100vh;
+    background: var(--adm-primary);
+    color: var(--adm-on-primary);
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.3s ease;
+    overflow-y: auto;
+}
+
+.adm-sidebar-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    font-size: 1.15rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+}
+
+.adm-sidebar-brand img {
+    width: 32px;
+    height: 32px;
+    border-radius: 0.25rem;
+}
+
+.adm-sidebar-brand span {
+    color: var(--adm-on-primary);
+}
+
+.adm-sidebar-nav {
+    flex: 1;
+    padding: 0.75rem 0;
+    overflow-y: auto;
+}
+
+.adm-sidebar-section {
+    padding: 0.5rem 1.5rem 0.35rem;
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: rgba(255,255,255,0.4);
+}
+
+.adm-sidebar-link {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.6rem 1.5rem;
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: rgba(255,255,255,0.7);
+    transition: background 0.15s ease, color 0.15s ease;
+    cursor: pointer;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+    font-family: "Hanken Grotesk", sans-serif;
+}
+
+.adm-sidebar-link:hover {
+    background: rgba(255,255,255,0.08);
+    color: #ffffff;
+}
+
+.adm-sidebar-link.active {
+    background: rgba(255,255,255,0.12);
+    color: #ffffff;
+    font-weight: 600;
+}
+
+.adm-sidebar-link .material-symbols-outlined {
+    font-size: 20px;
+    width: 20px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.adm-sidebar-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid rgba(255,255,255,0.1);
+}
+
+.adm-sidebar-user {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    font-size: 0.85rem;
+}
+
+.adm-sidebar-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.8rem;
+    flex-shrink: 0;
+}
+
+.adm-sidebar-user-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.adm-sidebar-user-name {
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.adm-sidebar-user-role {
+    font-size: 0.7rem;
+    color: rgba(255,255,255,0.5);
+    text-transform: capitalize;
+}
+
+/* --------------------------------------------
+   Sidebar Overlay (Mobile)
+   -------------------------------------------- */
+.adm-sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 99;
+}
+
+.adm-sidebar-overlay.open { display: block; }
+
+/* --------------------------------------------
+   Main Content Area
+   -------------------------------------------- */
+.adm-main {
+    margin-left: var(--adm-sidebar-width);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    transition: margin-left 0.3s ease;
+}
+
+/* --------------------------------------------
+   Topbar
+   -------------------------------------------- */
+.adm-topbar {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: var(--adm-topbar-height);
+    padding: 0 clamp(1.25rem, 3vw, 2rem);
+    background: var(--adm-surface-container-lowest);
+    border-bottom: 1px solid var(--adm-outline-variant);
+}
+
+.adm-topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.adm-menu-toggle {
+    display: none;
+    width: 40px;
+    height: 40px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    color: var(--adm-on-surface);
+    font-size: 1.5rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.25rem;
+}
+
+.adm-menu-toggle:hover {
+    background: var(--adm-surface-container);
+}
+
+.adm-topbar-title {
+    font-size: 1.15rem;
+    font-weight: 600;
+}
+
+.adm-topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.adm-topbar-link {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.45rem 0.85rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--adm-on-surface-variant);
+    border: 1px solid var(--adm-outline-variant);
+    background: transparent;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+    font-family: "Hanken Grotesk", sans-serif;
+}
+
+.adm-topbar-link:hover {
+    background: var(--adm-surface-container);
+    color: var(--adm-on-surface);
+}
+
+.adm-topbar-link .material-symbols-outlined {
+    font-size: 18px;
+}
+
+/* --------------------------------------------
+   Content Area
+   -------------------------------------------- */
+.adm-content {
+    flex: 1;
+    padding: clamp(1.5rem, 3vw, 2.5rem) clamp(1.25rem, 3vw, 2rem);
+    max-width: 1400px;
+    width: 100%;
+}
+
+/* --------------------------------------------
+   Page Header
+   -------------------------------------------- */
+.adm-page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.75rem;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.adm-page-header h1 {
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    font-weight: 700;
+    line-height: 1.15;
+}
+
+.adm-page-header-actions {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+/* --------------------------------------------
+   Buttons
+   -------------------------------------------- */
+.adm-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.55rem 1.15rem;
+    border: none;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    font-family: "Hanken Grotesk", sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    transition: opacity 0.2s ease, background 0.15s ease;
+    white-space: nowrap;
+}
+
+.adm-btn .material-symbols-outlined {
+    font-size: 18px;
+}
+
+.adm-btn-primary {
+    background: var(--adm-primary);
+    color: var(--adm-on-primary);
+}
+
+.adm-btn-primary:hover { opacity: 0.85; }
+
+.adm-btn-secondary {
+    background: transparent;
+    color: var(--adm-on-surface);
+    border: 1px solid var(--adm-outline-variant);
+}
+
+.adm-btn-secondary:hover {
+    background: var(--adm-surface-container);
+}
+
+.adm-btn-danger {
+    background: var(--adm-error);
+    color: #fff;
+}
+
+.adm-btn-danger:hover { opacity: 0.85; }
+
+.adm-btn-sm {
+    padding: 0.35rem 0.7rem;
+    font-size: 0.78rem;
+}
+
+.adm-btn-icon {
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--adm-outline-variant);
+    background: transparent;
+    color: var(--adm-on-surface-variant);
+    cursor: pointer;
+    border-radius: 0.25rem;
+    transition: background 0.15s ease;
+}
+
+.adm-btn-icon:hover {
+    background: var(--adm-surface-container);
+    color: var(--adm-on-surface);
+}
+
+.adm-btn-icon .material-symbols-outlined { font-size: 18px; }
+
+.adm-btn-icon-danger {
+    border-color: var(--adm-error);
+    color: var(--adm-error);
+}
+
+.adm-btn-icon-danger:hover {
+    background: var(--adm-error-container);
+}
+
+/* --------------------------------------------
+   Stat Cards
+   -------------------------------------------- */
+.adm-stat-grid,
+.adm-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.adm-stat-card {
+    background: var(--adm-surface-container-lowest);
+    border: 1px solid var(--adm-outline-variant);
+    padding: 1.25rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+}
+
+.adm-stat-card-icon {
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--adm-surface-container);
+    flex-shrink: 0;
+}
+
+.adm-stat-card-icon .material-symbols-outlined {
+    font-size: 22px;
+    color: var(--adm-on-surface);
+}
+
+.adm-stat-card-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.adm-stat-card-num {
+    font-size: 1.75rem;
+    font-weight: 700;
+    line-height: 1.1;
+    color: var(--adm-on-surface);
+}
+
+.adm-stat-card-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--adm-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-top: 0.2rem;
+}
+
+/* --------------------------------------------
+   Tabs
+   -------------------------------------------- */
+.adm-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--adm-outline-variant);
+    margin-bottom: 1.5rem;
+    gap: 0.5rem;
+    overflow-x: auto;
+}
+
+.adm-tab {
+    padding: 0.65rem 1rem;
+    border: none;
+    border-bottom: 2px solid transparent;
+    background: none;
+    cursor: pointer;
+    color: var(--adm-on-surface-variant);
+    font-family: "Hanken Grotesk", sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.adm-tab:hover { color: var(--adm-on-surface); }
+
+.adm-tab.active {
+    color: var(--adm-primary);
+    border-bottom-color: var(--adm-primary);
+}
+
+/* --------------------------------------------
+   Tables
+   -------------------------------------------- */
+.adm-table-wrap {
+    border: 1px solid var(--adm-outline-variant);
+    background: var(--adm-surface-container-lowest);
+    overflow-x: auto;
+}
+
+.adm-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+}
+
+.adm-table th {
+    padding: 0.8rem 1rem;
+    text-align: left;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--adm-secondary);
+    background: var(--adm-surface-container-low);
+    border-bottom: 1px solid var(--adm-outline-variant);
+    white-space: nowrap;
+}
+
+.adm-table td {
+    padding: 0.8rem 1rem;
+    border-bottom: 1px solid var(--adm-outline-variant);
+    vertical-align: middle;
+}
+
+.adm-table tbody tr {
+    transition: background 0.15s ease;
+}
+
+.adm-table tbody tr:hover {
+    background: var(--adm-surface-bright);
+}
+
+.adm-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.adm-table .cell-main {
+    font-weight: 500;
+    color: var(--adm-on-surface);
+}
+
+.adm-table .cell-sub {
+    font-size: 0.78rem;
+    color: var(--adm-secondary);
+    margin-top: 0.15rem;
+}
+
+.adm-table .cell-mono {
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.adm-table .cell-muted {
+    color: var(--adm-secondary);
+    white-space: nowrap;
+}
+
+.adm-table .cell-actions {
+    display: flex;
+    gap: 0.4rem;
+    justify-content: flex-end;
+}
+
+/* --------------------------------------------
+   Status Badges
+   -------------------------------------------- */
+.adm-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.2rem 0.55rem;
+    border: 1px solid;
+    border-radius: 9999px;
+    font-size: 0.73rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.adm-status-open { border-color: var(--adm-primary); color: var(--adm-primary); background: transparent; }
+.adm-status-waiting { border-color: var(--adm-outline-variant); color: var(--adm-secondary); background: transparent; }
+.adm-status-review { border-color: var(--adm-info); color: var(--adm-info); background: transparent; }
+.adm-status-resolved { border-color: var(--adm-outline-variant); color: var(--adm-secondary); background: var(--adm-surface-container-low); }
+.adm-status-pending { border-color: var(--adm-warning); color: var(--adm-warning); background: var(--adm-warning-bg); }
+.adm-status-confirmed { border-color: #123d35; color: #123d35; background: var(--adm-success-bg); }
+.adm-status-cancelled { border-color: var(--adm-error); color: var(--adm-error); background: var(--adm-error-container); }
+.adm-status-active { border-color: #123d35; color: #123d35; background: var(--adm-success-bg); }
+.adm-status-inactive { border-color: var(--adm-outline-variant); color: var(--adm-secondary); background: var(--adm-surface-container-low); }
+.adm-status-completed { border-color: var(--adm-info); color: var(--adm-info); background: var(--adm-info-bg); }
+.adm-status-reviewed { border-color: var(--adm-warning); color: var(--adm-warning); background: var(--adm-warning-bg); }
+
+.adm-badge-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+/* --------------------------------------------
+   Search / Filter Bar
+   -------------------------------------------- */
+.adm-filter-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+    flex-wrap: wrap;
+}
+
+.adm-search {
+    position: relative;
+    flex: 1;
+    min-width: 200px;
+    max-width: 360px;
+}
+
+.adm-search input {
+    width: 100%;
+    padding: 0.55rem 0.85rem 0.55rem 2.25rem;
+    border: 1px solid var(--adm-outline-variant);
+    background: var(--adm-surface-container-lowest);
+    color: var(--adm-on-surface);
+    font-family: "Hanken Grotesk", sans-serif;
+    font-size: 0.88rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.adm-search input:focus {
+    outline: none;
+    border-color: var(--adm-primary);
+    box-shadow: 0 0 0 1px var(--adm-primary);
+}
+
+.adm-search .material-symbols-outlined {
+    position: absolute;
+    left: 0.65rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 18px;
+    color: var(--adm-secondary);
+    pointer-events: none;
+}
+
+.adm-filter-select {
+    padding: 0.55rem 2rem 0.55rem 0.75rem;
+    border: 1px solid var(--adm-outline-variant);
+    background: var(--adm-surface-container-lowest);
+    color: var(--adm-on-surface);
+    font-family: "Hanken Grotesk", sans-serif;
+    font-size: 0.85rem;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2 4l4 4 4-4' fill='none' stroke='%23747878' stroke-width='1.5'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.65rem center;
+    cursor: pointer;
+    transition: border-color 0.2s ease;
+}
+
+.adm-filter-select:focus {
+    outline: none;
+    border-color: var(--adm-primary);
+    box-shadow: 0 0 0 1px var(--adm-primary);
+}
+
+/* --------------------------------------------
+   Forms
+   -------------------------------------------- */
+.adm-form-card {
+    background: var(--adm-surface-container-lowest);
+    border: 1px solid var(--adm-outline-variant);
+    padding: 1.5rem;
+    margin-bottom: 1.25rem;
+}
+
+.adm-form-card h2 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--adm-outline-variant);
+}
+
+.adm-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.adm-form-grid .full-width {
+    grid-column: 1 / -1;
+}
+
+.adm-form-field {
+    display: grid;
+    gap: 0.35rem;
+}
+
+.adm-form-field label {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--adm-on-surface);
+}
+
+.adm-form-field input,
+.adm-form-field select,
+.adm-form-field textarea {
+    width: 100%;
+    padding: 0.6rem 0.75rem;
+    border: 1px solid var(--adm-outline-variant);
+    background: transparent;
+    color: var(--adm-on-surface);
+    font-family: "Hanken Grotesk", sans-serif;
+    font-size: 0.9rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.adm-form-field input:focus,
+.adm-form-field select:focus,
+.adm-form-field textarea:focus {
+    outline: none;
+    border-color: var(--adm-primary);
+    box-shadow: 0 0 0 1px var(--adm-primary);
+}
+
+.adm-form-field textarea {
+    min-height: 100px;
+    resize: vertical;
+    line-height: 1.5;
+}
+
+.adm-form-field select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2 4l4 4 4-4' fill='none' stroke='%23747878' stroke-width='1.5'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.65rem center;
+    padding-right: 2rem;
+    cursor: pointer;
+}
+
+.adm-form-field-hint {
+    font-size: 0.75rem;
+    color: var(--adm-secondary);
+}
+
+.adm-form-field input[type="checkbox"] {
+    width: auto;
+    min-height: auto;
+}
+
+.adm-form-check {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.adm-form-check input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--adm-primary);
+    cursor: pointer;
+}
+
+.adm-form-check label {
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+
+.adm-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    margin-top: 1.25rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--adm-outline-variant);
+}
+
+/* --------------------------------------------
+   Alert / Flash Messages
+   -------------------------------------------- */
+.adm-alert {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.85rem 1rem;
+    margin-bottom: 1.25rem;
+    border: 1px solid;
+    font-size: 0.88rem;
+    font-weight: 500;
+}
+
+.adm-alert .material-symbols-outlined { font-size: 20px; flex-shrink: 0; }
+
+.adm-alert-success {
+    border-color: var(--adm-success-border);
+    background: var(--adm-success-bg);
+    color: var(--adm-success-text);
+}
+
+.adm-alert-error {
+    border-color: var(--adm-error);
+    background: var(--adm-error-container);
+    color: var(--adm-error);
+}
+
+.adm-alert-warning {
+    border-color: var(--adm-warning);
+    background: var(--adm-warning-bg);
+    color: var(--adm-warning);
+}
+
+/* --------------------------------------------
+   Empty State
+   -------------------------------------------- */
+.adm-empty {
+    text-align: center;
+    padding: clamp(3rem, 6vw, 5rem) 2rem;
+}
+
+.adm-empty-icon {
+    font-size: 56px;
+    color: var(--adm-outline-variant);
+    margin-bottom: 1rem;
+}
+
+.adm-empty h2 {
+    font-size: clamp(1.25rem, 2.5vw, 1.5rem);
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.adm-empty p {
+    color: var(--adm-secondary);
+    line-height: 1.7;
+}
+
+/* --------------------------------------------
+   Pagination
+   -------------------------------------------- */
+.adm-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    margin-top: 1.5rem;
+}
+
+.adm-pagination a,
+.adm-pagination span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 34px;
+    height: 34px;
+    padding: 0 0.5rem;
+    border: 1px solid var(--adm-outline-variant);
+    background: var(--adm-surface-container-lowest);
+    color: var(--adm-on-surface);
+    font-family: "Hanken Grotesk", sans-serif;
+    font-size: 0.82rem;
+    font-weight: 600;
+    transition: background 0.15s ease, color 0.15s ease;
+    text-decoration: none;
+}
+
+.adm-pagination a:hover {
+    background: var(--adm-surface-container);
+}
+
+.adm-pagination .active {
+    background: var(--adm-primary);
+    color: var(--adm-on-primary);
+    border-color: var(--adm-primary);
+}
+
+.adm-pagination .disabled {
+    opacity: 0.4;
+    pointer-events: none;
+}
+
+/* --------------------------------------------
+   Modal
+   -------------------------------------------- */
+.adm-modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    background: rgba(0, 0, 0, 0.5);
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    animation: admFadeIn 0.2s ease;
+}
+
+.adm-modal-overlay.open { display: flex; }
+
+.adm-modal {
+    background: var(--adm-surface-container-lowest);
+    border: 1px solid var(--adm-outline-variant);
+    width: 100%;
+    max-width: 700px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    animation: admSlideUp 0.25s ease;
+}
+
+.adm-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--adm-outline-variant);
+}
+
+.adm-modal-header h2 {
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.adm-modal-close {
+    width: 36px;
+    height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: none;
+    cursor: pointer;
+    color: var(--adm-on-surface-variant);
+    transition: background 0.2s ease;
+    border-radius: 0.25rem;
+}
+
+.adm-modal-close:hover { background: var(--adm-surface-container); }
+
+.adm-modal-body {
+    padding: 1.5rem;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.adm-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--adm-outline-variant);
+}
+
+/* --------------------------------------------
+   Chart Cards
+   -------------------------------------------- */
+.adm-chart-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.adm-chart-card {
+    background: var(--adm-surface-container-lowest);
+    border: 1px solid var(--adm-outline-variant);
+    padding: 1.25rem;
+}
+
+.adm-chart-card h3 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.adm-chart-card canvas {
+    width: 100% !important;
+    max-height: 280px;
+}
+
+/* --------------------------------------------
+   Detail View / Read-only fields
+   -------------------------------------------- */
+.adm-detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.85rem;
+}
+
+.adm-detail-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+.adm-detail-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--adm-secondary);
+}
+
+.adm-detail-value {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--adm-on-surface);
+}
+
+/* --------------------------------------------
+   Inquiries specific (migrated)
+   -------------------------------------------- */
+.adm-inquiry-details {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+    padding-bottom: 1.25rem;
+    border-bottom: 1px solid var(--adm-outline-variant);
+}
+
+.adm-status-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+    padding: 0.85rem 1rem;
+    border: 1px solid var(--adm-outline-variant);
+    background: var(--adm-surface-bright);
+}
+
+.adm-status-row label {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--adm-on-surface);
+    white-space: nowrap;
+}
+
+.adm-status-row select {
+    flex: 1;
+    min-height: 40px;
+    padding: 0 0.75rem;
+    border: 1px solid var(--adm-outline-variant);
+    border-radius: 0;
+    background: transparent;
+    color: var(--adm-on-surface);
+    font-family: "Hanken Grotesk", sans-serif;
+    font-size: 0.85rem;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2 4l4 4 4-4' fill='none' stroke='%23747878' stroke-width='1.5'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+}
+
+.adm-status-row select:focus {
+    outline: none;
+    border-color: var(--adm-primary);
+    box-shadow: 0 0 0 1px var(--adm-primary);
+}
+
+.adm-thread-messages {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+}
+
+.adm-message {
+    padding: 1rem;
+    border: 1px solid var(--adm-outline-variant);
+    background: var(--adm-surface-bright);
+}
+
+.adm-message-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+}
+
+.adm-message-sender {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--adm-on-surface);
+}
+
+.adm-message-sender .user-label {
+    display: inline-block;
+    padding: 0.1rem 0.4rem;
+    background: var(--adm-surface-container);
+    color: var(--adm-secondary);
+    font-size: 0.7rem;
+    font-weight: 600;
+    margin-left: 0.35rem;
+}
+
+.adm-message-date {
+    font-size: 0.75rem;
+    color: var(--adm-outline);
+}
+
+.adm-message-text {
+    color: var(--adm-on-surface);
+    font-size: 0.95rem;
+    line-height: 1.65;
+}
+
+.adm-message.user-message { background: var(--adm-surface-container-lowest); }
+
+.adm-message.admin-message {
+    background: var(--adm-surface-container-low);
+    border-left: 3px solid var(--adm-primary);
+}
+
+.adm-reply-form {
+    border-top: 1px solid var(--adm-outline-variant);
+    padding-top: 1rem;
+}
+
+.adm-reply-form .form-field {
+    display: grid;
+    gap: 0.4rem;
+}
+
+.adm-reply-form .form-field label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--adm-on-surface);
+}
+
+.adm-reply-form .form-field textarea {
+    width: 100%;
+    min-height: 80px;
+    padding: 0.75rem;
+    border: 1px solid var(--adm-outline-variant);
+    border-radius: 0;
+    background: transparent;
+    color: var(--adm-on-surface);
+    font-family: "Hanken Grotesk", sans-serif;
+    font-size: 1rem;
+    line-height: 1.5;
+    resize: vertical;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.adm-reply-form .form-field textarea:focus {
+    outline: none;
+    border-color: var(--adm-primary);
+    box-shadow: 0 0 0 1px var(--adm-primary);
+}
+
+.adm-reply-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+}
+
+.adm-reply-actions button {
+    min-height: 44px;
+    padding: 0 1.25rem;
+    border: none;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    font-family: "Hanken Grotesk", sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    transition: opacity 0.2s ease;
+}
+
+.adm-cancel-btn {
+    border: 1px solid var(--adm-outline-variant) !important;
+    background: transparent !important;
+    color: var(--adm-on-surface-variant) !important;
+}
+
+.adm-cancel-btn:hover { background: var(--adm-surface-container) !important; }
+
+.adm-reply-btn {
+    background: var(--adm-primary) !important;
+    color: var(--adm-on-primary) !important;
+}
+
+.adm-reply-btn:hover { opacity: 0.85; }
+
+/* --------------------------------------------
+   Animations
+   -------------------------------------------- */
+@keyframes admFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes admSlideUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* --------------------------------------------
+   Responsive
+   -------------------------------------------- */
+@media (max-width: 1024px) {
+    .adm-chart-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .adm-form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .adm-form-grid .full-width {
+        grid-column: 1;
+    }
+
+    .adm-detail-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .adm-sidebar {
+        transform: translateX(-100%);
+    }
+
+    .adm-sidebar.open {
+        transform: translateX(0);
+    }
+
+    .adm-main {
+        margin-left: 0;
+    }
+
+    .adm-menu-toggle {
+        display: flex;
+    }
+
+    .adm-stat-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .adm-page-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .adm-filter-bar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .adm-search {
+        max-width: none;
+    }
+
+    .adm-topbar-link span:not(.material-symbols-outlined) {
+        display: none;
+    }
+}
+
+@media (max-width: 480px) {
+    .adm-stat-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .adm-content {
+        padding: 1rem;
+    }
+
+    .adm-inquiry-details {
+        grid-template-columns: 1fr;
+    }
+
+    .adm-modal {
+        max-height: 100vh;
+        border-radius: 0;
+    }
+
+    .adm-modal-overlay {
+        padding: 0;
+    }
+}

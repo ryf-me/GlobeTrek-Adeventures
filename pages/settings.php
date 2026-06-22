@@ -6,6 +6,82 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
+require_once __DIR__ . '/../config/database.php';
+$db = getDB();
+$userId = $_SESSION['user_id'];
+
+$stmt = $db->prepare("SELECT * FROM users WHERE id = :id");
+$stmt->execute([':id' => $userId]);
+$user = $stmt->fetch();
+
+$notificationPrefs = json_decode($user['notification_preferences'] ?? '{}', true) ?: [
+    'email_notifications' => true,
+    'sms_updates' => false,
+    'promotional_offers' => true,
+    'public_profile' => false
+];
+
+$successMsg = '';
+$errorMsg = '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $action = $_POST['action'] ?? '';
+
+    if ($action === 'update_password') {
+        $currentPassword = $_POST['current_password'] ?? '';
+        $newPassword = $_POST['new_password'] ?? '';
+        $confirmPassword = $_POST['confirm_password'] ?? '';
+
+        if ($currentPassword === '' || $newPassword === '' || $confirmPassword === '') {
+            $errorMsg = 'All password fields are required.';
+        } elseif (!password_verify($currentPassword, $user['password'])) {
+            $errorMsg = 'Current password is incorrect.';
+        } elseif (strlen($newPassword) < 6) {
+            $errorMsg = 'New password must be at least 6 characters.';
+        } elseif ($newPassword !== $confirmPassword) {
+            $errorMsg = 'New passwords do not match.';
+        } else {
+            $hashed = password_hash($newPassword, PASSWORD_DEFAULT);
+            $updStmt = $db->prepare("UPDATE users SET password = :pw WHERE id = :id");
+            $updStmt->execute([':pw' => $hashed, ':id' => $userId]);
+            $successMsg = 'Password updated successfully.';
+        }
+    } elseif ($action === 'update_notifications') {
+        $notifPrefs = [
+            'email_notifications' => isset($_POST['email_notifications']),
+            'sms_updates' => isset($_POST['sms_updates']),
+            'promotional_offers' => isset($_POST['promotional_offers']),
+        ];
+        $updStmt = $db->prepare("UPDATE users SET notification_preferences = :prefs WHERE id = :id");
+        $updStmt->execute([':prefs' => json_encode($notifPrefs), ':id' => $userId]);
+        $notificationPrefs = $notifPrefs;
+        $successMsg = 'Notification preferences saved.';
+    } elseif ($action === 'update_privacy') {
+        $privacy = ['public_profile' => isset($_POST['public_profile'])];
+        $notifPrefs['public_profile'] = $privacy['public_profile'];
+        $updStmt = $db->prepare("UPDATE users SET notification_preferences = :prefs WHERE id = :id");
+        $updStmt->execute([':prefs' => json_encode($notifPrefs), ':id' => $userId]);
+        $notificationPrefs = $notifPrefs;
+        $successMsg = 'Privacy settings saved.';
+    } elseif ($action === 'delete_account') {
+        $deletePassword = $_POST['delete_password'] ?? '';
+        if (!password_verify($deletePassword, $user['password'])) {
+            $errorMsg = 'Incorrect password. Account not deleted.';
+        } else {
+            $db->prepare("DELETE FROM wishlist WHERE user_id = :id")->execute([':id' => $userId]);
+            $db->prepare("UPDATE bookings SET user_id = NULL WHERE user_id = :id")->execute([':id' => $userId]);
+            $db->prepare("UPDATE inquiries SET user_id = NULL WHERE user_id = :id")->execute([':id' => $userId]);
+            $db->prepare("DELETE FROM inquiry_replies WHERE sender_id = :id")->execute([':id' => $userId]);
+            $db->prepare("DELETE FROM activity_logs WHERE user_id = :id")->execute([':id' => $userId]);
+            $db->prepare("DELETE FROM payments WHERE user_id = :id")->execute([':id' => $userId]);
+            $db->prepare("DELETE FROM users WHERE id = :id")->execute([':id' => $userId]);
+            session_destroy();
+            header('Location: ../index.php?account_deleted=1');
+            exit;
+        }
+    }
+}
+
 $activePage = 'settings';
 ?>
 <!DOCTYPE html>
@@ -37,62 +113,47 @@ $activePage = 'settings';
                     <p>Manage your account settings and preferences.</p>
                 </div>
 
-                <div class="settings-sections">
-                    <!-- General Preferences -->
-                    <section class="settings-section">
-                        <div class="settings-section-header">
-                            <span class="material-symbols-outlined">language</span>
-                            <h3>General Preferences</h3>
-                        </div>
-                        <div class="settings-form-row">
-                            <div class="settings-form-group">
-                                <label for="language">Preferred Language</label>
-                                <select id="language">
-                                    <option>English (US)</option>
-                                    <option>Spanish</option>
-                                    <option>French</option>
-                                    <option>German</option>
-                                </select>
-                            </div>
-                            <div class="settings-form-group">
-                                <label for="currency">Currency Display</label>
-                                <select id="currency">
-                                    <option>USD ($)</option>
-                                    <option>EUR (€)</option>
-                                    <option>GBP (£)</option>
-                                    <option>JPY (¥)</option>
-                                    <option>LKR (Rs)</option>
-                                </select>
-                            </div>
-                        </div>
-                    </section>
+                <?php if ($successMsg): ?>
+                    <div class="settings-alert settings-alert-success">
+                        <span class="material-symbols-outlined">check_circle</span>
+                        <?= htmlspecialchars($successMsg) ?>
+                    </div>
+                <?php endif; ?>
+                <?php if ($errorMsg): ?>
+                    <div class="settings-alert settings-alert-error">
+                        <span class="material-symbols-outlined">error</span>
+                        <?= htmlspecialchars($errorMsg) ?>
+                    </div>
+                <?php endif; ?>
 
+                <div class="settings-sections">
                     <!-- Security -->
                     <section class="settings-section">
                         <div class="settings-section-header">
                             <span class="material-symbols-outlined">security</span>
                             <h3>Security</h3>
                         </div>
-                        <div class="settings-password-stack">
+                        <form method="post" class="settings-password-stack">
+                            <input type="hidden" name="action" value="update_password">
                             <p class="settings-subheading">Change Password</p>
                             <div class="settings-form-group">
                                 <label for="current-password">Current Password</label>
-                                <input type="password" id="current-password" placeholder="••••••••">
+                                <input type="password" id="current-password" name="current_password" placeholder="••••••••" required>
                             </div>
                             <div class="settings-form-row">
                                 <div class="settings-form-group">
                                     <label for="new-password">New Password</label>
-                                    <input type="password" id="new-password" placeholder="••••••••">
+                                    <input type="password" id="new-password" name="new_password" placeholder="••••••••" minlength="6" required>
                                 </div>
                                 <div class="settings-form-group">
                                     <label for="confirm-password">Confirm New Password</label>
-                                    <input type="password" id="confirm-password" placeholder="••••••••">
+                                    <input type="password" id="confirm-password" name="confirm_password" placeholder="••••••••" minlength="6" required>
                                 </div>
                             </div>
                             <div>
-                                <button type="button" class="settings-btn settings-btn-primary" id="update-password-btn">Update Password</button>
+                                <button type="submit" class="settings-btn settings-btn-primary">Update Password</button>
                             </div>
-                        </div>
+                        </form>
                     </section>
 
                     <!-- Notifications -->
@@ -101,38 +162,44 @@ $activePage = 'settings';
                             <span class="material-symbols-outlined">notifications</span>
                             <h3>Notifications</h3>
                         </div>
-                        <div>
-                            <div class="settings-toggle-row">
-                                <div class="settings-toggle-info">
-                                    <p>Email Notifications</p>
-                                    <p>Receive booking updates via email</p>
+                        <form method="post">
+                            <input type="hidden" name="action" value="update_notifications">
+                            <div>
+                                <div class="settings-toggle-row">
+                                    <div class="settings-toggle-info">
+                                        <p>Email Notifications</p>
+                                        <p>Receive booking updates via email</p>
+                                    </div>
+                                    <label class="settings-toggle">
+                                        <input type="checkbox" name="email_notifications" <?= !empty($notificationPrefs['email_notifications']) ? 'checked' : '' ?>>
+                                        <span class="settings-toggle-slider"></span>
+                                    </label>
                                 </div>
-                                <label class="settings-toggle">
-                                    <input type="checkbox" checked>
-                                    <span class="settings-toggle-slider"></span>
-                                </label>
-                            </div>
-                            <div class="settings-toggle-row">
-                                <div class="settings-toggle-info">
-                                    <p>SMS Updates</p>
-                                    <p>Get real-time trip alerts on your phone</p>
+                                <div class="settings-toggle-row">
+                                    <div class="settings-toggle-info">
+                                        <p>SMS Updates</p>
+                                        <p>Get real-time trip alerts on your phone</p>
+                                    </div>
+                                    <label class="settings-toggle">
+                                        <input type="checkbox" name="sms_updates" <?= !empty($notificationPrefs['sms_updates']) ? 'checked' : '' ?>>
+                                        <span class="settings-toggle-slider"></span>
+                                    </label>
                                 </div>
-                                <label class="settings-toggle">
-                                    <input type="checkbox">
-                                    <span class="settings-toggle-slider"></span>
-                                </label>
-                            </div>
-                            <div class="settings-toggle-row">
-                                <div class="settings-toggle-info">
-                                    <p>Promotional Offers</p>
-                                    <p>Occasional discounts and travel inspiration</p>
+                                <div class="settings-toggle-row">
+                                    <div class="settings-toggle-info">
+                                        <p>Promotional Offers</p>
+                                        <p>Occasional discounts and travel inspiration</p>
+                                    </div>
+                                    <label class="settings-toggle">
+                                        <input type="checkbox" name="promotional_offers" <?= !empty($notificationPrefs['promotional_offers']) ? 'checked' : '' ?>>
+                                        <span class="settings-toggle-slider"></span>
+                                    </label>
                                 </div>
-                                <label class="settings-toggle">
-                                    <input type="checkbox" checked>
-                                    <span class="settings-toggle-slider"></span>
-                                </label>
                             </div>
-                        </div>
+                            <div style="margin-top:1rem;">
+                                <button type="submit" class="settings-btn settings-btn-primary">Save Preferences</button>
+                            </div>
+                        </form>
                     </section>
 
                     <!-- Account Privacy -->
@@ -141,19 +208,21 @@ $activePage = 'settings';
                             <span class="material-symbols-outlined">privacy_tip</span>
                             <h3>Account Privacy</h3>
                         </div>
-                        <div>
-                            <label class="settings-checkbox-row">
-                                <input type="checkbox">
-                                <div class="settings-checkbox-info">
-                                    <span>Make Profile Public</span>
-                                    <p>Allow others to see your travel wishlist and reviews.</p>
-                                </div>
-                            </label>
-                            <a href="#" class="settings-manage-data">
-                                <span>Manage Data</span>
-                                <span class="material-symbols-outlined">open_in_new</span>
-                            </a>
-                        </div>
+                        <form method="post">
+                            <input type="hidden" name="action" value="update_privacy">
+                            <div>
+                                <label class="settings-checkbox-row">
+                                    <input type="checkbox" name="public_profile" <?= !empty($notificationPrefs['public_profile']) ? 'checked' : '' ?>>
+                                    <div class="settings-checkbox-info">
+                                        <span>Make Profile Public</span>
+                                        <p>Allow others to see your travel wishlist and reviews.</p>
+                                    </div>
+                                </label>
+                            </div>
+                            <div style="margin-top:1rem;">
+                                <button type="submit" class="settings-btn settings-btn-primary">Save Privacy Settings</button>
+                            </div>
+                        </form>
                     </section>
 
                     <!-- Danger Zone -->
@@ -162,13 +231,20 @@ $activePage = 'settings';
                             <span class="material-symbols-outlined">warning</span>
                             <h3>Danger Zone</h3>
                         </div>
-                        <div class="settings-danger-row">
-                            <div class="settings-danger-info">
-                                <p>Delete Account</p>
-                                <p>This action is permanent and cannot be undone. All your bookings and data will be lost.</p>
+                        <form method="post" onsubmit="return confirm('Are you sure you want to delete your account? This action cannot be undone.');">
+                            <input type="hidden" name="action" value="delete_account">
+                            <div class="settings-danger-row">
+                                <div class="settings-danger-info">
+                                    <p>Delete Account</p>
+                                    <p>This action is permanent and cannot be undone. All your bookings and data will be lost.</p>
+                                    <div class="settings-form-group" style="margin-top:1rem; max-width:300px;">
+                                        <label for="delete-password">Confirm your password</label>
+                                        <input type="password" id="delete-password" name="delete_password" placeholder="Enter password to confirm" required>
+                                    </div>
+                                </div>
+                                <button type="submit" class="settings-btn settings-btn-danger">Delete Account</button>
                             </div>
-                            <button type="button" class="settings-btn settings-btn-danger" id="delete-account-btn">Delete Account</button>
-                        </div>
+                        </form>
                     </section>
                 </div>
             </div>
@@ -178,34 +254,5 @@ $activePage = 'settings';
     <?php $basePath = '../'; include '../includes/footer.php'; ?>
 
     <script src="../js/script.js"></script>
-    <script>
-        // Password update feedback
-        document.getElementById('update-password-btn').addEventListener('click', function() {
-            const btn = this;
-            const originalText = btn.innerText;
-            btn.innerText = 'Updating...';
-            btn.disabled = true;
-            btn.style.opacity = '0.5';
-
-            setTimeout(function() {
-                btn.innerText = 'Updated!';
-                btn.style.opacity = '1';
-                btn.style.background = '#16a34a';
-
-                setTimeout(function() {
-                    btn.innerText = originalText;
-                    btn.style.background = '';
-                    btn.disabled = false;
-                }, 2000);
-            }, 1000);
-        });
-
-        // Delete account confirmation
-        document.getElementById('delete-account-btn').addEventListener('click', function() {
-            if (confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
-                alert('Account deletion request submitted.');
-            }
-        });
-    </script>
 </body>
 </html>

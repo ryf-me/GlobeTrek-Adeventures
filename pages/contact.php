@@ -76,16 +76,12 @@ function field_error(string $field, array $errors): string
 <body class="contact-page">
     <?php $basePath = '../'; include '../includes/navbar.php'; ?>
 
-    <main>
+    <main class="contact-page-main">
         <section class="contact-hero" aria-labelledby="contact-title">
             <h1 id="contact-title">Get in Touch</h1>
             <p class="contact-hero-desc">
                 We're here to help you plan your next great adventure. Reach out to our team with any questions or inquiries.
             </p>
-            <div class="contact-hero-card" aria-label="Response time">
-                <span>24h</span>
-                <p>Typical response time for new travel inquiries.</p>
-            </div>
         </section>
 
         <section class="contact-workspace" aria-labelledby="message-title">
@@ -171,23 +167,12 @@ function field_error(string $field, array $errors): string
                     </div>
                 </div>
 
-                <div class="office-hours">
-                    <span>Office Hours</span>
-                    <p>Monday to Friday, 9:00 AM - 6:00 PM</p>
-                </div>
-
-                <div class="social-links">
+                <div class="social-follow">
                     <span class="social-label">Follow Us</span>
                     <div class="social-icons">
-                        <a href="#" aria-label="Facebook" class="social-icon">
-                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
-                        </a>
-                        <a href="#" aria-label="Instagram" class="social-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="5"/><circle cx="17.5" cy="6.5" r="1.5" fill="currentColor" stroke="none"/></svg>
-                        </a>
-                        <a href="#" aria-label="Twitter" class="social-icon">
-                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-                        </a>
+                        <a href="#" aria-label="Facebook" class="social-icon-placeholder"></a>
+                        <a href="#" aria-label="Instagram" class="social-icon-placeholder"></a>
+                        <a href="#" aria-label="Twitter" class="social-icon-placeholder"></a>
                     </div>
                 </div>
             </aside>

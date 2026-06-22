@@ -20,7 +20,7 @@
         <li><a href="<?php echo $basePath; ?>pages/contact.php">Contact Us</a></li>
         <?php if (isset($_SESSION['user_id'])): ?>
             <?php if (($_SESSION['user_role'] ?? '') === 'admin'): ?>
-                <li><a href="<?php echo $basePath; ?>pages/admin-inquiries.php">Admin</a></li>
+                <li><a href="<?php echo $basePath; ?>admin/index.php">Admin</a></li>
             <?php endif; ?>
             <li>
                 <?php

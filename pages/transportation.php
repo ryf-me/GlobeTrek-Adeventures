@@ -202,7 +202,7 @@ function buildQueryString($overrides = []) {
                                     </div>
                                     <div class="card-footer">
                                         <div class="card-price">
-                                            $<?= number_format($t['price_per_day'], 0) ?>
+                                            Rs.<?= number_format($t['price_per_day'], 0) ?>
                                             <span>/ day</span>
                                         </div>
                                         <div class="card-rating">

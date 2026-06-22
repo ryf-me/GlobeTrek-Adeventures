@@ -379,3 +379,31 @@
         justify-content: center;
     }
 }
+
+/* ---------- Alerts ---------- */
+.settings-alert {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.settings-alert-success {
+    background: #dfe9df;
+    color: #123d35;
+    border: 1px solid rgba(18, 61, 53, 0.28);
+}
+
+.settings-alert-error {
+    background: #fde8e8;
+    color: #7f1d1d;
+    border: 1px solid rgba(127, 29, 29, 0.2);
+}
+
+.settings-alert .material-symbols-outlined {
+    font-size: 1.2rem;
+}
