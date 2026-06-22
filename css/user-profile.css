@@ -1,0 +1,336 @@
+/* ============================================
+   User Profile Page – Styles
+   (Sidebar layout in css/user-sidebar.css)
+   ============================================ */
+
+.usr-page {
+    background: var(--inq-surface, #f5f7fa);
+    color: var(--inq-on-surface, #1a1c1c);
+    font-family: 'Winky Sans', sans-serif;
+    overflow-x: hidden;
+}
+
+.usr-page main {
+    max-width: none;
+    margin: 0;
+    padding: 0;
+}
+
+.usr-page h1,
+.usr-page h2,
+.usr-page h3 {
+    font-family: 'Winky Sans', sans-serif;
+    color: var(--inq-on-surface, #1a1c1c);
+    letter-spacing: 0;
+}
+
+/* --------------------------------------------
+   Page Header
+   -------------------------------------------- */
+.usr-page-header {
+    border-bottom: 1px solid var(--inq-outline-variant, #c4c7c8);
+    padding-bottom: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.usr-page-header h1 {
+    font-size: clamp(1.5rem, 4vw, 2rem);
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.usr-page-header p {
+    margin-top: 0.25rem;
+    color: var(--inq-on-surface-variant, #5e5e5e);
+    font-size: 1rem;
+    line-height: 1.5;
+}
+
+/* --------------------------------------------
+   Form Sections
+   -------------------------------------------- */
+.usr-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.usr-section {
+    border: 1px solid var(--inq-outline-variant, #c4c7c8);
+    background: var(--inq-surface-container-lowest, #fff);
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.usr-section-title {
+    font-size: clamp(1rem, 2vw, 1.25rem);
+    font-weight: 600;
+    line-height: 1.25;
+}
+
+/* --------------------------------------------
+   Photo Management
+   -------------------------------------------- */
+.usr-photo-row {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+}
+
+.usr-avatar {
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    border: 2px solid var(--inq-outline-variant, #c4c7c8);
+    background: var(--inq-surface-container, #eeeeee);
+    overflow: hidden;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.usr-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.usr-avatar .material-symbols-outlined {
+    font-size: 48px;
+    color: var(--inq-outline-variant, #c4c7c8);
+}
+
+.usr-photo-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.usr-photo-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--inq-on-surface, #1a1c1c);
+}
+
+.usr-photo-hint {
+    font-size: 0.78rem;
+    color: var(--inq-on-surface-variant, #5e5e5e);
+}
+
+.usr-photo-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.25rem;
+}
+
+/* --------------------------------------------
+   Buttons
+   -------------------------------------------- */
+.usr-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+    padding: 0 1rem;
+    border: none;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    font-family: 'Winky Sans', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    transition: opacity 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+}
+
+.usr-btn-primary {
+    background: var(--inq-primary, #000);
+    color: var(--inq-on-primary, #fff);
+}
+
+.usr-btn-primary:hover {
+    opacity: 0.85;
+}
+
+.usr-btn-outline {
+    border: 1px solid var(--inq-outline-variant, #c4c7c8);
+    background: transparent;
+    color: var(--inq-on-surface-variant, #5e5e5e);
+}
+
+.usr-btn-outline:hover {
+    background: var(--inq-surface-container, #eeeeee);
+}
+
+.usr-btn-submit {
+    min-height: 48px;
+    padding: 0 1.5rem;
+    align-self: flex-end;
+}
+
+/* --------------------------------------------
+   Form Fields
+   -------------------------------------------- */
+.usr-fields-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.usr-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.usr-field-full {
+    grid-column: 1 / -1;
+}
+
+.usr-field label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--inq-on-surface, #1a1c1c);
+    letter-spacing: 0.02em;
+    line-height: 1.4;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.usr-field label .usr-change-link {
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: var(--inq-on-surface, #1a1c1c);
+    text-decoration: underline;
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 0;
+    transition: opacity 0.2s ease;
+}
+
+.usr-field label .usr-change-link:hover {
+    opacity: 0.7;
+}
+
+.usr-field input,
+.usr-field select,
+.usr-field textarea {
+    width: 100%;
+    border: 1px solid var(--inq-outline-variant, #c4c7c8);
+    border-radius: 0.25rem;
+    background: #fff;
+    color: var(--inq-on-surface, #1a1c1c);
+    font-family: 'Winky Sans', sans-serif;
+    font-size: 1rem;
+    line-height: 1.5;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.usr-field input:disabled,
+.usr-field select:disabled {
+    background: var(--inq-surface-container, #eeeeee);
+    color: var(--inq-on-surface-variant, #5e5e5e);
+    cursor: not-allowed;
+}
+
+.usr-field input {
+    height: 48px;
+    padding: 0 0.75rem;
+}
+
+.usr-field select {
+    height: 48px;
+    padding: 0 0.75rem;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2 4l4 4 4-4' fill='none' stroke='%23747878' stroke-width='1.5'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    padding-right: 2rem;
+}
+
+.usr-field textarea {
+    min-height: 100px;
+    padding: 0.65rem 0.75rem;
+    resize: vertical;
+}
+
+.usr-field input:focus,
+.usr-field select:focus,
+.usr-field textarea:focus {
+    outline: none;
+    border-color: var(--inq-primary, #000);
+    box-shadow: 0 0 0 1px var(--inq-primary, #000);
+}
+
+.usr-char-count {
+    text-align: right;
+    font-size: 0.78rem;
+    color: var(--inq-on-surface-variant, #5e5e5e);
+    margin-top: 0.15rem;
+}
+
+/* --------------------------------------------
+   Actions Bar
+   -------------------------------------------- */
+.usr-actions-bar {
+    display: flex;
+    justify-content: flex-end;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--inq-outline-variant, #c4c7c8);
+}
+
+/* --------------------------------------------
+   Alerts
+   -------------------------------------------- */
+.usr-alert {
+    padding: 0.85rem 1rem;
+    border: 1px solid;
+    font-weight: 600;
+    line-height: 1.45;
+}
+
+.usr-alert.success {
+    border-color: rgba(18, 61, 53, 0.28);
+    background: rgba(215, 229, 212, 0.4);
+    color: #123d35;
+}
+
+.usr-alert.error {
+    border-color: rgba(186, 26, 26, 0.32);
+    background: rgba(186, 26, 26, 0.06);
+    color: #ba1a1a;
+}
+
+/* --------------------------------------------
+   Responsive
+   -------------------------------------------- */
+@media (max-width: 900px) {
+    .usr-fields-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 640px) {
+    .usr-photo-row {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .usr-section {
+        padding: 1.25rem;
+    }
+
+    .usr-actions-bar {
+        flex-direction: column;
+    }
+
+    .usr-btn-submit {
+        width: 100%;
+    }
+}

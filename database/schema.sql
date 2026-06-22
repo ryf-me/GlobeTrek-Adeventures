@@ -8,6 +8,12 @@ CREATE TABLE IF NOT EXISTS users (
     email VARCHAR(150) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
     phone VARCHAR(20) DEFAULT NULL,
+    date_of_birth DATE DEFAULT NULL,
+    gender VARCHAR(30) DEFAULT NULL,
+    country VARCHAR(100) DEFAULT NULL,
+    city VARCHAR(100) DEFAULT NULL,
+    bio TEXT DEFAULT NULL,
+    profile_photo VARCHAR(500) DEFAULT NULL,
     role ENUM('user', 'admin') DEFAULT 'user',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
@@ -140,5 +146,49 @@ CREATE TABLE IF NOT EXISTS newsletter_subscriptions (
     id INT AUTO_INCREMENT PRIMARY KEY,
     email VARCHAR(150) NOT NULL UNIQUE,
     is_active TINYINT(1) DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+-- Inquiries table
+CREATE TABLE IF NOT EXISTS inquiries (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    package_id INT DEFAULT NULL,
+    booking_reference VARCHAR(20) DEFAULT NULL,
+    inquiry_id_code VARCHAR(20) NOT NULL UNIQUE,
+    subject VARCHAR(200) NOT NULL,
+    message TEXT NOT NULL,
+    status ENUM('open', 'waiting_for_response', 'under_review', 'resolved') DEFAULT 'open',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (package_id) REFERENCES packages(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+-- Inquiry replies table
+CREATE TABLE IF NOT EXISTS inquiry_replies (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    inquiry_id INT NOT NULL,
+    sender_id INT DEFAULT NULL,
+    sender_role ENUM('user', 'admin') NOT NULL DEFAULT 'user',
+    message TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (inquiry_id) REFERENCES inquiries(id) ON DELETE CASCADE,
+    FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+-- Custom trip requests table
+CREATE TABLE IF NOT EXISTS custom_trip_requests (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    full_name VARCHAR(150) NOT NULL,
+    email VARCHAR(150) NOT NULL,
+    destination VARCHAR(300) DEFAULT NULL,
+    duration_days INT DEFAULT NULL,
+    num_travelers INT DEFAULT NULL,
+    estimated_dates VARCHAR(100) DEFAULT NULL,
+    travel_style ENUM('luxury', 'adventure', 'cultural', 'relaxation') DEFAULT NULL,
+    interests JSON DEFAULT NULL,
+    additional_details TEXT DEFAULT NULL,
+    status ENUM('pending', 'reviewed', 'completed') DEFAULT 'pending',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;

@@ -46,6 +46,14 @@ $tripDurations = [
     <div class="page-container">
         <h1>Tour Packages</h1>
 
+        <a href="custom-trips.php" class="customize-trip-banner">
+            <div class="customize-trip-text">
+                <h2>Can't find the perfect trip?</h2>
+                <p>Let our travel experts design a bespoke itinerary tailored to your preferences.</p>
+            </div>
+            <span class="customize-trip-btn">Customize Trip</span>
+        </a>
+
         <div class="packages-layout">
             <!-- Sidebar Filters -->
             <aside class="filters-sidebar">

@@ -1,0 +1,381 @@
+/* ============================================
+   Settings Page – User Dashboard
+   (Sidebar layout in css/user-sidebar.css)
+   ============================================ */
+
+/* --------------------------------------------
+   Page Header
+   -------------------------------------------- */
+.usr-page-header {
+    margin-bottom: 1.5rem;
+}
+
+.usr-page-header h1 {
+    font-size: clamp(1.75rem, 4vw, 2.5rem);
+    font-weight: 700;
+    line-height: 1.1;
+    color: var(--inq-on-surface, #1a1c1c);
+}
+
+.usr-page-header p {
+    margin-top: 0.35rem;
+    color: var(--inq-on-surface-variant, #5e5e5e);
+    font-size: 0.95rem;
+}
+
+/* --------------------------------------------
+   Sections Container
+   -------------------------------------------- */
+.settings-sections {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+/* --------------------------------------------
+   Individual Section
+   -------------------------------------------- */
+.settings-section {
+    border: 1px solid var(--inq-outline-variant, #c4c7c8);
+    background: var(--inq-surface-container-lowest, #fff);
+    padding: 1.25rem;
+    border-radius: 0.25rem;
+}
+
+.settings-section.danger {
+    border: 2px solid var(--inq-error, #ba1a1a);
+}
+
+/* --------------------------------------------
+   Section Header
+   -------------------------------------------- */
+.settings-section-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding-bottom: 0.75rem;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid var(--inq-outline-variant, #c4c7c8);
+}
+
+.settings-section.danger .settings-section-header {
+    border-bottom-color: var(--inq-error, #ba1a1a);
+}
+
+.settings-section-header .material-symbols-outlined {
+    font-size: 22px;
+    color: var(--inq-primary, #000);
+}
+
+.settings-section.danger .settings-section-header .material-symbols-outlined {
+    color: var(--inq-error, #ba1a1a);
+}
+
+.settings-section-header h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--inq-on-surface, #1a1c1c);
+}
+
+.settings-section.danger .settings-section-header h3 {
+    color: var(--inq-error, #ba1a1a);
+}
+
+/* --------------------------------------------
+   Form Groups
+   -------------------------------------------- */
+.settings-form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.settings-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.settings-form-group label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--inq-on-surface-variant, #5e5e5e);
+    letter-spacing: 0.01em;
+}
+
+.settings-form-group select,
+.settings-form-group input[type="password"] {
+    padding: 0.6rem 0.75rem;
+    border: 1px solid var(--inq-outline-variant, #c4c7c8);
+    border-radius: 0.25rem;
+    font-family: 'Winky Sans', sans-serif;
+    font-size: 0.95rem;
+    color: var(--inq-on-surface, #1a1c1c);
+    background: var(--inq-surface-container-low, #f3f3f4);
+    transition: border-color 0.2s ease;
+}
+
+.settings-form-group select:focus,
+.settings-form-group input[type="password"]:focus {
+    outline: none;
+    border-color: var(--inq-primary, #000);
+}
+
+.settings-form-group select {
+    cursor: pointer;
+    appearance: auto;
+}
+
+/* --------------------------------------------
+   Sub-headings
+   -------------------------------------------- */
+.settings-subheading {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--inq-on-surface-variant, #5e5e5e);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 0.25rem;
+}
+
+/* --------------------------------------------
+   Password Fields Stack
+   -------------------------------------------- */
+.settings-password-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+/* --------------------------------------------
+   Buttons
+   -------------------------------------------- */
+.settings-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.3rem;
+    padding: 0.6rem 1.5rem;
+    border-radius: 0.25rem;
+    font-family: 'Winky Sans', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.15s ease, opacity 0.2s ease;
+    border: none;
+    white-space: nowrap;
+}
+
+.settings-btn:active {
+    transform: scale(0.97);
+}
+
+.settings-btn-primary {
+    background: var(--inq-primary, #000);
+    color: var(--inq-on-primary, #fff);
+}
+
+.settings-btn-primary:hover {
+    background: #222;
+}
+
+.settings-btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.settings-btn-danger {
+    background: var(--inq-error, #ba1a1a);
+    color: var(--inq-on-error, #fff);
+}
+
+.settings-btn-danger:hover {
+    opacity: 0.9;
+}
+
+/* --------------------------------------------
+   Toggle Switches
+   -------------------------------------------- */
+.settings-toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+}
+
+.settings-toggle-row + .settings-toggle-row {
+    border-top: 1px solid var(--inq-surface-container, #eeeeee);
+}
+
+.settings-toggle-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+}
+
+.settings-toggle-info p:first-child {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--inq-on-surface, #1a1c1c);
+}
+
+.settings-toggle-info p:last-child {
+    font-size: 0.78rem;
+    color: var(--inq-on-surface-variant, #5e5e5e);
+}
+
+.settings-toggle {
+    position: relative;
+    display: inline-block;
+    width: 2.5rem;
+    height: 1.4rem;
+    flex-shrink: 0;
+}
+
+.settings-toggle input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+    position: absolute;
+}
+
+.settings-toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--inq-surface-container-highest, #e2e2e2);
+    border: 1px solid var(--inq-outline-variant, #c4c7c8);
+    border-radius: 999px;
+    transition: background-color 0.3s ease;
+}
+
+.settings-toggle-slider::before {
+    content: "";
+    position: absolute;
+    height: 16px;
+    width: 16px;
+    left: 2px;
+    bottom: 2px;
+    background-color: #fff;
+    border-radius: 50%;
+    transition: transform 0.3s ease;
+}
+
+.settings-toggle input:checked + .settings-toggle-slider {
+    background-color: var(--inq-primary, #000);
+    border-color: var(--inq-primary, #000);
+}
+
+.settings-toggle input:checked + .settings-toggle-slider::before {
+    transform: translateX(20px);
+}
+
+/* --------------------------------------------
+   Privacy Section
+   -------------------------------------------- */
+.settings-checkbox-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    cursor: pointer;
+}
+
+.settings-checkbox-row input[type="checkbox"] {
+    margin-top: 0.2rem;
+    width: 1.1rem;
+    height: 1.1rem;
+    border: 2px solid var(--inq-outline-variant, #c4c7c8);
+    border-radius: 0.125rem;
+    cursor: pointer;
+    accent-color: var(--inq-primary, #000);
+    flex-shrink: 0;
+}
+
+.settings-checkbox-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+}
+
+.settings-checkbox-info span:first-child {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--inq-on-surface, #1a1c1c);
+    transition: color 0.2s ease;
+}
+
+.settings-checkbox-row:hover .settings-checkbox-info span:first-child {
+    color: var(--inq-primary, #000);
+}
+
+.settings-checkbox-info p:last-child {
+    font-size: 0.78rem;
+    color: var(--inq-on-surface-variant, #5e5e5e);
+}
+
+.settings-manage-data {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    margin-top: 0.75rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--inq-primary, #000);
+    text-decoration: none;
+    transition: opacity 0.2s ease;
+}
+
+.settings-manage-data:hover {
+    text-decoration: underline;
+    text-underline-offset: 4px;
+    text-decoration-thickness: 2px;
+}
+
+.settings-manage-data .material-symbols-outlined {
+    font-size: 16px;
+}
+
+/* --------------------------------------------
+   Danger Zone
+   -------------------------------------------- */
+.settings-danger-row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.settings-danger-info p:first-child {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--inq-error, #ba1a1a);
+}
+
+.settings-danger-info p:last-child {
+    font-size: 0.78rem;
+    color: var(--inq-on-surface-variant, #5e5e5e);
+    margin-top: 0.15rem;
+}
+
+/* --------------------------------------------
+   Responsive
+   -------------------------------------------- */
+@media (max-width: 640px) {
+    .settings-form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .settings-danger-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .settings-btn-danger {
+        width: 100%;
+        justify-content: center;
+    }
+}

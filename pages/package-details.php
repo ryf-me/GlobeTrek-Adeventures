@@ -98,7 +98,7 @@ if ($package['duration_days'] > 5) {
                             <path d="M13 6l6 6-6 6"></path>
                         </svg>
                     </a>
-                    <a class="secondary-action" href="contact.php">Customize Trip</a>
+                    <a class="secondary-action" href="custom-trips.php">Customize Trip</a>
                 </div>
             </aside>
         </section>

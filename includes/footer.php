@@ -29,6 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['newsletter_email'])) 
     }
 }
 ?>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
 <!-- Footer Section-->
     <footer class="site-footer">
         <div class="footer-main">
@@ -53,6 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['newsletter_email'])) 
                     <li><a href="<?php echo $basePath; ?>pages/guides.php">Guides</a></li>
                     <li><a href="<?php echo $basePath; ?>pages/accommodations.php">Accommodations</a></li>
                     <li><a href="<?php echo $basePath; ?>pages/transportation.php">Transportation</a></li>
+                    <li><a href="<?php echo $basePath; ?>pages/custom-trips.php">Custom Trips</a></li>
                 </ul>
             </div>
 
@@ -105,4 +107,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['newsletter_email'])) 
         <div class="footer-bottom">
             <p>&copy; 2026 GlobeTrek Adventures. All rights reserved.</p>
         </div>
+        
+    <!-- Inquiries Floating Button -->
+<a href="<?php echo $basePath; ?><?php echo isset($_SESSION['user_id']) ? 'pages/inquiries.php' : 'pages/login.php'; ?>" class="inquiries-fab" aria-label="Inquiries">
+    <span class="material-symbols-outlined">chat_bubble</span>
+</a>
     </footer>

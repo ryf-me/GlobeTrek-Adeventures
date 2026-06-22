@@ -1,0 +1,350 @@
+/* ============================================
+   Wishlist Page – User Dashboard
+   (Sidebar layout in css/user-sidebar.css)
+   ============================================ */
+
+/* --------------------------------------------
+   Page Header
+   -------------------------------------------- */
+.usr-page-header {
+    margin-bottom: 1.5rem;
+}
+
+.usr-page-header h1 {
+    font-size: clamp(1.75rem, 4vw, 2.5rem);
+    font-weight: 700;
+    line-height: 1.1;
+    color: var(--inq-on-surface, #1a1c1c);
+}
+
+.usr-page-header p {
+    margin-top: 0.35rem;
+    color: var(--inq-on-surface-variant, #5e5e5e);
+    font-size: 0.95rem;
+}
+
+/* --------------------------------------------
+   Wishlist Header Row
+   -------------------------------------------- */
+.wl-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.25rem;
+}
+
+.wl-count {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.3rem 0.75rem;
+    border: 1px solid var(--inq-outline-variant, #c4c7c8);
+    border-radius: 0.125rem;
+    background: var(--inq-surface-container-lowest, #fff);
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--inq-on-surface-variant, #5e5e5e);
+    letter-spacing: 0.02em;
+}
+
+.wl-count .material-symbols-outlined {
+    font-size: 16px;
+}
+
+/* --------------------------------------------
+   Wishlist Grid
+   -------------------------------------------- */
+.wl-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.25rem;
+}
+
+/* --------------------------------------------
+   Wishlist Card
+   -------------------------------------------- */
+.wl-card {
+    display: flex;
+    flex-direction: column;
+    background: var(--inq-surface-container-lowest, #fff);
+    border: 1px solid var(--inq-outline-variant, #c4c7c8);
+    border-radius: 0.25rem;
+    overflow: hidden;
+    transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.wl-card:hover {
+    border-color: var(--inq-on-surface, #1a1c1c);
+    transform: translateY(-2px);
+}
+
+/* --------------------------------------------
+   Card Image
+   -------------------------------------------- */
+.wl-card-img {
+    position: relative;
+    aspect-ratio: 4 / 3;
+    width: 100%;
+    overflow: hidden;
+    background: var(--inq-surface-container, #eeeeee);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.wl-card-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.3s ease;
+}
+
+.wl-card:hover .wl-card-img img {
+    transform: scale(1.03);
+}
+
+/* Placeholder when no image */
+.wl-placeholder {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background: var(--inq-surface-container, #eeeeee);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.wl-placeholder .material-symbols-outlined {
+    font-size: 40px;
+    color: var(--inq-outline, #747878);
+}
+
+.wl-placeholder::before,
+.wl-placeholder::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-top: 1px solid var(--inq-outline-variant, #c4c7c8);
+    transform-origin: top left;
+}
+
+.wl-placeholder::before {
+    transform: rotate(calc(atan(1)));
+    width: 142%;
+}
+
+.wl-placeholder::after {
+    transform: translateY(100%) rotate(calc(-1 * atan(1)));
+    width: 142%;
+}
+
+/* --------------------------------------------
+   Card Body
+   -------------------------------------------- */
+.wl-card-body {
+    padding: 1rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+/* --------------------------------------------
+   Card Title Row (title + remove button)
+   -------------------------------------------- */
+.wl-card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 0.5rem;
+    margin-bottom: 0.4rem;
+}
+
+.wl-card-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    line-height: 1.2;
+    color: var(--inq-on-surface, #1a1c1c);
+}
+
+.wl-card-remove {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    padding: 0.2rem;
+    color: var(--inq-on-surface-variant, #5e5e5e);
+    cursor: pointer;
+    transition: color 0.2s ease, transform 0.15s ease;
+    flex-shrink: 0;
+}
+
+.wl-card-remove:hover {
+    color: var(--inq-error, #ba1a1a);
+    transform: scale(1.15);
+}
+
+.wl-card-remove .material-symbols-outlined {
+    font-size: 20px;
+}
+
+/* --------------------------------------------
+   Card Duration
+   -------------------------------------------- */
+.wl-card-duration {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    color: var(--inq-on-surface-variant, #5e5e5e);
+    font-size: 0.82rem;
+    margin-bottom: 0.75rem;
+}
+
+.wl-card-duration .material-symbols-outlined {
+    font-size: 16px;
+}
+
+/* --------------------------------------------
+   Card Footer (price + book button)
+   -------------------------------------------- */
+.wl-card-footer {
+    margin-top: auto;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--inq-outline-variant, #c4c7c8);
+}
+
+.wl-card-price-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 0.85rem;
+}
+
+.wl-card-price {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--inq-on-surface, #1a1c1c);
+}
+
+.wl-card-per-person {
+    font-size: 0.78rem;
+    color: var(--inq-on-surface-variant, #5e5e5e);
+}
+
+.wl-card-book {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 0.65rem 1rem;
+    background: var(--inq-primary, #000);
+    color: var(--inq-on-primary, #fff);
+    border: none;
+    border-radius: 0.125rem;
+    font-family: 'Winky Sans', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    transition: opacity 0.2s ease, transform 0.15s ease;
+}
+
+.wl-card-book:hover {
+    opacity: 0.88;
+}
+
+.wl-card-book:active {
+    transform: scale(0.97);
+}
+
+/* --------------------------------------------
+   Empty State
+   -------------------------------------------- */
+.wl-empty {
+    text-align: center;
+    padding: clamp(3rem, 6vw, 5rem) 2rem;
+    border: 1px dashed var(--inq-outline-variant, #c4c7c8);
+    background: var(--inq-surface-container-lowest, #fff);
+    border-radius: 0.25rem;
+    margin-top: 1.5rem;
+}
+
+.wl-empty .material-symbols-outlined {
+    font-size: 56px;
+    color: var(--inq-outline-variant, #c4c7c8);
+    margin-bottom: 1rem;
+}
+
+.wl-empty h2 {
+    font-size: clamp(1.15rem, 2.5vw, 1.4rem);
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--inq-on-surface, #1a1c1c);
+}
+
+.wl-empty p {
+    color: var(--inq-on-surface-variant, #5e5e5e);
+    max-width: 380px;
+    margin: 0 auto;
+    line-height: 1.6;
+    font-size: 0.9rem;
+}
+
+.wl-empty-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    margin-top: 1.25rem;
+    padding: 0.6rem 1.5rem;
+    border: 1px solid var(--inq-primary, #000);
+    color: var(--inq-primary, #000);
+    background: transparent;
+    font-family: 'Winky Sans', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+    border-radius: 0.125rem;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.wl-empty-link:hover {
+    background: var(--inq-primary, #000);
+    color: var(--inq-on-primary, #fff);
+}
+
+/* --------------------------------------------
+   Remove Animation
+   -------------------------------------------- */
+.wl-card.removing {
+    opacity: 0.4;
+    pointer-events: none;
+    transform: scale(0.96);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+/* --------------------------------------------
+   Responsive
+   -------------------------------------------- */
+@media (max-width: 900px) {
+    .wl-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+}
+
+@media (max-width: 640px) {
+    .wl-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .wl-header-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+}

@@ -1,0 +1,126 @@
+/* ============================================
+   Shared User Sidebar – Unified across all
+   user dashboard pages (profile, bookings,
+   wishlist, inquiries, settings)
+   ============================================ */
+
+/* --------------------------------------------
+   Layout: Sidebar + Canvas
+   -------------------------------------------- */
+.usr-layout {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: clamp(2rem, 4vw, 3rem) clamp(1.25rem, 4vw, 3rem) clamp(3rem, 6vw, 5rem);
+    display: flex;
+    flex-direction: row;
+    gap: 2rem;
+    align-items: flex-start;
+}
+
+/* --------------------------------------------
+   Sidebar
+   -------------------------------------------- */
+.usr-sidebar {
+    width: 240px;
+    flex-shrink: 0;
+    position: sticky;
+    top: 6rem;
+}
+
+.usr-sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.usr-sidebar-link {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.65rem 0.85rem;
+    text-decoration: none;
+    color: var(--inq-on-surface-variant, #5e5e5e);
+    font-size: 1rem;
+    font-weight: 400;
+    border-radius: 0.25rem;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.usr-sidebar-link:hover {
+    background: var(--inq-surface-container, #eeeeee);
+    color: var(--inq-on-surface, #1a1c1c);
+}
+
+.usr-sidebar-link.active {
+    background: var(--inq-surface-container-high, #e8e8e8);
+    color: var(--inq-on-surface, #1a1c1c);
+    font-weight: 700;
+    border-left: 2px solid var(--inq-primary, #000);
+    border-radius: 0 0.25rem 0.25rem 0;
+}
+
+.usr-sidebar-link .material-symbols-outlined {
+    font-size: 20px;
+}
+
+.usr-sidebar-link:not(.active) .material-symbols-outlined {
+    color: var(--inq-outline, #747878);
+    font-variation-settings: 'wght' 300, 'FILL' 0;
+}
+
+.usr-sidebar-link.active .material-symbols-outlined {
+    color: var(--inq-primary, #000);
+    font-variation-settings: 'wght' 400, 'FILL' 1;
+}
+
+/* --------------------------------------------
+   Canvas Area
+   -------------------------------------------- */
+.usr-canvas {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+/* --------------------------------------------
+   Responsive: Sidebar → horizontal tab bar
+   -------------------------------------------- */
+@media (max-width: 900px) {
+    .usr-layout {
+        flex-direction: column;
+    }
+
+    .usr-sidebar {
+        width: 100%;
+        position: static;
+    }
+
+    .usr-sidebar-nav {
+        flex-direction: row;
+        overflow-x: auto;
+        gap: 0;
+        border-bottom: 1px solid var(--inq-outline-variant, #c4c7c8);
+    }
+
+    .usr-sidebar-link {
+        padding: 0.65rem 1rem;
+        white-space: nowrap;
+        border-left: none;
+        border-bottom: 2px solid transparent;
+        border-radius: 0;
+    }
+
+    .usr-sidebar-link.active {
+        border-left: none;
+        border-bottom-color: var(--inq-primary, #000);
+        border-radius: 0;
+    }
+}
+
+@media (max-width: 640px) {
+    .usr-layout {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+}

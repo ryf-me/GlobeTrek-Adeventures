@@ -425,3 +425,44 @@ section h2 {
         padding: 1.75rem 1rem;
     }
 }
+
+/* Inquiries Floating Button */
+.inquiries-fab {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    width: 60px;
+    height: 60px;
+    background: #000;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    z-index: 999;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    text-decoration: none;
+}
+
+.inquiries-fab:hover {
+    opacity: 0.85;
+    transform: scale(1.05);
+}
+
+.inquiries-fab .material-symbols-outlined {
+    font-size: 28px;
+}
+
+@media (max-width: 560px) {
+    .inquiries-fab {
+        bottom: 1.25rem;
+        right: 1.25rem;
+        width: 52px;
+        height: 52px;
+    }
+
+    .inquiries-fab .material-symbols-outlined {
+        font-size: 24px;
+    }
+}
