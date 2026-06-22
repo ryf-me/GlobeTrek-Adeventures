@@ -73,8 +73,8 @@
 }
 .signup-btn {
     margin-left: -0.75rem;
-    border: 2px solid #555;
-    background: #7d7d7d;
+    border: 2px solid #264653;
+    background: #264653;
     color: #fff;
 }
 .navbar .nav-links a.login-btn {
@@ -82,7 +82,7 @@
 }
 .login-btn:hover,
 .login-btn:focus-visible {
-    border-color: #0e3a32;
+    border-color: #e76f51;
     background: #f0f0f0;
     transform: translateY(-1px);
 }
@@ -189,7 +189,7 @@
     width: 36px;
     height: 36px;
     border-radius: 50%;
-    background: #1a1c1c;
+    background: #264653;
     color: #fff;
     display: flex;
     align-items: center;
@@ -208,7 +208,7 @@
 }
 
 .user-name-label {
-    color: #1a1c1c;
+    color: #264653;
     font-size: 0.9rem;
     font-weight: 600;
     line-height: 1.2;
@@ -261,7 +261,7 @@
     width: 44px;
     height: 44px;
     border-radius: 50%;
-    background: #1a1c1c;
+    background: #264653;
     color: #fff;
     display: flex;
     align-items: center;
@@ -286,7 +286,7 @@
     margin: 0;
     font-size: 0.95rem;
     font-weight: 700;
-    color: #1a1c1c;
+    color: #264653;
     line-height: 1.3;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -312,7 +312,7 @@
     align-items: center;
     gap: 0.7rem;
     padding: 0.6rem 1rem;
-    color: #1a1c1c;
+    color: #264653;
     text-decoration: none;
     font-size: 0.9rem;
     font-weight: 500;
@@ -420,9 +420,63 @@
     color: #ba1a1a;
 }
 
+/* About page overlay navbar */
+.about-page .navbar {
+    position: absolute;
+    background: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border-bottom: none;
+}
+
+.about-page .navbar .logo,
+.about-page .navbar .logo span,
+.about-page .navbar .nav-links a {
+    color: #fff;
+}
+
+.about-page .menu-toggle {
+    color: #fff;
+}
+
+.about-page .login-btn {
+    border-color: rgba(255, 255, 255, 0.5);
+    background: transparent;
+    color: #fff;
+}
+
+.about-page .signup-btn {
+    border-color: rgba(255, 255, 255, 0.5);
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+}
+
+.about-page .login-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: #fff;
+}
+
+.about-page .signup-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    border-color: #fff;
+}
+
+.about-page .navbar .nav-links .dropdown-nav-item {
+    color: #1a1c1c;
+}
+
+.about-page .navbar .nav-links .dropdown-nav-item .material-symbols-outlined {
+    color: #5e5e5e;
+}
+
+.about-page .navbar .nav-links .dropdown-logout {
+    color: #ba1a1a;
+}
+
 /* Mobile */
 @media (max-width: 768px) {
-    .home-page .navbar .nav-links {
+    .home-page .navbar .nav-links,
+    .about-page .navbar .nav-links {
         background: rgba(0, 0, 0, 0.85);
     }
 }

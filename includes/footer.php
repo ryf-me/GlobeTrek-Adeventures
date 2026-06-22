@@ -61,10 +61,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['newsletter_email'])) 
             <div class="footer-column">
                 <h2>Support</h2>
                 <ul>
-                    <li><a href="#">FAQ</a></li>
-                    <li><a href="#">Terms &amp; Conditions</a></li>
-                    <li><a href="#">Privacy Policy</a></li>
-                    <li><a href="#">Payment Policy</a></li>
+                    <li><a href="<?php echo $basePath; ?>pages/faq.php">FAQ</a></li>
+                    <li><a href="<?php echo $basePath; ?>pages/terms.php">Terms &amp; Conditions</a></li>
+                    <li><a href="<?php echo $basePath; ?>pages/privacy.php">Privacy Policy</a></li>
+                    <li><a href="<?php echo $basePath; ?>pages/payment-policy.php">Payment Policy</a></li>
                 </ul>
             </div>
 

@@ -3,12 +3,12 @@
 .booking-page {
     --paper: #f5f7fa;
     --paper-soft: #ffffff;
-    --ink: #141915;
+    --ink: #264653;
     --muted: #667066;
     --line: #d7cfbf;
-    --green: #0e3a32;
-    --green-dark: #08251f;
-    --leaf: #7e9f48;
+    --green: #e76f51;
+    --green-dark: #1a3a4a;
+    --leaf: #e9c46a;
     --sand: #e7d6b2;
     --white: #ffffff;
     --danger: #a73624;
@@ -170,8 +170,8 @@
 }
 
 .form-alert.success {
-    border-color: rgba(14, 58, 50, 0.28);
-    background: rgba(126, 159, 72, 0.12);
+    border-color: rgba(231, 111, 81, 0.28);
+    background: rgba(233, 196, 106, 0.12);
     color: var(--green);
 }
 
@@ -262,7 +262,7 @@
     outline: 0;
     border-color: var(--green);
     background: var(--white);
-    box-shadow: 0 0 0 3px rgba(14, 58, 50, 0.13);
+    box-shadow: 0 0 0 3px rgba(231, 111, 81, 0.13);
 }
 
 .form-field input[aria-invalid="true"],

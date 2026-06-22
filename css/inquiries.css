@@ -4,7 +4,7 @@
    ============================================ */
 
 :root {
-    --inq-primary: #000000;
+    --inq-primary: #264653;
     --inq-on-primary: #ffffff;
     --inq-surface: #f5f7fa;
     --inq-surface-bright: #f9f9f9;
@@ -12,7 +12,7 @@
     --inq-surface-container-high: #e8e8e8;
     --inq-surface-container-low: #f3f3f4;
     --inq-surface-container-lowest: #ffffff;
-    --inq-on-surface: #1a1c1c;
+    --inq-on-surface: #264653;
     --inq-on-surface-variant: #5e5e5e;
     --inq-secondary: #5e5e5e;
     --inq-outline: #747878;
@@ -20,8 +20,8 @@
     --inq-error: #ba1a1a;
     --inq-error-container: #ffdad6;
     --inq-success-bg: #dfe9df;
-    --inq-success-border: rgba(18, 61, 53, 0.28);
-    --inq-success-text: #123d35;
+    --inq-success-border: rgba(38, 70, 83, 0.28);
+    --inq-success-text: #264653;
 }
 
 .inq-page {
@@ -221,15 +221,15 @@
 }
 
 .inq-status-review .status-dot {
-    background: #0066cc;
+    background: #e76f51;
 }
 .inq-status-review {
-    border-color: #0066cc;
-    color: #0066cc;
+    border-color: #e76f51;
+    color: #e76f51;
 }
 
 .inq-status-resolved .status-dot {
-    background: #123d35;
+    background: #264653;
 }
 .inq-status-resolved {
     border-color: var(--inq-outline-variant);

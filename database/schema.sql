@@ -240,3 +240,17 @@ CREATE TABLE IF NOT EXISTS activity_logs (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
+
+-- Testimonials table
+CREATE TABLE IF NOT EXISTS testimonials (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    reviewer_name VARCHAR(150) NOT NULL,
+    reviewer_country VARCHAR(100),
+    reviewer_avatar VARCHAR(500),
+    rating TINYINT NOT NULL,
+    title VARCHAR(200),
+    content TEXT NOT NULL,
+    is_featured TINYINT(1) DEFAULT 0,
+    is_approved TINYINT(1) DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;

@@ -1,0 +1,275 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Bungee&family=Rubik+Doodle+Shadow&family=Unkempt:wght@400;700&family=Winky+Sans:ital,wght@0,300..900;1,300..900&display=swap');
+
+/* Support Pages Shared Styles */
+
+.support-hero {
+    position: relative;
+    width: 100%;
+    min-height: 340px;
+    background: #264653;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.support-hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(38, 70, 83, 0.92) 0%, rgba(38, 70, 83, 0.75) 100%);
+    z-index: 1;
+}
+
+.support-hero-bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 0;
+}
+
+.support-hero-content {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    padding: 5rem 2rem 4rem;
+    max-width: 700px;
+}
+
+.support-hero-content h1 {
+    font-family: 'Fraunces', serif;
+    font-size: 2.8rem;
+    font-weight: 800;
+    color: #fff;
+    margin: 0 0 1rem;
+    line-height: 1.2;
+}
+
+.support-hero-content p {
+    font-family: 'Winky Sans', sans-serif;
+    font-size: 1.1rem;
+    color: #d0d0d0;
+    line-height: 1.6;
+    margin: 0;
+}
+
+/* Content Section */
+.support-content {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 4rem 2rem;
+}
+
+.support-content h2 {
+    font-family: 'Fraunces', serif;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #264653;
+    margin: 2.5rem 0 1rem;
+    line-height: 1.3;
+}
+
+.support-content h2:first-child {
+    margin-top: 0;
+}
+
+.support-content h3 {
+    font-family: 'Winky Sans', sans-serif;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #264653;
+    margin: 2rem 0 0.6rem;
+}
+
+.support-content p {
+    font-family: 'Winky Sans', sans-serif;
+    font-size: 0.98rem;
+    color: #444;
+    line-height: 1.8;
+    margin: 0 0 1rem;
+}
+
+.support-content ul,
+.support-content ol {
+    font-family: 'Winky Sans', sans-serif;
+    font-size: 0.98rem;
+    color: #444;
+    line-height: 1.8;
+    margin: 0 0 1rem;
+    padding-left: 1.5rem;
+}
+
+.support-content li {
+    margin-bottom: 0.4rem;
+}
+
+.support-content a {
+    color: #e76f51;
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.2s ease;
+}
+
+.support-content a:hover {
+    color: #c45a3c;
+    text-decoration: underline;
+}
+
+/* FAQ Accordion */
+.faq-list {
+    display: grid;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+}
+
+.faq-item {
+    border: 1.5px solid #e0e0e0;
+    border-radius: 10px;
+    overflow: hidden;
+    transition: border-color 0.25s ease;
+}
+
+.faq-item:hover {
+    border-color: #b0b0b0;
+}
+
+.faq-question {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.1rem 1.3rem;
+    background: #f9fafb;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    font-family: 'Winky Sans', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #264653;
+    transition: background 0.2s ease;
+}
+
+.faq-question:hover {
+    background: #f0f2f4;
+}
+
+.faq-toggle {
+    flex-shrink: 0;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: #264653;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    font-weight: 700;
+    line-height: 1;
+    transition: background 0.2s ease, transform 0.3s ease;
+}
+
+.faq-item.active .faq-toggle {
+    background: #e76f51;
+    transform: rotate(45deg);
+}
+
+.faq-answer {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.35s ease, padding 0.35s ease;
+}
+
+.faq-item.active .faq-answer {
+    max-height: 600px;
+}
+
+.faq-answer-inner {
+    padding: 0 1.3rem 1.2rem;
+    font-family: 'Winky Sans', sans-serif;
+    font-size: 0.95rem;
+    color: #555;
+    line-height: 1.75;
+}
+
+/* Policy Section Blocks */
+.policy-section {
+    margin-bottom: 2.5rem;
+}
+
+.policy-section h2 {
+    border-bottom: 2px solid #e76f51;
+    padding-bottom: 0.5rem;
+    display: inline-block;
+}
+
+/* Developer Credit */
+.developer-credit {
+    margin-top: 3rem;
+    padding: 1.5rem;
+    background: #f0f7f4;
+    border-left: 4px solid #264653;
+    border-radius: 0 8px 8px 0;
+}
+
+.developer-credit p {
+    margin: 0;
+    font-size: 0.92rem;
+    color: #333;
+}
+
+.developer-credit strong {
+    color: #264653;
+}
+
+.developer-credit .dev-name {
+    color: #e76f51;
+    font-weight: 800;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .support-hero {
+        min-height: 280px;
+    }
+
+    .support-hero-content h1 {
+        font-size: 2.2rem;
+    }
+
+    .support-content {
+        padding: 3rem 1.5rem;
+    }
+}
+
+@media (max-width: 560px) {
+    .support-hero {
+        min-height: 240px;
+    }
+
+    .support-hero-content h1 {
+        font-size: 1.8rem;
+    }
+
+    .support-hero-content p {
+        font-size: 1rem;
+    }
+
+    .support-content {
+        padding: 2.5rem 1.2rem;
+    }
+
+    .support-content h2 {
+        font-size: 1.35rem;
+    }
+
+    .faq-question {
+        font-size: 0.95rem;
+        padding: 1rem 1.1rem;
+    }
+}

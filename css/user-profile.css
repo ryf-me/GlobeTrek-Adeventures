@@ -5,7 +5,7 @@
 
 .usr-page {
     background: var(--inq-surface, #f5f7fa);
-    color: var(--inq-on-surface, #1a1c1c);
+    color: var(--inq-on-surface, #264653);
     font-family: 'Winky Sans', sans-serif;
     overflow-x: hidden;
 }
@@ -20,7 +20,7 @@
 .usr-page h2,
 .usr-page h3 {
     font-family: 'Winky Sans', sans-serif;
-    color: var(--inq-on-surface, #1a1c1c);
+    color: var(--inq-on-surface, #264653);
     letter-spacing: 0;
 }
 
@@ -296,9 +296,9 @@
 }
 
 .usr-alert.success {
-    border-color: rgba(18, 61, 53, 0.28);
+    border-color: rgba(38, 70, 83, 0.28);
     background: rgba(215, 229, 212, 0.4);
-    color: #123d35;
+    color: #264653;
 }
 
 .usr-alert.error {

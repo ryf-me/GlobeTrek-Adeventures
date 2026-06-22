@@ -1,0 +1,284 @@
+/* ---------- Reset & Base ---------- */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Winky Sans', sans-serif;
+    background: #f5f7fa;
+    color: #1e293b;
+    line-height: 1.5;
+    padding: 0;
+}
+
+.page-container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+}
+
+/* ---------- Page Hero ---------- */
+.dest-hero {
+    background: linear-gradient(135deg, #264653 0%, #1a3340 100%);
+    padding: 4rem 2rem;
+    text-align: center;
+    color: #fff;
+}
+
+.dest-hero h1 {
+    font-size: 2.4rem;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+    color: #fff;
+}
+
+.dest-hero p {
+    font-size: 1.1rem;
+    color: #c4c7d0;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+/* ---------- Grid ---------- */
+.destinations-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.8rem;
+}
+
+/* ---------- Destination Card ---------- */
+.dest-card {
+    background: #fff;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    text-decoration: none;
+    color: inherit;
+}
+
+.dest-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
+}
+
+.dest-card-img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    display: block;
+    background: #d9e2ef;
+}
+
+.dest-card-body {
+    padding: 1.25rem 1.25rem 1.5rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.dest-card-body h3 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #264653;
+    margin-bottom: 0.4rem;
+}
+
+.dest-card-desc {
+    color: #555;
+    font-size: 0.88rem;
+    line-height: 1.5;
+    flex: 1;
+    margin-bottom: 1rem;
+}
+
+.dest-card-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #e76f51;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.dest-card-link:hover {
+    color: #d4603f;
+}
+
+.dest-card-link .material-symbols-outlined {
+    font-size: 18px;
+    transition: transform 0.2s;
+}
+
+.dest-card-link:hover .material-symbols-outlined {
+    transform: translateX(3px);
+}
+
+/* ---------- Featured Badge ---------- */
+.dest-badge {
+    display: inline-block;
+    background: #e76f51;
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 0.2rem 0.6rem;
+    border-radius: 20px;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    align-self: flex-start;
+}
+
+/* ---------- Empty State ---------- */
+.dest-empty {
+    text-align: center;
+    padding: 4rem 1rem;
+    color: #64748b;
+}
+
+.dest-empty .material-symbols-outlined {
+    font-size: 64px;
+    color: #d1d9e6;
+    margin-bottom: 1rem;
+}
+
+.dest-empty h2 {
+    font-size: 1.4rem;
+    color: #264653;
+    margin-bottom: 0.5rem;
+}
+
+/* ---------- Detail Page ---------- */
+.dest-detail-hero {
+    position: relative;
+    width: 100%;
+    height: 420px;
+    overflow: hidden;
+}
+
+.dest-detail-hero img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.dest-detail-hero-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 2.5rem 2rem;
+    background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
+    color: #fff;
+}
+
+.dest-detail-hero-overlay h1 {
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 0.3rem;
+}
+
+.dest-detail-meta {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-size: 0.9rem;
+    color: #ddd;
+}
+
+.dest-detail-meta .material-symbols-outlined {
+    font-size: 18px;
+}
+
+.dest-detail-content {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem;
+}
+
+.dest-detail-content h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #264653;
+    margin-bottom: 1rem;
+}
+
+.dest-detail-content p {
+    font-size: 1rem;
+    color: #444;
+    line-height: 1.7;
+    margin-bottom: 1.5rem;
+}
+
+.dest-detail-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #e76f51;
+    text-decoration: none;
+    margin-bottom: 1.5rem;
+    transition: color 0.2s;
+}
+
+.dest-detail-back:hover {
+    color: #d4603f;
+}
+
+.dest-detail-back .material-symbols-outlined {
+    font-size: 18px;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 900px) {
+    .dest-hero {
+        padding: 3rem 1.5rem;
+    }
+
+    .dest-hero h1 {
+        font-size: 1.9rem;
+    }
+
+    .dest-detail-hero {
+        height: 300px;
+    }
+}
+
+@media (max-width: 600px) {
+    .page-container {
+        padding: 1rem;
+    }
+
+    .dest-hero {
+        padding: 2.5rem 1rem;
+    }
+
+    .dest-hero h1 {
+        font-size: 1.6rem;
+    }
+
+    .destinations-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .dest-detail-hero {
+        height: 240px;
+    }
+
+    .dest-detail-hero-overlay h1 {
+        font-size: 1.5rem;
+    }
+
+    .dest-detail-content {
+        padding: 1.5rem 1rem;
+    }
+}

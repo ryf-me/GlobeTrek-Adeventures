@@ -27,7 +27,7 @@ body {
     font-size: 2.2rem;
     font-weight: 600;
     margin-bottom: 0.5rem;
-    color: #0b1a33;
+    color: #264653;
 }
 
 .page-header p {
@@ -58,7 +58,7 @@ body {
 .filters-sidebar h2 {
     font-size: 1.1rem;
     font-weight: 600;
-    color: #0b1a33;
+    color: #264653;
     margin-bottom: 1.2rem;
     letter-spacing: 0.3px;
 }
@@ -90,13 +90,13 @@ body {
 }
 
 .filter-group label:hover {
-    color: #0b1a33;
+    color: #264653;
 }
 
 .filter-group input[type="checkbox"] {
     width: 16px;
     height: 16px;
-    accent-color: #2563eb;
+    accent-color: #e76f51;
     flex-shrink: 0;
 }
 
@@ -114,7 +114,7 @@ body {
 
 .filter-group input[type="text"]:focus {
     outline: none;
-    border-color: #2563eb;
+    border-color: #e76f51;
     background: #fff;
 }
 
@@ -125,7 +125,7 @@ body {
 .apply-btn {
     display: block;
     width: 100%;
-    background: #2563eb;
+    background: #e76f51;
     border: none;
     padding: 0.65rem 1.5rem;
     border-radius: 30px;
@@ -138,7 +138,7 @@ body {
 }
 
 .apply-btn:hover {
-    background: #1d4ed8;
+    background: #d4603f;
     transform: translateY(-1px);
 }
 
@@ -158,7 +158,7 @@ body {
 
 .reset-btn:hover {
     background: #d1d9e6;
-    color: #0b1a33;
+    color: #264653;
 }
 
 /* ---------- Toolbar (sort + count) ---------- */
@@ -188,7 +188,7 @@ body {
 
 .sort-select:focus {
     outline: none;
-    border-color: #2563eb;
+    border-color: #e76f51;
 }
 
 /* ---------- Main Content (Cards) ---------- */
@@ -239,7 +239,7 @@ body {
 .accommodation-card .card-top h3 {
     font-size: 1.15rem;
     font-weight: 600;
-    color: #0b1a33;
+    color: #264653;
     line-height: 1.3;
 }
 
@@ -252,7 +252,7 @@ body {
 }
 
 .accommodation-card .card-rating .star {
-    color: #f59e0b;
+    color: #e9c46a;
     font-size: 1rem;
 }
 
@@ -311,7 +311,7 @@ body {
 .accommodation-card .card-price {
     font-size: 1.2rem;
     font-weight: 700;
-    color: #0b1a33;
+    color: #264653;
 }
 
 .accommodation-card .card-price span {
@@ -323,8 +323,8 @@ body {
 .view-btn {
     display: inline-block;
     padding: 0.45rem 1rem;
-    border: 2px solid #0b1a33;
-    color: #0b1a33;
+    border: 2px solid #264653;
+    color: #264653;
     font-weight: 600;
     font-size: 0.82rem;
     border-radius: 30px;
@@ -335,7 +335,7 @@ body {
 }
 
 .view-btn:hover {
-    background: #0b1a33;
+    background: #264653;
     color: #ffffff;
 }
 
@@ -369,13 +369,13 @@ body {
 }
 
 .pagination a:hover {
-    border-color: #2563eb;
-    color: #2563eb;
+    border-color: #e76f51;
+    color: #e76f51;
 }
 
 .pagination .active {
-    background: #2563eb;
-    border: 1px solid #2563eb;
+    background: #e76f51;
+    border: 1px solid #e76f51;
     color: #ffffff;
 }
 

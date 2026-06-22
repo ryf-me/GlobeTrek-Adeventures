@@ -14,7 +14,7 @@
     font-size: clamp(1.75rem, 4vw, 2.5rem);
     font-weight: 700;
     line-height: 1.1;
-    color: var(--inq-on-surface, #1a1c1c);
+    color: var(--inq-on-surface, #264653);
 }
 
 .usr-page-header p {
@@ -394,8 +394,8 @@
 
 .settings-alert-success {
     background: #dfe9df;
-    color: #123d35;
-    border: 1px solid rgba(18, 61, 53, 0.28);
+    color: #264653;
+    border: 1px solid rgba(38, 70, 83, 0.28);
 }
 
 .settings-alert-error {

@@ -101,7 +101,10 @@ function field_error(string $field, array $errors): string
                 <form class="contact-form" method="post" action="contact.php#message-title" novalidate>
                     <div class="form-field">
                         <label for="name">Name</label>
-                        <input id="name" name="name" type="text" value="<?= old_value('name', $fields) ?>" placeholder="Enter your full name" aria-invalid="<?= isset($errors['name']) ? 'true' : 'false' ?>">
+                        <div class="input-wrapper">
+                            <input id="name" name="name" type="text" value="<?= old_value('name', $fields) ?>" placeholder="Enter your full name" aria-invalid="<?= isset($errors['name']) ? 'true' : 'false' ?>">
+                            <span class="material-symbols-outlined input-icon" aria-hidden="true">person</span>
+                        </div>
                         <?php if (isset($errors['name'])): ?>
                             <p class="field-error"><?= field_error('name', $errors) ?></p>
                         <?php endif; ?>
@@ -109,7 +112,10 @@ function field_error(string $field, array $errors): string
 
                     <div class="form-field">
                         <label for="email">Email Address</label>
-                        <input id="email" name="email" type="email" value="<?= old_value('email', $fields) ?>" placeholder="Enter your email address" aria-invalid="<?= isset($errors['email']) ? 'true' : 'false' ?>">
+                        <div class="input-wrapper">
+                            <input id="email" name="email" type="email" value="<?= old_value('email', $fields) ?>" placeholder="Enter your email address" aria-invalid="<?= isset($errors['email']) ? 'true' : 'false' ?>">
+                            <span class="material-symbols-outlined input-icon" aria-hidden="true">mail</span>
+                        </div>
                         <?php if (isset($errors['email'])): ?>
                             <p class="field-error"><?= field_error('email', $errors) ?></p>
                         <?php endif; ?>
@@ -117,7 +123,10 @@ function field_error(string $field, array $errors): string
 
                     <div class="form-field">
                         <label for="subject">Subject</label>
-                        <input id="subject" name="subject" type="text" value="<?= old_value('subject', $fields) ?>" placeholder="What is this regarding?" aria-invalid="<?= isset($errors['subject']) ? 'true' : 'false' ?>">
+                        <div class="input-wrapper">
+                            <input id="subject" name="subject" type="text" value="<?= old_value('subject', $fields) ?>" placeholder="What is this regarding?" aria-invalid="<?= isset($errors['subject']) ? 'true' : 'false' ?>">
+                            <span class="material-symbols-outlined input-icon" aria-hidden="true">subject</span>
+                        </div>
                         <?php if (isset($errors['subject'])): ?>
                             <p class="field-error"><?= field_error('subject', $errors) ?></p>
                         <?php endif; ?>
@@ -125,13 +134,19 @@ function field_error(string $field, array $errors): string
 
                     <div class="form-field">
                         <label for="message">Message</label>
-                        <textarea id="message" name="message" rows="5" placeholder="Type your message here..." aria-invalid="<?= isset($errors['message']) ? 'true' : 'false' ?>"><?= old_value('message', $fields) ?></textarea>
+                        <div class="input-wrapper">
+                            <textarea id="message" name="message" rows="5" placeholder="Type your message here..." aria-invalid="<?= isset($errors['message']) ? 'true' : 'false' ?>"><?= old_value('message', $fields) ?></textarea>
+                            <span class="material-symbols-outlined input-icon" aria-hidden="true">edit_note</span>
+                        </div>
                         <?php if (isset($errors['message'])): ?>
                             <p class="field-error"><?= field_error('message', $errors) ?></p>
                         <?php endif; ?>
                     </div>
 
-                    <button type="submit">Send Message</button>
+                    <button type="submit">
+                        <span class="material-symbols-outlined" aria-hidden="true">send</span>
+                        Send Message
+                    </button>
                 </form>
             </div>
 
@@ -167,12 +182,38 @@ function field_error(string $field, array $errors): string
                     </div>
                 </div>
 
+                <div class="info-hours">
+                    <span class="material-symbols-outlined info-icon" aria-hidden="true">schedule</span>
+                    <div>
+                        <h3>Business Hours</h3>
+                        <p>Monday – Friday, 9:00 AM – 6:00 PM IST</p>
+                    </div>
+                </div>
+
                 <div class="social-follow">
                     <span class="social-label">Follow Us</span>
                     <div class="social-icons">
-                        <a href="#" aria-label="Facebook" class="social-icon-placeholder"></a>
-                        <a href="#" aria-label="Instagram" class="social-icon-placeholder"></a>
-                        <a href="#" aria-label="Twitter" class="social-icon-placeholder"></a>
+                        <a href="#" aria-label="Share on LinkedIn" class="social-icon-link">
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <circle cx="18" cy="5" r="3" />
+                                <circle cx="6" cy="12" r="3" />
+                                <circle cx="18" cy="19" r="3" />
+                                <path d="M8.7 10.7l6.6-3.4M8.7 13.3l6.6 3.4" />
+                            </svg>
+                        </a>
+                        <a href="#" aria-label="Follow us on Instagram" class="social-icon-link">
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <rect x="5" y="5" width="14" height="14" rx="4" />
+                                <circle cx="12" cy="12" r="3" />
+                                <path d="M16.5 7.5h.1" />
+                            </svg>
+                        </a>
+                        <a href="#" aria-label="Email us" class="social-icon-link">
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <rect x="4" y="6" width="16" height="12" rx="2" />
+                                <path d="M5 8l7 5 7-5" />
+                            </svg>
+                        </a>
                     </div>
                 </div>
             </aside>
@@ -180,15 +221,24 @@ function field_error(string $field, array $errors): string
 
         <section class="contact-map" aria-label="Office location map">
             <div class="map-placeholder">
-                <span class="material-symbols-outlined map-icon">map</span>
-                <span class="map-label">Interactive Map View</span>
+                <div class="map-content">
+                    <span class="material-symbols-outlined map-icon">map</span>
+                    <span class="map-address">123, Main Street, Negombo, Sri Lanka</span>
+                    <a href="#" class="map-link" target="_blank" rel="noopener noreferrer">
+                        <span class="material-symbols-outlined" aria-hidden="true">open_in_new</span>
+                        View on Google Maps
+                    </a>
+                </div>
             </div>
         </section>
 
         <section class="faq-teaser" aria-labelledby="faq-title">
             <h3 id="faq-title">Have questions? Check out our help center</h3>
             <p>Find quick answers to common questions about bookings, cancellations, and travel requirements.</p>
-            <a href="#" class="faq-btn">Visit Help Center</a>
+            <a href="#" class="faq-btn">
+                <span class="material-symbols-outlined" aria-hidden="true">help</span>
+                Visit Help Center
+            </a>
         </section>
     </main>
 

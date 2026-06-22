@@ -120,6 +120,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ]);
 
         $_SESSION['user_name'] = $fields['full_name'];
+        $_SESSION['user_profile_photo'] = $profilePhoto;
         $success = 'Profile updated successfully.';
     }
 }

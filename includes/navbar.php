@@ -12,6 +12,7 @@
 
     <ul class="nav-links">
         <li><a href="<?php echo $basePath; ?>index.php#home">Home</a></li>
+        <li><a href="<?php echo $basePath; ?>pages/destinations.php">Destinations</a></li>
         <li><a href="<?php echo $basePath; ?>pages/packages.php">Packages</a></li>
 <li><a href="<?php echo $basePath; ?>pages/guides.php">Guides</a></li>
         <li><a href="<?php echo $basePath; ?>pages/accommodations.php">Accommodations</a></li>
@@ -32,15 +33,28 @@
                     }
                     if ($udInitials === '') $udInitials = 'U';
                     $udEmail = htmlspecialchars($_SESSION['user_email'] ?? '', ENT_QUOTES, 'UTF-8');
+                    $udPhoto = htmlspecialchars($_SESSION['user_profile_photo'] ?? '', ENT_QUOTES, 'UTF-8');
                 ?>
                 <div class="user-profile-trigger" id="profileTrigger" role="button" tabindex="0" aria-haspopup="true" aria-expanded="false" aria-label="User menu">
-                    <div class="user-avatar"><?php echo $udInitials; ?></div>
-                    <span class="user-name-label"><?php echo $udName; ?></span>
+                    <div class="user-avatar">
+                        <?php if ($udPhoto): ?>
+                            <img src="<?php echo $basePath . $udPhoto; ?>" alt="Profile photo">
+                        <?php else: ?>
+                            <?php echo $udInitials; ?>
+                        <?php endif; ?>
+                    </div>
+                    <!-- <span class="user-name-label"><?php echo $udName; ?></span> -->
                     <span class="material-symbols-outlined trigger-chevron">expand_more</span>
 
                     <div class="profile-dropdown" id="profileDropdown" role="menu">
                         <div class="dropdown-user-info">
-                            <div class="dropdown-user-avatar"><?php echo $udInitials; ?></div>
+                            <div class="dropdown-user-avatar">
+                                <?php if ($udPhoto): ?>
+                                    <img src="<?php echo $basePath . $udPhoto; ?>" alt="Profile photo">
+                                <?php else: ?>
+                                    <?php echo $udInitials; ?>
+                                <?php endif; ?>
+                            </div>
                             <div class="dropdown-user-details">
                                 <p class="dropdown-user-name"><?php echo $udName; ?></p>
                                 <?php if ($udEmail !== ''): ?>

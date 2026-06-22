@@ -269,8 +269,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 datasets: [{
                     label: 'Revenue (Rs.)',
                     data: revenueValues,
-                    backgroundColor: '#000000',
-                    borderColor: '#000000',
+                    backgroundColor: '#264653',
+                    borderColor: '#264653',
                     borderWidth: 1
                 }]
             },
@@ -295,7 +295,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 labels: bookingLabels.map(function(l) { return l.charAt(0).toUpperCase() + l.slice(1); }),
                 datasets: [{
                     data: bookingValues,
-                    backgroundColor: ['#c77c00', '#123d35', '#ba1a1a'],
+                    backgroundColor: ['#f4a261', '#264653', '#ba1a1a'],
                     borderWidth: 0
                 }]
             },
@@ -318,12 +318,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 datasets: [{
                     label: 'New Users',
                     data: userValues,
-                    borderColor: '#000000',
-                    backgroundColor: 'rgba(0,0,0,0.05)',
+                    borderColor: '#264653',
+                    backgroundColor: 'rgba(38,70,83,0.05)',
                     fill: true,
                     tension: 0.3,
                     pointRadius: 4,
-                    pointBackgroundColor: '#000000'
+                    pointBackgroundColor: '#264653'
                 }]
             },
             options: {

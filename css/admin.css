@@ -3,7 +3,7 @@
    ============================================ */
 
 :root {
-    --adm-primary: #000000;
+    --adm-primary: #264653;
     --adm-on-primary: #ffffff;
     --adm-surface: #f5f7fa;
     --adm-surface-bright: #f9f9f9;
@@ -11,7 +11,7 @@
     --adm-surface-container-high: #e8e8e8;
     --adm-surface-container-low: #f3f3f4;
     --adm-surface-container-lowest: #ffffff;
-    --adm-on-surface: #1a1c1c;
+    --adm-on-surface: #264653;
     --adm-on-surface-variant: #5e5e5e;
     --adm-secondary: #5e5e5e;
     --adm-outline: #747878;
@@ -19,12 +19,12 @@
     --adm-error: #ba1a1a;
     --adm-error-container: #ffdad6;
     --adm-success-bg: #dfe9df;
-    --adm-success-border: rgba(18, 61, 53, 0.28);
-    --adm-success-text: #123d35;
-    --adm-warning: #c77c00;
+    --adm-success-border: rgba(38, 70, 83, 0.28);
+    --adm-success-text: #264653;
+    --adm-warning: #f4a261;
     --adm-warning-bg: #fff3e0;
-    --adm-info: #0066cc;
-    --adm-info-bg: #e3f2fd;
+    --adm-info: #e76f51;
+    --adm-info-bg: #fde8e3;
     --adm-sidebar-width: 260px;
     --adm-sidebar-collapsed: 0px;
     --adm-topbar-height: 64px;
@@ -587,9 +587,9 @@ a { color: inherit; text-decoration: none; }
 .adm-status-review { border-color: var(--adm-info); color: var(--adm-info); background: transparent; }
 .adm-status-resolved { border-color: var(--adm-outline-variant); color: var(--adm-secondary); background: var(--adm-surface-container-low); }
 .adm-status-pending { border-color: var(--adm-warning); color: var(--adm-warning); background: var(--adm-warning-bg); }
-.adm-status-confirmed { border-color: #123d35; color: #123d35; background: var(--adm-success-bg); }
+.adm-status-confirmed { border-color: #264653; color: #264653; background: var(--adm-success-bg); }
 .adm-status-cancelled { border-color: var(--adm-error); color: var(--adm-error); background: var(--adm-error-container); }
-.adm-status-active { border-color: #123d35; color: #123d35; background: var(--adm-success-bg); }
+.adm-status-active { border-color: #264653; color: #264653; background: var(--adm-success-bg); }
 .adm-status-inactive { border-color: var(--adm-outline-variant); color: var(--adm-secondary); background: var(--adm-surface-container-low); }
 .adm-status-completed { border-color: var(--adm-info); color: var(--adm-info); background: var(--adm-info-bg); }
 .adm-status-reviewed { border-color: var(--adm-warning); color: var(--adm-warning); background: var(--adm-warning-bg); }

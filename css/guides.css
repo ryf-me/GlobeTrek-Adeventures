@@ -1,13 +1,13 @@
 :root {
-    --guide-ink: #151515;
+    --guide-ink: #264653;
     --guide-muted: #68645d;
     --guide-paper: #f5f7fa;
     --guide-panel: #ffffff;
     --guide-line: #d8d2c5;
     --guide-field: #f4f0e7;
-    --guide-accent: #0f5b4d;
-    --guide-accent-dark: #093a31;
-    --guide-sun: #d99535;
+    --guide-accent: #e76f51;
+    --guide-accent-dark: #264653;
+    --guide-sun: #e9c46a;
     --guide-shadow: 0 18px 45px rgba(35, 30, 20, 0.08);
 }
 
@@ -325,8 +325,8 @@
 .featured-guide {
     margin-bottom: 4rem;
     padding: clamp(1.2rem, 3vw, 2.2rem);
-    background: #e9e0d0;
-    border: 1px solid #cfc1a9;
+    background: #f5e6d8;
+    border: 1px solid #e0c9b0;
     display: grid;
     grid-template-columns: minmax(230px, 0.42fr) 1fr;
     gap: clamp(1.5rem, 4vw, 3rem);
@@ -336,7 +336,7 @@
 
 .featured-guide::after {
     content: "";
-    border: 1px solid rgba(15, 91, 77, 0.35);
+    border: 1px solid rgba(231, 111, 81, 0.35);
     position: absolute;
     inset: 0.7rem;
     pointer-events: none;
@@ -381,7 +381,7 @@
 
 .featured-content p:not(.badge):not(.featured-specialty) {
     max-width: 710px;
-    color: #4e473c;
+    color: #264653;
     font-size: 1.05rem;
 }
 
@@ -396,14 +396,14 @@
     margin-bottom: 4.75rem;
     padding: clamp(2rem, 6vw, 4.5rem) 2rem;
     background:
-        linear-gradient(135deg, rgba(15, 91, 77, 0.92), rgba(9, 58, 49, 0.95)),
+        linear-gradient(135deg, rgba(38, 70, 83, 0.92), rgba(26, 58, 74, 0.95)),
         url("https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1400&h=650&fit=crop") center/cover;
     color: #fff;
     text-align: center;
 }
 
 .join-guides .eyebrow {
-    color: #f8ce8d;
+    color: #e9c46a;
 }
 
 .join-guides h2 {

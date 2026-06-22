@@ -321,7 +321,7 @@ function field_error(string $field, array $errors): string
                         </div>
 
                         <div id="paypal-fields" <?= $fields['paymentMethod'] === 'credit_card' ? 'style="display:none"' : '' ?>>
-                            <div class="form-alert success" style="background: rgba(14, 58, 50, 0.06); border-color: rgba(14, 58, 50, 0.18); color: var(--ink);">
+                            <div class="form-alert success" style="background: rgba(231, 111, 81, 0.06); border-color: rgba(231, 111, 81, 0.18); color: var(--ink);">
                                 You will be redirected to PayPal to complete your payment after clicking "Complete Payment".
                             </div>
                         </div>

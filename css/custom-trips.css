@@ -3,14 +3,14 @@
    ============================================ */
 
 :root {
-    --ct-primary: #000000;
+    --ct-primary: #264653;
     --ct-on-primary: #ffffff;
     --ct-surface: #f5f7fa;
     --ct-surface-bright: #f9f9f9;
     --ct-surface-container: #eeeeee;
     --ct-surface-container-low: #f3f3f4;
     --ct-surface-container-lowest: #ffffff;
-    --ct-on-surface: #1a1c1c;
+    --ct-on-surface: #264653;
     --ct-on-surface-variant: #5e5e5e;
     --ct-secondary: #5e5e5e;
     --ct-outline: #747878;
@@ -18,8 +18,8 @@
     --ct-error: #ba1a1a;
     --ct-error-container: #ffdad6;
     --ct-success-bg: #dfe9df;
-    --ct-success-border: rgba(18, 61, 53, 0.28);
-    --ct-success-text: #123d35;
+    --ct-success-border: rgba(38, 70, 83, 0.28);
+    --ct-success-text: #264653;
 }
 
 .custom-trips-page {

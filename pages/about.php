@@ -17,7 +17,8 @@
 
     <main>
         <section class="about-hero" aria-labelledby="about-title">
-            <div class="about-hero-inner">
+            <img class="about-hero-bg" src="https://images.unsplash.com/photo-1654561773591-57b9413c45c0?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="">
+            <div class="about-hero-content">
                 <h1 id="about-title">Our Story</h1>
                 <p class="about-hero-subtitle">
                     We believe travel is more than just visiting places; it's about connecting with the world,
@@ -100,14 +101,24 @@
 
         <section class="team-section" aria-labelledby="team-title">
             <div class="team-inner">
-                <h2 id="team-title">Meet The Team</h2><br>
+                <h2 id="team-title">Meet The Team</h2>
+                <p class="team-intro">The passionate people behind GlobeTrek Adventures — dedicated to crafting unforgettable journeys around the world.</p>
                 <div class="team-grid">
                     <article class="team-member">
                         <div class="team-photo">
                             <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=400&fit=crop&crop=face" alt="Sarah Jenkins portrait">
                         </div>
                         <h3>Sarah Jenkins</h3>
-                        <p>Founder &amp; CEO</p>
+                        <p class="team-role">Founder &amp; CEO</p>
+                        <p class="team-bio">With over 15 years in the travel industry, Sarah's vision drives GlobeTrek's mission to deliver authentic, sustainable adventures worldwide.</p>
+                        <div class="team-socials" aria-label="Sarah Jenkins social links">
+                            <a href="#" aria-label="Sarah Jenkins on LinkedIn">
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.7 10.7l6.6-3.4M8.7 13.3l6.6 3.4"/></svg>
+                            </a>
+                            <a href="#" aria-label="Sarah Jenkins on Twitter">
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"/></svg>
+                            </a>
+                        </div>
                     </article>
 
                     <article class="team-member">
@@ -115,7 +126,16 @@
                             <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=face" alt="Marcus Vance portrait">
                         </div>
                         <h3>Marcus Vance</h3>
-                        <p>Head of Expeditions</p>
+                        <p class="team-role">Head of Expeditions</p>
+                        <p class="team-bio">A seasoned explorer who has led over 200 expeditions across six continents, Marcus ensures every journey exceeds expectations.</p>
+                        <div class="team-socials" aria-label="Marcus Vance social links">
+                            <a href="#" aria-label="Marcus Vance on LinkedIn">
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.7 10.7l6.6-3.4M8.7 13.3l6.6 3.4"/></svg>
+                            </a>
+                            <a href="#" aria-label="Marcus Vance on Twitter">
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"/></svg>
+                            </a>
+                        </div>
                     </article>
 
                     <article class="team-member">
@@ -123,7 +143,16 @@
                             <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop&crop=face" alt="Elena Rodriguez portrait">
                         </div>
                         <h3>Elena Rodriguez</h3>
-                        <p>Chief Sustainability Officer</p>
+                        <p class="team-role">Chief Sustainability Officer</p>
+                        <p class="team-bio">Elena leads our eco-initiatives, partnering with local communities to ensure every trip leaves a positive impact on the planet.</p>
+                        <div class="team-socials" aria-label="Elena Rodriguez social links">
+                            <a href="#" aria-label="Elena Rodriguez on LinkedIn">
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.7 10.7l6.6-3.4M8.7 13.3l6.6 3.4"/></svg>
+                            </a>
+                            <a href="#" aria-label="Elena Rodriguez on Twitter">
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"/></svg>
+                            </a>
+                        </div>
                     </article>
 
                     <article class="team-member">
@@ -131,13 +160,22 @@
                             <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=400&fit=crop&crop=face" alt="David Chen portrait">
                         </div>
                         <h3>David Chen</h3>
-                        <p>Lead Destination Guide</p>
+                        <p class="team-role">Lead Destination Guide</p>
+                        <p class="team-bio">A multilingual travel expert with deep local knowledge, David curates the immersive cultural experiences GlobeTrek is known for.</p>
+                        <div class="team-socials" aria-label="David Chen social links">
+                            <a href="#" aria-label="David Chen on LinkedIn">
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.7 10.7l6.6-3.4M8.7 13.3l6.6 3.4"/></svg>
+                            </a>
+                            <a href="#" aria-label="David Chen on Twitter">
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"/></svg>
+                            </a>
+                        </div>
                     </article>
                 </div>
             </div>
         </section>
 
-        <br>>
+        <br>
 
         <section class="about-cta" aria-labelledby="cta-title">
             <h2 id="cta-title">Work With Us</h2>

@@ -38,12 +38,12 @@ $pdfContent = '<!DOCTYPE html>
 <meta charset="UTF-8">
 <style>
 body { font-family: Arial, sans-serif; margin: 20px; color: #333; }
-h1 { color: #000; font-size: 22px; border-bottom: 2px solid #000; padding-bottom: 8px; }
+h1 { color: #264653; font-size: 22px; border-bottom: 2px solid #264653; padding-bottom: 8px; }
 h2 { color: #333; font-size: 16px; margin-top: 20px; }
 .summary { background: #f5f7fa; padding: 15px; border-radius: 6px; margin-bottom: 20px; }
 .summary p { margin: 5px 0; font-size: 13px; }
 table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 11px; }
-th { background: #000; color: #fff; padding: 8px 6px; text-align: left; }
+th { background: #264653; color: #fff; padding: 8px 6px; text-align: left; }
 td { padding: 6px; border-bottom: 1px solid #ddd; }
 tr:nth-child(even) { background: #f9f9f9; }
 .footer { margin-top: 20px; font-size: 10px; color: #666; text-align: center; }
