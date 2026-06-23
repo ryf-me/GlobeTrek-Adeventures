@@ -23,8 +23,11 @@ $destinations = $stmt->fetchAll();
     <?php $basePath = '../'; include '../includes/navbar.php'; ?>
 
     <div class="dest-hero">
-        <h1>Explore Sri Lanka</h1>
-        <p>Discover the beauty, culture, and adventure that await you across the island paradise.</p>
+        <img class="dest-hero-bg" src="https://images.pexels.com/photos/33190726/pexels-photo-33190726.jpeg" alt="Sri Lanka scenic view" />
+        <div class="dest-hero-content">
+            <h1>Explore Sri Lanka</h1>
+            <p>Discover the beauty, culture, and adventure that await you across the island paradise.</p>
+        </div>
     </div>
 
     <div class="page-container">

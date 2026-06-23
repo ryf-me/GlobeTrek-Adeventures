@@ -73,8 +73,8 @@
 }
 .signup-btn {
     margin-left: -0.75rem;
-    border: 2px solid #264653;
-    background: #264653;
+    border: 2px solid #000000;
+    background: #e68f70;
     color: #fff;
 }
 .navbar .nav-links a.login-btn {

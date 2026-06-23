@@ -218,9 +218,8 @@ section h2 {
     max-width: none;
     margin-left: calc(-50vw + 50%);
     margin-right: calc(-50vw + 50%);
-    background: #f5f7fa;
-    padding-top: 0;
-    padding-bottom: 0;
+    background: #fff;
+    padding:2rem 0;
     text-align: center;
     overflow: hidden;
     box-sizing: border-box;
@@ -229,7 +228,7 @@ section h2 {
     font-size: 1.2rem;
     font-weight: 700;
     color: #264653;
-    margin-bottom: 1.2rem;
+    margin-bottom: 1.2rem 1.5rem;
 }
 .marquee-container {
     overflow: hidden;
@@ -246,8 +245,8 @@ section h2 {
 }
 .partner-logo {
     flex-shrink: 0;
-    height: 30px;
-    width: 100px;
+    height: 50px;
+    width: 150px;
     opacity: 0.5;
     transition: opacity 0.3s ease;
     filter: grayscale(100%);
@@ -256,9 +255,10 @@ section h2 {
     opacity: 1;
     filter: grayscale(0%);
 }
-.partner-logo svg {
+.partner-logo img {
     width: 100%;
     height: 100%;
+    object-fit: contain;
 }
 @keyframes marquee {
     0% {
@@ -536,7 +536,7 @@ section h2 {
 /* Custom Trip CTA Section */
 .custom-trip-cta {
     max-width: none;
-    background: #e76f51;
+    background: #264653;
     padding: 4.5rem 2rem;
     text-align: center;
 }
@@ -559,7 +559,7 @@ section h2 {
 .custom-trip-cta .cta-btn {
     display: inline-block;
     background: #fff;
-    color: #e76f51;
+    color: #264653;
     padding: 0.85rem 2rem;
     text-decoration: none;
     font-size: 1rem;

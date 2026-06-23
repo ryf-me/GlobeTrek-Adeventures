@@ -32,6 +32,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['newsletter_email'])) 
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
 <!-- Footer Section-->
     <footer class="site-footer">
+        <video class="footer-bg" autoplay muted loop playsinline>
+            <source src="<?php echo $basePath; ?>Videos/sl-flag.mp4" type="video/mp4" />
+        </video>
+       <!-- <img class="footer-bg" src="https://images.pexels.com/photos/12650103/pexels-photo-12650103.jpeg" alt="" /> -->
         <div class="footer-main">
             <div class="footer-brand">
                 <div class="footer-logo">
@@ -88,14 +92,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['newsletter_email'])) 
                             <path d="M8.7 10.7l6.6-3.4M8.7 13.3l6.6 3.4" />
                         </svg>
                     </a>
-                    <a href="#" aria-label="Follow GlobeTrek on Instagram">
+                    <a href="https://www.instagram.com/" aria-label="Follow GlobeTrek on Instagram" target="_blank"?>
                         <svg viewBox="0 0 24 24" aria-hidden="true">
                             <rect x="5" y="5" width="14" height="14" rx="4" />
                             <circle cx="12" cy="12" r="3" />
                             <path d="M16.5 7.5h.1" />
                         </svg>
                     </a>
-                    <a href="#" aria-label="Email GlobeTrek">
+                    <a href="mailto:info@globetrek.com" aria-label="Email GlobeTrek" target="_blank">
                         <svg viewBox="0 0 24 24" aria-hidden="true">
                             <rect x="4" y="6" width="16" height="12" rx="2" />
                             <path d="M5 8l7 5 7-5" />

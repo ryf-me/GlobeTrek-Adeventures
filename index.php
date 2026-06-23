@@ -158,50 +158,31 @@ $stats = [
         </div>
     </section>
 
-    <!-- Benefits Section -->
-    <section id="about" class="benefits" aria-label="Why travelers book with Globe Trek Adventures">
-        <div class="benefits-grid">
-            <div class="benefit-item">
-                <svg class="benefit-icon" viewBox="0 0 48 48" aria-hidden="true">
-                    <path d="M24 4l4.2 3.6 5.5-1 2.1 5.2 5.2 2.1-1 5.5 3.6 4.2-3.6 4.2 1 5.5-5.2 2.1-2.1 5.2-5.5-1L24 44l-4.2-3.6-5.5 1-2.1-5.2L7 34.1l1-5.5L4.4 24 8 19.8 7 14.3l5.2-2.1 2.1-5.2 5.5 1L24 4z" />
-                    <path d="M16 24.5l5 5L32.5 18" />
-                </svg>
-                <h3>Best Price Guarantee</h3>
-                <p>We offer the best prices for amazing trips</p>
-            </div>
-            <div class="benefit-item">
-                <svg class="benefit-icon" viewBox="0 0 48 48" aria-hidden="true">
-                    <path d="M10 28v-6a14 14 0 0 1 28 0v6" />
-                    <path d="M10 26h6v12h-4a2 2 0 0 1-2-2V26z" />
-                    <path d="M32 26h6v10a2 2 0 0 1-2 2h-4V26z" />
-                    <path d="M20 38h5a7 7 0 0 0 7-7" />
-                    <path d="M17 20h.1" />
-                    <path d="M31 20h.1" />
-                    <path d="M20 27a7 7 0 0 0 8 0" />
-                </svg>
-                <h3>24/7 Support</h3>
-                <p>We are here to help you anytime</p>
-            </div>
-            <div class="benefit-item">
-                <svg class="benefit-icon" viewBox="0 0 48 48" aria-hidden="true">
-                    <rect x="12" y="20" width="24" height="20" rx="3" />
-                    <path d="M18 20v-6a6 6 0 0 1 12 0v6" />
-                    <path d="M24 29v4" />
-                    <circle cx="24" cy="28" r="2" />
-                </svg>
-                <h3>Secure Booking</h3>
-                <p>Book with confidence using secure payments</p>
-            </div>
-            <div class="benefit-item">
-                <svg class="benefit-icon" viewBox="0 0 48 48" aria-hidden="true">
-                    <path d="M15 22v18H8V22h7z" />
-                    <path d="M15 38h20.4a4 4 0 0 0 3.8-2.8l4-12A4 4 0 0 0 39.4 18H29l1.4-7.2A4 4 0 0 0 26.5 6H25L15 21.8V38z" />
-                </svg>
-                <h3>Trusted by Travelers</h3>
-                <p>Thousands of happy customers</p>
+    <!-- Trusted Partners Section -->
+    <section class="trusted-partners" aria-label="Trusted Partners">
+        <h2>Trusted Partners</h2>
+        <div class="marquee-container">
+            <div class="marquee-track">
+                <div class="partner-logo"><img src="images/partners/aitken.png" alt="aitken spence travels"></div>
+                <div class="partner-logo"><img src="images/partners/cylonroots.png" alt="ceylon roots"></div>
+                <div class="partner-logo"><img src="images/partners/jetwing.png" alt="jetwing travels"></div>
+                <div class="partner-logo"><img src="images/partners/replendent.png" alt="resplendent ceylon"></div>
+                <div class="partner-logo"><img src="images/partners/walkertours.png" alt="walkers tours"></div>
+                <div class="partner-logo"><img src="images/partners/blt.png" alt="blue lanka tours"></div>
+                <div class="partner-logo"><img src="images/partners/TR.png" alt="tourradar"></div>
+                <div class="partner-logo"><img src="images/partners/cylonex.png" alt="ceylon expeditions"></div>
+                <div class="partner-logo"><img src="images/partners/aitken.png" alt="aitken spence travels"></div>
+                <div class="partner-logo"><img src="images/partners/cylonroots.png" alt="ceylon roots"></div>
+                <div class="partner-logo"><img src="images/partners/jetwing.png" alt="jetwing travels"></div>
+                <div class="partner-logo"><img src="images/partners/replendent.png" alt="resplendent ceylon"></div>
+                <div class="partner-logo"><img src="images/partners/walkertours.png" alt="walkers tours"></div>
+                <div class="partner-logo"><img src="images/partners/blt.png" alt="blue lanka tours"></div>
+                <div class="partner-logo"><img src="images/partners/TR.png" alt="tourradar"></div>
+                <div class="partner-logo"><img src="images/partners/cylonex.png" alt="ceylon expeditions"></div>
             </div>
         </div>
     </section>
+    
 
     <!-- Custom Trip CTA Section -->
     <section class="custom-trip-cta">
