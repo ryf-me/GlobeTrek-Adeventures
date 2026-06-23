@@ -212,46 +212,61 @@ section h2 {
     line-height: 1.05;
 }
 
-/* Benefits */
-.benefits {
+/* Trusted Partners Marquee */
+.trusted-partners {
+    width: 100vw;
     max-width: none;
-    background: #fff;
-    padding: 4.5rem 2rem;
-}
-.benefits-grid {
-    max-width: 1200px;
-    margin: 0 auto;
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 2rem;
-    align-items: start;
-}
-.benefit-item {
+    margin-left: calc(-50vw + 50%);
+    margin-right: calc(-50vw + 50%);
+    background: #f5f7fa;
+    padding-top: 0;
+    padding-bottom: 0;
     text-align: center;
-    color: #264653;
+    overflow: hidden;
+    box-sizing: border-box;
 }
-.benefit-icon {
-    width: 52px;
-    height: 52px;
-    margin-bottom: 1rem;
-    fill: none;
-    stroke: #000;
-    stroke-width: 4;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-}
-.benefit-item h3 {
-    margin-bottom: 0.35rem;
-    font-size: 1rem;
+.trusted-partners h2 {
+    font-size: 1.2rem;
     font-weight: 700;
-    line-height: 1.25;
+    color: #264653;
+    margin-bottom: 1.2rem;
 }
-.benefit-item p {
-    max-width: 190px;
-    margin: 0 auto;
-    color: #707070;
-    font-size: 0.82rem;
-    line-height: 1.35;
+.marquee-container {
+    overflow: hidden;
+    width: 100%;
+}
+.marquee-track {
+    display: flex;
+    gap: 4rem;
+    width: max-content;
+    animation: marquee 25s linear infinite;
+}
+.marquee-track:hover {
+    animation-play-state: paused;
+}
+.partner-logo {
+    flex-shrink: 0;
+    height: 30px;
+    width: 100px;
+    opacity: 0.5;
+    transition: opacity 0.3s ease;
+    filter: grayscale(100%);
+}
+.partner-logo:hover {
+    opacity: 1;
+    filter: grayscale(0%);
+}
+.partner-logo svg {
+    width: 100%;
+    height: 100%;
+}
+@keyframes marquee {
+    0% {
+        transform: translateX(0);
+    }
+    100% {
+        transform: translateX(-50%);
+    }
 }
 
 .sr-only {
@@ -578,9 +593,17 @@ section h2 {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    .benefits-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        row-gap: 3rem;
+    .trusted-partners h2 {
+        font-size: 1.1rem;
+    }
+
+    .marquee-track {
+        gap: 3rem;
+    }
+
+    .partner-logo {
+        height: 28px;
+        width: 90px;
     }
 
     .footer-main {
@@ -658,12 +681,21 @@ section h2 {
         grid-template-columns: 1fr;
     }
 
-    .benefits {
-        padding: 3.25rem 1.5rem;
+    .trusted-partners {
+        padding: 1.5rem 0;
     }
 
-    .benefits-grid {
-        grid-template-columns: 1fr;
+    .trusted-partners h2 {
+        font-size: 1rem;
+    }
+
+    .marquee-track {
+        gap: 2.5rem;
+    }
+
+    .partner-logo {
+        height: 24px;
+        width: 70px;
     }
 
     .custom-trip-cta {
