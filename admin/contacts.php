@@ -1,9 +1,12 @@
 <?php
 $pageTitle = 'Contact Messages';
 require_once __DIR__ . '/includes/header.php';
-include __DIR__ . '/includes/sidebar.php';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delete') {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !validateCSRFToken($_POST['csrf_token'] ?? null)) {
+    $error = 'Invalid security token. Please try again.';
+}
+
+if (empty($error) && $_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delete') {
     $delId = (int)($_POST['contact_id'] ?? 0);
     if ($delId > 0) {
         $stmt = $db->prepare("DELETE FROM contact_messages WHERE id = :id");
@@ -13,7 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delet
     }
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'mark_read') {
+if (empty($error) && $_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'mark_read') {
     $mid = (int)($_POST['contact_id'] ?? 0);
     if ($mid > 0) {
         $stmt = $db->prepare("UPDATE contact_messages SET is_read = NOT is_read WHERE id = :id");
@@ -22,6 +25,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'mark_
         exit;
     }
 }
+
+include __DIR__ . '/includes/sidebar.php';
 
 $search = trim($_GET['q'] ?? '');
 $where = '';
@@ -121,6 +126,7 @@ $unreadCount = (int)$unreadStmt->fetch()['cnt'];
                                 <td class="cell-muted" style="max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><?= htmlspecialchars(mb_strimwidth($c['message'], 0, 80, '...')) ?></td>
                                 <td>
                                     <form method="post" style="display:inline;">
+                                        <?php csrf_field(); ?>
                                         <input type="hidden" name="action" value="mark_read">
                                         <input type="hidden" name="contact_id" value="<?= $c['id'] ?>">
                                         <button type="submit" class="adm-status-badge <?= $c['is_read'] ? 'adm-status-inactive' : 'adm-status-active' ?>" style="cursor:pointer;border:none;font-family:inherit;">
@@ -132,6 +138,7 @@ $unreadCount = (int)$unreadStmt->fetch()['cnt'];
                                 <td>
                                     <div class="cell-actions">
                                         <form method="post" style="display:inline;" data-confirm="Delete this message?">
+                                            <?php csrf_field(); ?>
                                             <input type="hidden" name="action" value="delete">
                                             <input type="hidden" name="contact_id" value="<?= $c['id'] ?>">
                                             <button type="submit" class="adm-btn-icon adm-btn-icon-danger" title="Delete"><span class="material-symbols-outlined">delete</span></button>

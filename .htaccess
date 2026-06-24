@@ -1,0 +1,8 @@
+# GlobeTrek — Apache configuration
+# Enable mod_rewrite for clean URLs and error document handling
+
+RewriteEngine On
+
+# Custom error documents
+ErrorDocument 404 /globetrek/pages/404.php
+ErrorDocument 500 /globetrek/pages/500.php

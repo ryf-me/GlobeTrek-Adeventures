@@ -7,8 +7,6 @@ if (($_SESSION['user_role'] ?? '') !== 'admin') {
     exit;
 }
 
-include __DIR__ . '/includes/sidebar.php';
-
 $userId = (int)($_GET['id'] ?? 0);
 if ($userId <= 0) { header('Location: users.php'); exit; }
 
@@ -17,10 +15,15 @@ $stmt->execute([':id' => $userId]);
 $user = $stmt->fetch();
 if (!$user) { header('Location: users.php'); exit; }
 
+include __DIR__ . '/includes/sidebar.php';
+
 $errors = [];
 $success = false;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!validateCSRFToken($_POST['csrf_token'] ?? null)) {
+        $errors[] = 'Invalid security token. Please try again.';
+    } else {
     $fullName = trim($_POST['full_name'] ?? '');
     $email = trim($_POST['email'] ?? '');
     $phone = trim($_POST['phone'] ?? '');
@@ -74,6 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
     }
+    }
 }
 ?>
 
@@ -102,6 +106,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="adm-form-card">
             <h2>User Details</h2>
             <form method="post" novalidate>
+                <?php csrf_field(); ?>
                 <div class="adm-form-grid">
                     <div class="adm-form-field">
                         <label for="full_name">Full Name *</label>

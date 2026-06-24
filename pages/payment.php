@@ -1,4 +1,12 @@
 <?php
+/**
+ * Payment Page (Step 4 — Final)
+ *
+ * Processes simulated credit card and PayPal payments. Validates card
+ * details, generates transaction ID, updates booking to 'confirmed',
+ * and creates a payment record. Includes CSRF protection.
+ * Requires user to be logged in.
+ */
 session_start();
 
 if (!isset($_SESSION['user_id'])) {
@@ -8,6 +16,7 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../config/csrf.php';
 $db = getDB();
 
 $bookingRef = isset($_GET['ref']) ? trim($_GET['ref']) : ($_SESSION['payment_booking_ref'] ?? '');
@@ -55,6 +64,11 @@ $submitted = false;
 $paymentSuccess = false;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // CSRF validation
+    if (!validateCSRFToken($_POST['csrf_token'] ?? null)) {
+        $errors['general'] = 'Invalid security token. Please try again.';
+    }
+
     foreach ($fields as $key => $value) {
         $fields[$key] = trim($_POST[$key] ?? '');
     }
@@ -257,6 +271,7 @@ function field_error(string $field, array $errors): string
                     <?php endif; ?>
 
                     <form id="payment-form" class="payment-form" method="post" action="payment.php?ref=<?= htmlspecialchars($booking['booking_reference']) ?>" novalidate>
+                        <?php csrf_field(); ?>
                         <div class="payment-tabs" role="tablist">
                             <button type="button" class="payment-tab <?= $fields['paymentMethod'] === 'credit_card' ? 'active' : '' ?>" role="tab" data-method="credit_card" aria-selected="<?= $fields['paymentMethod'] === 'credit_card' ? 'true' : 'false' ?>">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

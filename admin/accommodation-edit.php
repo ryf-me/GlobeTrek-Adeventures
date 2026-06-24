@@ -1,7 +1,6 @@
 <?php
 $pageTitle = 'Edit Accommodation';
 require_once __DIR__ . '/includes/header.php';
-include __DIR__ . '/includes/sidebar.php';
 
 $accomId = (int)($_GET['id'] ?? 0);
 $isEdit = $accomId > 0;
@@ -17,6 +16,9 @@ if ($isEdit) {
 $errors = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!validateCSRFToken($_POST['csrf_token'] ?? null)) {
+        $errors[] = 'Invalid security token. Please try again.';
+    } else {
     $name = trim($_POST['name'] ?? '');
     $description = trim($_POST['description'] ?? '');
     $shortDescription = trim($_POST['short_description'] ?? '');
@@ -73,7 +75,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         header('Location: accommodations.php?saved=1');
         exit;
     }
+    }
 }
+
+include __DIR__ . '/includes/sidebar.php';
 
 if (!$accom) {
     $accom = ['name'=>'','description'=>'','short_description'=>'','location'=>'','property_type'=>'Hotel','price_per_night'=>0,'rating'=>0,'image'=>'','has_wifi'=>0,'has_pool'=>0,'has_spa'=>0,'has_restaurant'=>0,'has_fitness'=>0,'provider_name'=>'','provider_email'=>'','provider_phone'=>'','is_featured'=>0,'is_active'=>1];
@@ -100,6 +105,7 @@ if (!$accom) {
         <?php endforeach; ?>
 
         <form method="post" enctype="multipart/form-data" novalidate>
+            <?php csrf_field(); ?>
             <div class="adm-form-card">
                 <h2>Accommodation Details</h2>
                 <div class="adm-form-grid">

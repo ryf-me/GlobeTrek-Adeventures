@@ -1,6 +1,14 @@
 <?php
 session_start();
+
+if (!isset($_SESSION['user_id'])) {
+    header('Location: login.php');
+    exit;
+}
+
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../config/csrf.php';
+require_once __DIR__ . '/../config/rate-limiter.php';
 $db = getDB();
 
 $fields = [
@@ -18,15 +26,26 @@ $errors = [];
 $submitted = false;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $fields['destination'] = trim($_POST['destination'] ?? '');
-    $fields['duration'] = trim($_POST['duration'] ?? '');
-    $fields['travelers'] = trim($_POST['travelers'] ?? '');
-    $fields['dates'] = trim($_POST['dates'] ?? '');
-    $fields['style'] = trim($_POST['style'] ?? '');
-    $fields['interests'] = $_POST['interests'] ?? [];
-    $fields['name'] = trim($_POST['name'] ?? '');
-    $fields['email'] = trim($_POST['email'] ?? '');
-    $fields['details'] = trim($_POST['details'] ?? '');
+    // CSRF validation
+    if (!validateCSRFToken($_POST['csrf_token'] ?? null)) {
+        $errors['general'] = 'Invalid security token. Please try again.';
+    }
+
+    // Rate limiting — max 5 custom trip requests per hour
+    if (empty($errors) && !checkRateLimit('custom_trips', 5, 3600, false)) {
+        $errors['general'] = 'Too many requests. Please try again later.';
+    }
+
+    if (empty($errors)) {
+        $fields['destination'] = trim($_POST['destination'] ?? '');
+        $fields['duration'] = trim($_POST['duration'] ?? '');
+        $fields['travelers'] = trim($_POST['travelers'] ?? '');
+        $fields['dates'] = trim($_POST['dates'] ?? '');
+        $fields['style'] = trim($_POST['style'] ?? '');
+        $fields['interests'] = $_POST['interests'] ?? [];
+        $fields['name'] = trim($_POST['name'] ?? '');
+        $fields['email'] = trim($_POST['email'] ?? '');
+        $fields['details'] = trim($_POST['details'] ?? '');
 
     if ($fields['destination'] === '') {
         $errors['destination'] = 'Please enter a destination.';
@@ -45,7 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif (!filter_var($fields['email'], FILTER_VALIDATE_EMAIL)) {
         $errors['email'] = 'Please enter a valid email address.';
     }
-
+}
     $submitted = empty($errors);
 
     if ($submitted) {
@@ -64,7 +83,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ':interests' => !empty($fields['interests']) ? json_encode($fields['interests']) : null,
             ':details' => $fields['details'] ?: null,
         ]);
-        $fields = array_fill_keys(array_keys($fields), []);
+        $fields = array_fill_keys(array_keys($fields), '');
         $fields['interests'] = [];
     }
 }
@@ -133,6 +152,7 @@ function style_selected(string $value, string $current): string
                     <?php endif; ?>
 
                     <form class="ct-form" method="post" action="custom-trips.php" novalidate>
+                        <?php csrf_field(); ?>
                         <!-- Trip Basics -->
                         <fieldset class="ct-fieldset">
                             <legend class="ct-fieldset-legend">

@@ -8,10 +8,12 @@ if (($_SESSION['user_role'] ?? '') !== 'admin') {
     exit;
 }
 
-include __DIR__ . '/includes/sidebar.php';
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !validateCSRFToken($_POST['csrf_token'] ?? null)) {
+    $error = 'Invalid security token. Please try again.';
+}
 
 // Handle delete
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delete') {
+if (empty($error) && $_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delete') {
     $delId = (int)($_POST['user_id'] ?? 0);
     if ($delId > 0 && $delId !== $_SESSION['user_id']) {
         $stmt = $db->prepare("DELETE FROM users WHERE id = :id");
@@ -23,7 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delet
 }
 
 // Handle role toggle
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'toggle_role') {
+if (empty($error) && $_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'toggle_role') {
     $rid = (int)($_POST['user_id'] ?? 0);
     $newRole = $_POST['new_role'] ?? '';
     if ($rid > 0 && in_array($newRole, ['user', 'staff', 'admin'])) {
@@ -34,6 +36,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'toggl
         exit;
     }
 }
+
+include __DIR__ . '/includes/sidebar.php';
 
 $filter = $_GET['filter'] ?? 'all';
 $where = '';
@@ -130,6 +134,7 @@ $users = $stmt->fetchAll();
                                     <div class="cell-actions">
                                         <a href="user-edit.php?id=<?= $u['id'] ?>" class="adm-btn-icon" title="Edit"><span class="material-symbols-outlined">edit</span></a>
                                         <form method="post" style="display:inline;" data-confirm="Change this user's role?">
+                                            <?php csrf_field(); ?>
                                             <input type="hidden" name="action" value="toggle_role">
                                             <input type="hidden" name="user_id" value="<?= $u['id'] ?>">
                                             <?php
@@ -157,6 +162,7 @@ $users = $stmt->fetchAll();
                                         </form>
                                         <?php if ($u['id'] !== $_SESSION['user_id']): ?>
                                             <form method="post" style="display:inline;" data-confirm="Delete this user permanently?">
+                                                <?php csrf_field(); ?>
                                                 <input type="hidden" name="action" value="delete">
                                                 <input type="hidden" name="user_id" value="<?= $u['id'] ?>">
                                                 <button type="submit" class="adm-btn-icon adm-btn-icon-danger" title="Delete"><span class="material-symbols-outlined">delete</span></button>

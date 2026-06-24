@@ -7,6 +7,7 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../config/csrf.php';
 $db = getDB();
 $userId = $_SESSION['user_id'];
 
@@ -25,6 +26,11 @@ $successMsg = '';
 $errorMsg = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // CSRF validation
+    if (!validateCSRFToken($_POST['csrf_token'] ?? null)) {
+        $errorMsg = 'Invalid security token. Please try again.';
+    }
+
     $action = $_POST['action'] ?? '';
 
     if ($action === 'update_password') {
@@ -134,6 +140,7 @@ $activePage = 'settings';
                             <h3>Security</h3>
                         </div>
                         <form method="post" class="settings-password-stack">
+                            <?php csrf_field(); ?>
                             <input type="hidden" name="action" value="update_password">
                             <p class="settings-subheading">Change Password</p>
                             <div class="settings-form-group">
@@ -163,6 +170,7 @@ $activePage = 'settings';
                             <h3>Notifications</h3>
                         </div>
                         <form method="post">
+                            <?php csrf_field(); ?>
                             <input type="hidden" name="action" value="update_notifications">
                             <div>
                                 <div class="settings-toggle-row">
@@ -209,6 +217,7 @@ $activePage = 'settings';
                             <h3>Account Privacy</h3>
                         </div>
                         <form method="post">
+                            <?php csrf_field(); ?>
                             <input type="hidden" name="action" value="update_privacy">
                             <div>
                                 <label class="settings-checkbox-row">
@@ -232,6 +241,7 @@ $activePage = 'settings';
                             <h3>Danger Zone</h3>
                         </div>
                         <form method="post" onsubmit="return confirm('Are you sure you want to delete your account? This action cannot be undone.');">
+                            <?php csrf_field(); ?>
                             <input type="hidden" name="action" value="delete_account">
                             <div class="settings-danger-row">
                                 <div class="settings-danger-info">

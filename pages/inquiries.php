@@ -7,6 +7,8 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../config/csrf.php';
+require_once __DIR__ . '/../config/rate-limiter.php';
 $db = getDB();
 $userId = $_SESSION['user_id'];
 
@@ -15,6 +17,16 @@ $action = $_POST['action'] ?? '';
 
 // Create new inquiry
 if ($action === 'create_inquiry') {
+    // CSRF validation
+    if (!validateCSRFToken($_POST['csrf_token'] ?? null)) {
+        $errors['general'] = 'Invalid security token. Please try again.';
+    }
+
+    // Rate limiting — max 10 inquiries per hour
+    if (empty($errors) && !checkRateLimit('inquiries', 10, 3600, false)) {
+        $errors['general'] = 'Too many inquiries. Please try again later.';
+    }
+
     $packageId = $_POST['package_id'] ?? '';
     $subject = trim($_POST['subject'] ?? '');
     $message = trim($_POST['message'] ?? '');
@@ -42,6 +54,12 @@ if ($action === 'create_inquiry') {
 
 // Add reply to inquiry
 if ($action === 'add_reply') {
+    // CSRF validation
+    if (!validateCSRFToken($_POST['csrf_token'] ?? null)) {
+        header('Location: inquiries.php?error=token');
+        exit;
+    }
+
     $inquiryId = (int)($_POST['inquiry_id'] ?? 0);
     $replyMsg = trim($_POST['reply_message'] ?? '');
 
@@ -277,6 +295,7 @@ function inq_error(string $field, array $errors): string
                 </button>
             </div>
             <form method="post" action="inquiries.php" novalidate>
+                <?php csrf_field(); ?>
                 <input type="hidden" name="action" value="create_inquiry">
                 <div class="inq-modal-body">
                     <?php if (!empty($errors)): ?>
@@ -379,6 +398,7 @@ function inq_error(string $field, array $errors): string
 
                     <?php if ($viewThread['status'] !== 'resolved'): ?>
                         <form method="post" action="inquiries.php" class="inq-reply-form" novalidate>
+                            <?php csrf_field(); ?>
                             <input type="hidden" name="action" value="add_reply">
                             <input type="hidden" name="inquiry_id" value="<?= $viewThread['id'] ?>">
                             <div class="form-field">

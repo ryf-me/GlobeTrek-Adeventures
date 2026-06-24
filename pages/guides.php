@@ -4,22 +4,22 @@ $db = getDB();
 
 $specialties = [
     'All Specialties',
-    'Mountain Climbing & Hiking',
-    'Cultural Heritage & Photography',
+    'Hill Country & Tea Plantations',
+    'Cultural Heritage & Temples',
     'Wildlife & Safari',
-    'Culinary & Wine Tours',
-    'Urban Exploration & Architecture',
+    'Culinary Tours',
+    'Urban Exploration',
     'Marine & Diving'
 ];
 
 $regions = [
     'All Regions',
-    'Andes',
-    'Himalayas',
-    'Southeast Asia',
-    'Africa',
-    'Europe',
-    'North America'
+    'Central Highlands',
+    'Southern Coast',
+    'Cultural Triangle',
+    'Eastern Province',
+    'Northern Province',
+    'Western Province'
 ];
 
 $searchQuery = trim($_GET['q'] ?? '');
@@ -79,9 +79,9 @@ function e($value)
 
     <main class="guides-shell">
         <section class="guides-hero" aria-labelledby="guides-title">
-            <p class="eyebrow">Local knowledge, global reach</p>
+            <p class="eyebrow">Local knowledge, island-wide reach</p>
             <h1 id="guides-title">Our Expert Guides</h1>
-            <p>Discover the passionate individuals who make our adventures unforgettable. Search by specialty or region to find your perfect local expert.</p>
+            <p>Discover the passionate Sri Lankan individuals who make our adventures unforgettable. Search by specialty or region to find your perfect local expert.</p>
         </section>
 
         <section class="guide-search-panel" aria-label="Find a guide">
@@ -166,7 +166,7 @@ function e($value)
         <section class="join-guides" aria-labelledby="join-title">
             <p class="eyebrow">Join the network</p>
             <h2 id="join-title">Are you an expert explorer?</h2>
-            <p>We are always looking for passionate, knowledgeable, and safety-conscious guides to join our global network. Share your expertise with the world.</p>
+            <p>We are always looking for passionate, knowledgeable, and safety-conscious Sri Lankan guides to join our team. Share your love for this island with the world.</p>
             <a href="#">Join Our Team</a>
         </section>
     </main>

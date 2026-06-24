@@ -1,18 +1,23 @@
 <?php
 $pageTitle = 'Manage Packages';
 require_once __DIR__ . '/includes/header.php';
-include __DIR__ . '/includes/sidebar.php';
 
 // Handle delete
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delete') {
-    $delId = (int)($_POST['package_id'] ?? 0);
-    if ($delId > 0) {
-        $stmt = $db->prepare("DELETE FROM packages WHERE id = :id");
-        $stmt->execute([':id' => $delId]);
-        header('Location: packages.php?deleted=1');
-        exit;
+    if (!validateCSRFToken($_POST['csrf_token'] ?? null)) {
+        $error = 'Invalid security token. Please try again.';
+    } else {
+        $delId = (int)($_POST['package_id'] ?? 0);
+        if ($delId > 0) {
+            $stmt = $db->prepare("DELETE FROM packages WHERE id = :id");
+            $stmt->execute([':id' => $delId]);
+            header('Location: packages.php?deleted=1');
+            exit;
+        }
     }
 }
+
+include __DIR__ . '/includes/sidebar.php';
 
 $filter = $_GET['filter'] ?? 'all';
 $where = '';
@@ -118,6 +123,7 @@ $packages = $stmt->fetchAll();
                                     <div class="cell-actions">
                                         <a href="package-edit.php?id=<?= $p['id'] ?>" class="adm-btn-icon" title="Edit"><span class="material-symbols-outlined">edit</span></a>
                                         <form method="post" style="display:inline;" data-confirm="Delete this package permanently?">
+                                            <?php csrf_field(); ?>
                                             <input type="hidden" name="action" value="delete">
                                             <input type="hidden" name="package_id" value="<?= $p['id'] ?>">
                                             <button type="submit" class="adm-btn-icon adm-btn-icon-danger" title="Delete"><span class="material-symbols-outlined">delete</span></button>

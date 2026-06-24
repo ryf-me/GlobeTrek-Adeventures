@@ -61,11 +61,11 @@ $stmt->execute($params);
 $packages = $stmt->fetchAll();
 
 $destinationsList = [
-    'Beaches & Coastal Getaways',
-    'Cultural & Historical Sites',
-    'Hill Country & Nature',
-    'Wildlife & National Parks',
-    'Urban & Cultural Capitals'
+    'Southern & Western Beaches',
+    'Cultural Triangle & Temples',
+    'Hill Country & Tea Country',
+    'National Parks & Wildlife',
+    'Colombo & City Experiences'
 ];
 
 $priceRanges = [
@@ -189,6 +189,7 @@ document.querySelectorAll('.wishlist-btn').forEach(function(btn) {
         var btn = this;
         var formData = new FormData();
         formData.append('package_id', packageId);
+        formData.append('csrf_token', csrfToken);
 
         fetch('wishlist-toggle.php', {
             method: 'POST',

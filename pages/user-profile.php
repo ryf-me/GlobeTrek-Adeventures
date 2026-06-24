@@ -7,6 +7,7 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../config/csrf.php';
 $db = getDB();
 $userId = $_SESSION['user_id'];
 
@@ -37,6 +38,11 @@ $profilePhoto = $user['profile_photo'] ?? '';
 
 // Handle POST
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // CSRF validation
+    if (!validateCSRFToken($_POST['csrf_token'] ?? null)) {
+        $errors['general'] = 'Invalid security token. Please try again.';
+    }
+
     $fields['full_name']     = trim($_POST['full_name'] ?? '');
     $fields['phone']         = trim($_POST['phone'] ?? '');
     $fields['date_of_birth'] = $_POST['date_of_birth'] ?? '';
@@ -177,6 +183,7 @@ function usr_error(string $field, array $errors): string
                 <?php endif; ?>
 
                 <form class="usr-form" method="post" action="user-profile.php" enctype="multipart/form-data" novalidate>
+                    <?php csrf_field(); ?>
                     <!-- Photo Management -->
                     <div class="usr-section">
                         <div class="usr-photo-row">

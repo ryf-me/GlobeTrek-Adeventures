@@ -37,8 +37,8 @@ $stats = [
             <source src="videos/hero-video.mp4" type="video/mp4"/>
         </video>
         <div class="hero-content">
-            <h1>Discover Your Next Adventure</h1>
-            <p>From pristine beaches to bustling cityscapes – we bring the world to you.</p>
+            <h1>Discover the Magic of <span id="typewriter"></span><span id="typewriter-cursor" class="typewriter-cursor">|</span></h1>
+            <p>From pristine southern beaches to misty hill country temples — experience the pearl of the Indian Ocean.</p>
             <button class="cta" onclick="scrollToSection('packages')">Explore Packages</button>
         </div>
     </section>
@@ -166,7 +166,7 @@ $stats = [
                 <div class="partner-logo"><img src="images/partners/aitken.png" alt="aitken spence travels"></div>
                 <div class="partner-logo"><img src="images/partners/cylonroots.png" alt="ceylon roots"></div>
                 <div class="partner-logo"><img src="images/partners/jetwing.png" alt="jetwing travels"></div>
-                <div class="partner-logo"><img src="images/partners/replendent.png" alt="resplendent ceylon"></div>
+                <div class="partner-logo"><img src="images/partners/Resplendent.png" alt="resplendent ceylon"></div>
                 <div class="partner-logo"><img src="images/partners/walkertours.png" alt="walkers tours"></div>
                 <div class="partner-logo"><img src="images/partners/blt.png" alt="blue lanka tours"></div>
                 <div class="partner-logo"><img src="images/partners/TR.png" alt="tourradar"></div>
@@ -174,7 +174,7 @@ $stats = [
                 <div class="partner-logo"><img src="images/partners/aitken.png" alt="aitken spence travels"></div>
                 <div class="partner-logo"><img src="images/partners/cylonroots.png" alt="ceylon roots"></div>
                 <div class="partner-logo"><img src="images/partners/jetwing.png" alt="jetwing travels"></div>
-                <div class="partner-logo"><img src="images/partners/replendent.png" alt="resplendent ceylon"></div>
+                <div class="partner-logo"><img src="images/partners/Resplendent.png" alt="resplendent ceylon"></div>
                 <div class="partner-logo"><img src="images/partners/walkertours.png" alt="walkers tours"></div>
                 <div class="partner-logo"><img src="images/partners/blt.png" alt="blue lanka tours"></div>
                 <div class="partner-logo"><img src="images/partners/TR.png" alt="tourradar"></div>

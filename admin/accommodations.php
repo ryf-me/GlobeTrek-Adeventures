@@ -1,17 +1,22 @@
 <?php
 $pageTitle = 'Manage Accommodations';
 require_once __DIR__ . '/includes/header.php';
-include __DIR__ . '/includes/sidebar.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delete') {
-    $delId = (int)($_POST['accom_id'] ?? 0);
-    if ($delId > 0) {
-        $stmt = $db->prepare("DELETE FROM accommodations WHERE id = :id");
-        $stmt->execute([':id' => $delId]);
-        header('Location: accommodations.php?deleted=1');
-        exit;
+    if (!validateCSRFToken($_POST['csrf_token'] ?? null)) {
+        $error = 'Invalid security token. Please try again.';
+    } else {
+        $delId = (int)($_POST['accom_id'] ?? 0);
+        if ($delId > 0) {
+            $stmt = $db->prepare("DELETE FROM accommodations WHERE id = :id");
+            $stmt->execute([':id' => $delId]);
+            header('Location: accommodations.php?deleted=1');
+            exit;
+        }
     }
 }
+
+include __DIR__ . '/includes/sidebar.php';
 
 $search = trim($_GET['q'] ?? '');
 $where = '';
@@ -97,6 +102,7 @@ $accommodations = $stmt->fetchAll();
                                     <div class="cell-actions">
                                         <a href="accommodation-edit.php?id=<?= $a['id'] ?>" class="adm-btn-icon" title="Edit"><span class="material-symbols-outlined">edit</span></a>
                                         <form method="post" style="display:inline;" data-confirm="Delete this accommodation?">
+                                            <?php csrf_field(); ?>
                                             <input type="hidden" name="action" value="delete">
                                             <input type="hidden" name="accom_id" value="<?= $a['id'] ?>">
                                             <button type="submit" class="adm-btn-icon adm-btn-icon-danger" title="Delete"><span class="material-symbols-outlined">delete</span></button>

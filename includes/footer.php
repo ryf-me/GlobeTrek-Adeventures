@@ -6,26 +6,33 @@ if (session_status() === PHP_SESSION_NONE) session_start();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['newsletter_email'])) {
     require_once __DIR__ . '/../config/database.php';
+    require_once __DIR__ . '/../config/csrf.php';
     $db = getDB();
 
-    $email = filter_var(trim($_POST['newsletter_email']), FILTER_SANITIZE_EMAIL);
-
-    if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $checkStmt = $db->prepare("SELECT id FROM newsletter_subscriptions WHERE email = :email LIMIT 1");
-        $checkStmt->execute([':email' => $email]);
-        if ($checkStmt->fetch()) {
-            $newsletterMessage = 'This email is already subscribed.';
-            $newsletterMessageClass = 'error';
-        } else {
-            $insertStmt = $db->prepare("INSERT INTO newsletter_subscriptions (email) VALUES (:email)");
-            $insertStmt->execute([':email' => $email]);
-            $safeEmail = htmlspecialchars($email, ENT_QUOTES, 'UTF-8');
-            $newsletterMessage = "Thank you! $safeEmail has been subscribed.";
-            $newsletterMessageClass = 'success';
-        }
-    } else {
-        $newsletterMessage = 'Please enter a valid email address.';
+    // CSRF validation
+    if (!validateCSRFToken($_POST['csrf_token'] ?? null)) {
+        $newsletterMessage = 'Invalid security token. Please try again.';
         $newsletterMessageClass = 'error';
+    } else {
+        $email = filter_var(trim($_POST['newsletter_email']), FILTER_SANITIZE_EMAIL);
+
+        if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $checkStmt = $db->prepare("SELECT id FROM newsletter_subscriptions WHERE email = :email LIMIT 1");
+            $checkStmt->execute([':email' => $email]);
+            if ($checkStmt->fetch()) {
+                $newsletterMessage = 'This email is already subscribed.';
+                $newsletterMessageClass = 'error';
+            } else {
+                $insertStmt = $db->prepare("INSERT INTO newsletter_subscriptions (email) VALUES (:email)");
+                $insertStmt->execute([':email' => $email]);
+                $safeEmail = htmlspecialchars($email, ENT_QUOTES, 'UTF-8');
+                $newsletterMessage = "Thank you! $safeEmail has been subscribed.";
+                $newsletterMessageClass = 'success';
+            }
+        } else {
+            $newsletterMessage = 'Please enter a valid email address.';
+            $newsletterMessageClass = 'error';
+        }
     }
 }
 ?>
@@ -74,11 +81,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['newsletter_email'])) 
 
             <div class="footer-column footer-newsletter">
                 <h2>Newsletter</h2>
-                <p>Stay updated with our latest offers.</p>
                 <form class="newsletter-form-footer" method="post" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>">
+                    <?php require_once __DIR__ . '/../config/csrf.php'; csrf_field(); ?>
                     <label class="sr-only" for="footer-newsletter-email">Email address</label>
-                    <input id="footer-newsletter-email" type="email" name="newsletter_email" placeholder="Enter your email" required />
-                    <button type="submit">Subscribe</button>
+                    <input id="footer-newsletter-email" type="email" name="newsletter_email" placeholder="Enter your email address" required />
+                    <button type="submit" aria-label="Subscribe">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M5 12h14M12 5l7 7-7 7"/>
+                        </svg>
+                    </button>
                 </form>
                 <?php if ($newsletterMessage !== ''): ?>
                     <p class="newsletter-message <?php echo $newsletterMessageClass; ?>"><?php echo $newsletterMessage; ?></p>
@@ -99,7 +110,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['newsletter_email'])) 
                             <path d="M16.5 7.5h.1" />
                         </svg>
                     </a>
-                    <a href="mailto:info@globetrek.com" aria-label="Email GlobeTrek" target="_blank">
+                    <a href="mailto:info@globetrek.lk" aria-label="Email GlobeTrek" target="_blank">
                         <svg viewBox="0 0 24 24" aria-hidden="true">
                             <rect x="4" y="6" width="16" height="12" rx="2" />
                             <path d="M5 8l7 5 7-5" />

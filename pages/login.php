@@ -1,20 +1,43 @@
 <?php
+/**
+ * User Login Page
+ *
+ * Authenticates users via email/password. Implements CSRF protection,
+ * rate limiting (5 attempts per 15 min per IP), and session fixation
+ * prevention via session_regenerate_id().
+ */
+
 session_start();
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../config/csrf.php';
+require_once __DIR__ . '/../config/rate-limiter.php';
 $db = getDB();
 
 $errors = [];
 $email = '';
 
+// --- Handle form submission ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $email = filter_var(trim($_POST['email'] ?? ''), FILTER_SANITIZE_EMAIL);
-    $password = $_POST['password'] ?? '';
-
-    if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $errors['email'] = 'Please enter a valid email address.';
+    // CSRF validation
+    if (!validateCSRFToken($_POST['csrf_token'] ?? null)) {
+        $errors['general'] = 'Invalid security token. Please try again.';
     }
-    if ($password === '') {
-        $errors['password'] = 'Please enter your password.';
+
+    // Rate limiting — max 5 login attempts per 15 minutes per IP
+    if (empty($errors) && !checkRateLimit('login', 5, 900, true)) {
+        $errors['general'] = 'Too many login attempts. Please try again in 15 minutes.';
+    }
+
+    if (empty($errors)) {
+        $email = filter_var(trim($_POST['email'] ?? ''), FILTER_SANITIZE_EMAIL);
+        $password = $_POST['password'] ?? '';
+
+        if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $errors['email'] = 'Please enter a valid email address.';
+        }
+        if ($password === '') {
+            $errors['password'] = 'Please enter your password.';
+        }
     }
 
     if (empty($errors)) {
@@ -23,6 +46,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $user = $stmt->fetch();
 
         if ($user && password_verify($password, $user['password'])) {
+            // Regenerate session ID to prevent session fixation
+            session_regenerate_id(true);
+
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['user_name'] = $user['full_name'];
             $_SESSION['user_email'] = $user['email'];
@@ -66,6 +92,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <?php endif; ?>
 
             <form class="login-form" action="login.php" method="post">
+                <?php csrf_field(); ?>
                 <div class="form-group<?php echo isset($errors['email']) ? ' has-error' : ''; ?>">
                     <label for="email">Email Address</label>
                     <input id="email" name="email" type="email" placeholder="Enter your email" autocomplete="email" value="<?php echo htmlspecialchars($email, ENT_QUOTES, 'UTF-8'); ?>" required>

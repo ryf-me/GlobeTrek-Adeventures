@@ -1,7 +1,6 @@
 <?php
 $pageTitle = 'Edit Guide';
 require_once __DIR__ . '/includes/header.php';
-include __DIR__ . '/includes/sidebar.php';
 
 $guideId = (int)($_GET['id'] ?? 0);
 $isEdit = $guideId > 0;
@@ -17,6 +16,9 @@ if ($isEdit) {
 $errors = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!validateCSRFToken($_POST['csrf_token'] ?? null)) {
+        $errors[] = 'Invalid security token. Please try again.';
+    } else {
     $name = trim($_POST['name'] ?? '');
     $specialty = trim($_POST['specialty'] ?? '');
     $region = trim($_POST['region'] ?? '');
@@ -53,7 +55,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         header('Location: guides.php?saved=1');
         exit;
     }
+    }
 }
+
+include __DIR__ . '/includes/sidebar.php';
 
 if (!$guide) $guide = ['name'=>'','specialty'=>'','region'=>'','description'=>'','profile_link'=>'#','image'=>'','is_featured'=>0,'is_active'=>1];
 ?>
@@ -78,6 +83,7 @@ if (!$guide) $guide = ['name'=>'','specialty'=>'','region'=>'','description'=>''
         <?php endforeach; ?>
 
         <form method="post" enctype="multipart/form-data" novalidate>
+            <?php csrf_field(); ?>
             <div class="adm-form-card">
                 <h2>Guide Details</h2>
                 <div class="adm-form-grid">

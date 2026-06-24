@@ -7,11 +7,18 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../config/csrf.php';
 $db = getDB();
 $userId = $_SESSION['user_id'];
 
 // Handle remove from wishlist
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remove_wishlist_id'])) {
+    // CSRF validation
+    if (!validateCSRFToken($_POST['csrf_token'] ?? null)) {
+        header('Location: wishlist.php?error=token');
+        exit;
+    }
+
     $wishlistId = (int) $_POST['remove_wishlist_id'];
     $stmt = $db->prepare("DELETE FROM wishlist WHERE id = :id AND user_id = :user_id");
     $stmt->execute([':id' => $wishlistId, ':user_id' => $userId]);
@@ -98,6 +105,7 @@ function wl_duration_string(int $days, int $nights): string
                                     <div class="wl-card-top">
                                         <h3 class="wl-card-title"><?= htmlspecialchars($item['title']) ?></h3>
                                         <form method="POST" class="wl-remove-form">
+                                            <?php csrf_field(); ?>
                                             <input type="hidden" name="remove_wishlist_id" value="<?= (int) $item['wishlist_id'] ?>">
                                             <button type="submit" class="wl-card-remove" title="Remove from wishlist">
                                                 <span class="material-symbols-outlined">delete</span>

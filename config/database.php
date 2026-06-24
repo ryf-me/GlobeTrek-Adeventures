@@ -18,7 +18,8 @@ function getDB() {
                 PDO::ATTR_EMULATE_PREPARES => false,                 // Use real prepared statements (SQL injection prevention)
             ]);
         } catch (PDOException $e) {    // Catch database connection errors
-            die('Database connection failed: ' . $e->getMessage()); // Stop execution and show error
+            // Re-throw as runtime exception — let the error handler display a friendly page
+            throw new RuntimeException('Database connection failed: ' . $e->getMessage(), 0, $e);
         }
     }
     return $pdo;                   // Return the database connection object

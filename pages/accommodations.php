@@ -97,7 +97,7 @@ function buildQueryString($overrides = []) {
     <div class="page-container">
         <div class="page-header">
             <h1>Accommodations</h1>
-            <p>Discover curated stays ranging from minimalist boutique hotels to expansive eco-resorts, designed for the modern explorer.</p>
+            <p>Discover curated stays across Sri Lanka, from boutique hotels in Galle Fort to eco-lodges in the hill country and beachfront resorts on the southern coast.</p>
         </div>
 
         <form class="accommodations-layout" method="get" action="">

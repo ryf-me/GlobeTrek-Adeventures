@@ -1,8 +1,22 @@
-// Block copy and cut actions
+/**
+ * GlobeTrek Adventures — Main Frontend JavaScript
+ *
+ * Handles: navigation toggle, password visibility, modals, profile dropdown,
+ * stats counter animation, and CSRF token injection for AJAX requests.
+ */
+
+// --- Content protection: block copy and cut actions ---
 document.addEventListener('copy', function(e) { e.preventDefault(); });
 document.addEventListener('cut', function(e) { e.preventDefault(); });
 
-// Simple script for navigation scroll
+// Global CSRF token — read from the variable set by navbar.php
+// Fallback to meta tag if the variable is not available
+var csrfToken = window.csrfToken || (function () {
+    var meta = document.querySelector('meta[name="csrf-token"]');
+    return meta ? meta.getAttribute('content') : '';
+})();
+
+// --- Navigation scroll helper ---
 function scrollToSection(id) {
   const el = document.getElementById(id);
   if (el) {
@@ -10,6 +24,7 @@ function scrollToSection(id) {
   }
 }
 
+// --- Mobile menu toggle ---
 const menuToggle = document.querySelector('.menu-toggle');
 const navLinks = document.querySelector('.nav-links');
 
@@ -30,6 +45,7 @@ if (menuToggle && navLinks) {
   });
 }
 
+// --- Password visibility toggle ---
 document.querySelectorAll('.password-toggle').forEach((btn) => {
   btn.addEventListener('click', () => {
     const targetId = btn.getAttribute('data-target');
@@ -42,7 +58,7 @@ document.querySelectorAll('.password-toggle').forEach((btn) => {
   });
 });
 
-// Modal open/close helpers
+// --- Modal open/close helpers ---
 function openModal(id) {
   var el = document.getElementById(id);
   if (el) el.classList.add('open');
@@ -71,7 +87,7 @@ document.querySelectorAll('.inq-modal-overlay, .adm-modal-overlay').forEach(func
   });
 });
 
-// User Profile Dropdown
+// --- Profile dropdown (accessible keyboard + click handling) ---
 (function () {
   var trigger = document.getElementById('profileTrigger');
   var dropdown = document.getElementById('profileDropdown');
@@ -127,7 +143,7 @@ document.querySelectorAll('.inq-modal-overlay, .adm-modal-overlay').forEach(func
   });
 })();
 
-// Stats counter animation
+// --- Stats counter animation (IntersectionObserver-based) ---
 (function () {
   var statNumbers = document.querySelectorAll('.stat-number[data-target]');
   if (!statNumbers.length) return;
@@ -165,4 +181,56 @@ document.querySelectorAll('.inq-modal-overlay, .adm-modal-overlay').forEach(func
   statNumbers.forEach(function (el) {
     observer.observe(el);
   });
+})();
+
+// --- Hero typewriter effect for "Sri Lanka" ---
+(function () {
+  var target = document.getElementById('typewriter');
+  var cursor = document.getElementById('typewriter-cursor');
+  if (!target) return;
+
+  var words = ['Sri Lanka', 'Paradise', 'the Pearl of the Indian Ocean'];
+  var wordIndex = 0;
+  var charIndex = 0;
+  var isDeleting = false;
+  var typeSpeed = 100;
+  var deleteSpeed = 60;
+  var pauseEnd = 2000;
+  var pauseStart = 500;
+
+  function tick() {
+    var currentWord = words[wordIndex];
+
+    if (!isDeleting) {
+      target.textContent = currentWord.substring(0, charIndex + 1);
+      charIndex++;
+
+      if (charIndex === currentWord.length) {
+        isDeleting = true;
+        setTimeout(tick, pauseEnd);
+        return;
+      }
+      setTimeout(tick, typeSpeed);
+    } else {
+      target.textContent = currentWord.substring(0, charIndex - 1);
+      charIndex--;
+
+      if (charIndex === 0) {
+        isDeleting = false;
+        wordIndex = (wordIndex + 1) % words.length;
+        setTimeout(tick, pauseStart);
+        return;
+      }
+      setTimeout(tick, deleteSpeed);
+    }
+  }
+
+  // Blinking cursor
+  setInterval(function () {
+    if (cursor) {
+      cursor.style.opacity = cursor.style.opacity === '0' ? '1' : '0';
+    }
+  }, 530);
+
+  setTimeout(tick, 800);
 })();

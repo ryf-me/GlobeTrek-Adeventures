@@ -1,9 +1,12 @@
 <?php
 $pageTitle = 'Newsletter Subscribers';
 require_once __DIR__ . '/includes/header.php';
-include __DIR__ . '/includes/sidebar.php';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delete') {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !validateCSRFToken($_POST['csrf_token'] ?? null)) {
+    $error = 'Invalid security token. Please try again.';
+}
+
+if (empty($error) && $_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delete') {
     $delId = (int)($_POST['sub_id'] ?? 0);
     if ($delId > 0) {
         $stmt = $db->prepare("DELETE FROM newsletter_subscriptions WHERE id = :id");
@@ -13,7 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delet
     }
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'toggle_active') {
+if (empty($error) && $_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'toggle_active') {
     $sid = (int)($_POST['sub_id'] ?? 0);
     if ($sid > 0) {
         $stmt = $db->prepare("UPDATE newsletter_subscriptions SET is_active = NOT is_active WHERE id = :id");
@@ -22,6 +25,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'toggl
         exit;
     }
 }
+
+include __DIR__ . '/includes/sidebar.php';
 
 $search = trim($_GET['q'] ?? '');
 $where = '';
@@ -108,6 +113,7 @@ $activeCount = (int)$activeStmt->fetch()['cnt'];
                                 <td class="cell-main"><?= htmlspecialchars($s['email']) ?></td>
                                 <td>
                                     <form method="post" style="display:inline;">
+                                        <?php csrf_field(); ?>
                                         <input type="hidden" name="action" value="toggle_active">
                                         <input type="hidden" name="sub_id" value="<?= $s['id'] ?>">
                                         <button type="submit" class="adm-status-badge <?= $s['is_active'] ? 'adm-status-active' : 'adm-status-inactive' ?>" style="cursor:pointer;border:none;font-family:inherit;">
@@ -119,6 +125,7 @@ $activeCount = (int)$activeStmt->fetch()['cnt'];
                                 <td>
                                     <div class="cell-actions">
                                         <form method="post" style="display:inline;" data-confirm="Remove this subscriber?">
+                                            <?php csrf_field(); ?>
                                             <input type="hidden" name="action" value="delete">
                                             <input type="hidden" name="sub_id" value="<?= $s['id'] ?>">
                                             <button type="submit" class="adm-btn-icon adm-btn-icon-danger" title="Delete"><span class="material-symbols-outlined">delete</span></button>

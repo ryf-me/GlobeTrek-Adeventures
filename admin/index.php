@@ -1,4 +1,11 @@
 <?php
+/**
+ * Admin Dashboard
+ *
+ * Displays key performance indicators (users, bookings, revenue, etc.),
+ * Chart.js visualizations (revenue trends, booking status, user growth),
+ * and recent activity tables for bookings and inquiries.
+ */
 $pageTitle = 'Dashboard';
 require_once __DIR__ . '/includes/header.php';
 include __DIR__ . '/includes/sidebar.php';

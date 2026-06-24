@@ -1,18 +1,23 @@
 <?php
 $pageTitle = 'Custom Trip Requests';
 require_once __DIR__ . '/includes/header.php';
-include __DIR__ . '/includes/sidebar.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'update_status') {
-    $tid = (int)($_POST['trip_id'] ?? 0);
-    $newStatus = $_POST['status'] ?? '';
-    if ($tid > 0 && in_array($newStatus, ['pending', 'reviewed', 'completed'])) {
-        $stmt = $db->prepare("UPDATE custom_trip_requests SET status = :status WHERE id = :id");
-        $stmt->execute([':status' => $newStatus, ':id' => $tid]);
-        header('Location: custom-trips.php?updated=1');
-        exit;
+    if (!validateCSRFToken($_POST['csrf_token'] ?? null)) {
+        $error = 'Invalid security token. Please try again.';
+    } else {
+        $tid = (int)($_POST['trip_id'] ?? 0);
+        $newStatus = $_POST['status'] ?? '';
+        if ($tid > 0 && in_array($newStatus, ['pending', 'reviewed', 'completed'])) {
+            $stmt = $db->prepare("UPDATE custom_trip_requests SET status = :status WHERE id = :id");
+            $stmt->execute([':status' => $newStatus, ':id' => $tid]);
+            header('Location: custom-trips.php?updated=1');
+            exit;
+        }
     }
 }
+
+include __DIR__ . '/includes/sidebar.php';
 
 $filter = $_GET['filter'] ?? 'all';
 $where = '';
@@ -137,6 +142,7 @@ $totalTrips = array_sum($stats);
                                             <span class="material-symbols-outlined">visibility</span>
                                         </button>
                                         <form method="post" style="display:flex;gap:0.35rem;">
+                                            <?php csrf_field(); ?>
                                             <input type="hidden" name="action" value="update_status">
                                             <input type="hidden" name="trip_id" value="<?= $t['id'] ?>">
                                             <select name="status" onchange="if(confirm('Update status?')) this.form.submit();" style="padding:0.3rem 0.5rem;border:1px solid var(--adm-outline-variant);font-size:0.78rem;font-family:inherit;background:transparent;">

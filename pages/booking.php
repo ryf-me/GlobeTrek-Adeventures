@@ -1,6 +1,20 @@
 <?php
+/**
+ * Booking Page (Step 2 — Traveller Details)
+ *
+ * Collects traveller information, validates input, creates a booking
+ * record with 'pending' status, then redirects to payment.
+ * Includes CSRF protection on the form.
+ */
 session_start();
+
+if (!isset($_SESSION['user_id'])) {
+    header('Location: login.php');
+    exit;
+}
+
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../config/csrf.php';
 $db = getDB();
 
 $packageId = isset($_GET['id']) ? (int) $_GET['id'] : 0;
@@ -31,6 +45,11 @@ $errors = [];
 $submitted = false;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // CSRF validation
+    if (!validateCSRFToken($_POST['csrf_token'] ?? null)) {
+        $errors['general'] = 'Invalid security token. Please try again.';
+    }
+
     foreach ($fields as $key => $value) {
         $fields[$key] = trim($_POST[$key] ?? '');
     }
@@ -159,6 +178,7 @@ function field_error(string $field, array $errors): string
                 <?php endif; ?>
 
                 <form id="booking-form" class="booking-form" method="post" action="booking.php?id=<?= $package['id'] ?>" novalidate>
+                    <?php csrf_field(); ?>
                     <div class="form-row">
                         <div class="form-field">
                             <label for="firstName">First Name</label>

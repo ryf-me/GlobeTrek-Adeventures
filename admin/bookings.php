@@ -2,20 +2,25 @@
 $pageTitle = 'Manage Bookings';
 require_once __DIR__ . '/includes/header.php';
 require_once __DIR__ . '/../config/logger.php';
-include __DIR__ . '/includes/sidebar.php';
 
 // Handle status update
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'update_status') {
-    $bid = (int)($_POST['booking_id'] ?? 0);
-    $newStatus = $_POST['status'] ?? '';
-    if ($bid > 0 && in_array($newStatus, ['pending', 'confirmed', 'cancelled'])) {
-        $stmt = $db->prepare("UPDATE bookings SET status = :status WHERE id = :id");
-        $stmt->execute([':status' => $newStatus, ':id' => $bid]);
-        logActivity('booking_status_updated', 'booking', $bid, 'Status changed to ' . $newStatus);
-        header('Location: bookings.php?updated=1');
-        exit;
+    if (!validateCSRFToken($_POST['csrf_token'] ?? null)) {
+        $error = 'Invalid security token. Please try again.';
+    } else {
+        $bid = (int)($_POST['booking_id'] ?? 0);
+        $newStatus = $_POST['status'] ?? '';
+        if ($bid > 0 && in_array($newStatus, ['pending', 'confirmed', 'cancelled'])) {
+            $stmt = $db->prepare("UPDATE bookings SET status = :status WHERE id = :id");
+            $stmt->execute([':status' => $newStatus, ':id' => $bid]);
+            logActivity('booking_status_updated', 'booking', $bid, 'Status changed to ' . $newStatus);
+            header('Location: bookings.php?updated=1');
+            exit;
+        }
     }
 }
+
+include __DIR__ . '/includes/sidebar.php';
 
 $filter = $_GET['filter'] ?? 'all';
 $where = '';
@@ -148,6 +153,7 @@ $totalBookings = array_sum($stats);
                                 <td>
                                     <div class="cell-actions">
                                         <form method="post" style="display:flex;gap:0.35rem;">
+                                            <?php csrf_field(); ?>
                                             <input type="hidden" name="action" value="update_status">
                                             <input type="hidden" name="booking_id" value="<?= $b['id'] ?>">
                                             <select name="status" onchange="if(confirm('Update status?')) this.form.submit();" style="padding:0.3rem 0.5rem;border:1px solid var(--adm-outline-variant);font-size:0.78rem;font-family:inherit;background:transparent;">

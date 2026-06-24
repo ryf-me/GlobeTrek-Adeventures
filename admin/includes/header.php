@@ -1,10 +1,19 @@
 <?php
+/**
+ * Admin Panel Header (included on all admin pages)
+ *
+ * Performs session-based authentication check — only users with
+ * 'admin' or 'staff' roles may access the admin panel.
+ * Also loads the database connection and CSRF helper.
+ */
+
 if (session_status() === PHP_SESSION_NONE) session_start();
 if (!isset($_SESSION['user_id']) || !in_array($_SESSION['user_role'] ?? '', ['admin', 'staff'])) {
     header('Location: ../pages/login.php');
     exit;
 }
 require_once __DIR__ . '/../../config/database.php';
+require_once __DIR__ . '/../../config/csrf.php';
 $db = getDB();
 
 $adminName = htmlspecialchars($_SESSION['user_name'] ?? 'Admin', ENT_QUOTES, 'UTF-8');

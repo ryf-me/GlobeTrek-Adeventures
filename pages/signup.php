@@ -1,6 +1,15 @@
 <?php
+/**
+ * User Registration Page
+ *
+ * Creates new user accounts with bcrypt password hashing.
+ * Includes CSRF protection and rate limiting (3 attempts per hour per IP).
+ */
+
 session_start();
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../config/csrf.php';
+require_once __DIR__ . '/../config/rate-limiter.php';
 $db = getDB();
 
 $errors = [];
@@ -10,55 +19,68 @@ $values = [
     'email' => '',
 ];
 
+// --- Handle form submission ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $values['full_name'] = trim($_POST['full_name'] ?? '');
-    $values['email'] = filter_var(trim($_POST['email'] ?? ''), FILTER_SANITIZE_EMAIL);
-    $password = $_POST['password'] ?? '';
-    $confirmPassword = $_POST['confirm_password'] ?? '';
-    $acceptedTerms = isset($_POST['terms']);
+    // CSRF validation
+    if (!validateCSRFToken($_POST['csrf_token'] ?? null)) {
+        $errors['general'] = 'Invalid security token. Please try again.';
+    }
 
-    if ($values['full_name'] === '') {
-        $errors['full_name'] = 'Please enter your full name.';
-    }
-    if (!filter_var($values['email'], FILTER_VALIDATE_EMAIL)) {
-        $errors['email'] = 'Please enter a valid email address.';
-    }
-    if ($password === '') {
-        $errors['password'] = 'Please enter a password.';
-    } elseif (strlen($password) < 6) {
-        $errors['password'] = 'Password must be at least 6 characters.';
-    }
-    if ($confirmPassword === '') {
-        $errors['confirm_password'] = 'Please confirm your password.';
-    } elseif ($password !== $confirmPassword) {
-        $errors['confirm_password'] = 'Passwords must match.';
-    }
-    if (!$acceptedTerms) {
-        $errors['terms'] = 'Please accept the terms before continuing.';
+    // Rate limiting — max 3 signup attempts per hour per IP
+    if (empty($errors) && !checkRateLimit('signup', 3, 3600, true)) {
+        $errors['general'] = 'Too many signup attempts. Please try again later.';
     }
 
     if (empty($errors)) {
-        $checkStmt = $db->prepare("SELECT id FROM users WHERE email = :email LIMIT 1");
-        $checkStmt->execute([':email' => $values['email']]);
-        if ($checkStmt->fetch()) {
-            $errors['email'] = 'An account with this email already exists.';
+        $values['full_name'] = trim($_POST['full_name'] ?? '');
+        $values['email'] = filter_var(trim($_POST['email'] ?? ''), FILTER_SANITIZE_EMAIL);
+        $password = $_POST['password'] ?? '';
+        $confirmPassword = $_POST['confirm_password'] ?? '';
+        $acceptedTerms = isset($_POST['terms']);
+
+        if ($values['full_name'] === '') {
+            $errors['full_name'] = 'Please enter your full name.';
         }
-    }
+        if (!filter_var($values['email'], FILTER_VALIDATE_EMAIL)) {
+            $errors['email'] = 'Please enter a valid email address.';
+        }
+        if ($password === '') {
+            $errors['password'] = 'Please enter a password.';
+        } elseif (strlen($password) < 6) {
+            $errors['password'] = 'Password must be at least 6 characters.';
+        }
+        if ($confirmPassword === '') {
+            $errors['confirm_password'] = 'Please confirm your password.';
+        } elseif ($password !== $confirmPassword) {
+            $errors['confirm_password'] = 'Passwords must match.';
+        }
+        if (!$acceptedTerms) {
+            $errors['terms'] = 'Please accept the terms before continuing.';
+        }
 
-    if (empty($errors)) {
-        $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
-        $insertStmt = $db->prepare(
-            "INSERT INTO users (full_name, email, password) VALUES (:full_name, :email, :password)"
-        );
-        $insertStmt->execute([
-            ':full_name' => $values['full_name'],
-            ':email' => $values['email'],
-            ':password' => $hashedPassword,
-        ]);
+        if (empty($errors)) {
+            $checkStmt = $db->prepare("SELECT id FROM users WHERE email = :email LIMIT 1");
+            $checkStmt->execute([':email' => $values['email']]);
+            if ($checkStmt->fetch()) {
+                $errors['email'] = 'An account with this email already exists.';
+            }
+        }
 
-        $safeEmail = htmlspecialchars($values['email'], ENT_QUOTES, 'UTF-8');
-        $successMessage = "Account created for $safeEmail. You can now log in.";
-        $values = array_fill_keys(array_keys($values), '');
+        if (empty($errors)) {
+            $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+            $insertStmt = $db->prepare(
+                "INSERT INTO users (full_name, email, password) VALUES (:full_name, :email, :password)"
+            );
+            $insertStmt->execute([
+                ':full_name' => $values['full_name'],
+                ':email' => $values['email'],
+                ':password' => $hashedPassword,
+            ]);
+
+            $safeEmail = htmlspecialchars($values['email'], ENT_QUOTES, 'UTF-8');
+            $successMessage = "Account created for $safeEmail. You can now log in.";
+            $values = array_fill_keys(array_keys($values), '');
+        }
     }
 }
 ?>
@@ -97,6 +119,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <?php endif; ?>
 
             <form class="login-form" action="signup.php" method="post" novalidate>
+                <?php csrf_field(); ?>
                 <div class="form-group<?php echo isset($errors['full_name']) ? ' has-error' : ''; ?>">
                     <label for="full-name">Full Name</label>
                     <input id="full-name" name="full_name" type="text" placeholder="Enter your full name" autocomplete="name" value="<?php echo htmlspecialchars($values['full_name'], ENT_QUOTES, 'UTF-8'); ?>" aria-invalid="<?php echo isset($errors['full_name']) ? 'true' : 'false'; ?>" required>

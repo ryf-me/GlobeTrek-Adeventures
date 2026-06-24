@@ -12,6 +12,13 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
+// CSRF validation
+require_once __DIR__ . '/../config/csrf.php';
+if (!validateCSRFToken($_POST['csrf_token'] ?? null)) {
+    echo json_encode(['status' => 'error', 'message' => 'Invalid security token']);
+    exit;
+}
+
 require_once __DIR__ . '/../config/database.php';
 $db = getDB();
 

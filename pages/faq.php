@@ -59,7 +59,7 @@
                     </button>
                     <div class="faq-answer">
                         <div class="faq-answer-inner">
-                            We offer curated travel experiences across six continents, including destinations in Asia, Europe, Africa, North America, South America, and Oceania. From tropical beaches to mountain expeditions, cultural city tours to wildlife safaris — we have something for every type of traveler.
+                            We offer curated travel experiences across Sri Lanka, covering all nine provinces of the island. From the sun-kissed southern beaches to the misty hill country, ancient cultural sites to vibrant city life — we have something for every type of traveler exploring the pearl of the Indian Ocean.
                         </div>
                     </div>
                 </div>

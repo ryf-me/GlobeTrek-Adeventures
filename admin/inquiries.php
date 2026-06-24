@@ -2,11 +2,15 @@
 $pageTitle = 'Manage Inquiries';
 require_once __DIR__ . '/includes/header.php';
 require_once __DIR__ . '/../config/logger.php';
-include __DIR__ . '/includes/sidebar.php';
 
 $adminId = $_SESSION['user_id'];
 
 $action = $_POST['action'] ?? '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !validateCSRFToken($_POST['csrf_token'] ?? null)) {
+    $error = 'Invalid security token. Please try again.';
+    $action = '';
+}
 
 if ($action === 'admin_reply') {
     $inquiryId = (int)($_POST['inquiry_id'] ?? 0);
@@ -45,6 +49,8 @@ if ($action === 'update_status') {
         exit;
     }
 }
+
+include __DIR__ . '/includes/sidebar.php';
 
 $stmt = $db->query("SELECT status, COUNT(*) AS cnt FROM inquiries GROUP BY status");
 $statusCounts = ['open' => 0, 'waiting_for_response' => 0, 'under_review' => 0, 'resolved' => 0];
@@ -238,6 +244,7 @@ if ($threadId > 0) {
                 <div class="adm-status-row">
                     <label for="status-select">Status:</label>
                     <form method="post" action="inquiries.php" style="display:flex;gap:0.5rem;flex:1;align-items:center;" novalidate>
+                        <?php csrf_field(); ?>
                         <input type="hidden" name="action" value="update_status">
                         <input type="hidden" name="inquiry_id" value="<?= $viewThread['id'] ?>">
                         <select id="status-select" name="inquiry_status" onchange="this.form.submit()">
@@ -274,6 +281,7 @@ if ($threadId > 0) {
 
                 <?php if ($viewThread['status'] !== 'resolved'): ?>
                     <form method="post" action="inquiries.php" class="adm-reply-form" novalidate>
+                        <?php csrf_field(); ?>
                         <input type="hidden" name="action" value="admin_reply">
                         <input type="hidden" name="inquiry_id" value="<?= $viewThread['id'] ?>">
                         <div class="form-field">

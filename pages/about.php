@@ -21,8 +21,9 @@
             <div class="about-hero-content">
                 <h1 id="about-title">Our Story</h1>
                 <p class="about-hero-subtitle">
-                    We believe travel is more than just visiting places; it's about connecting with the world,
-                    experiencing different cultures, and discovering yourself along the way.
+                    Born on the island of Sri Lanka, GlobeTrek Adventures was founded with a deep love for our homeland's
+                    breathtaking landscapes, rich heritage, and warm hospitality. We believe travel is more than just visiting places
+                    — it's about connecting with the world and discovering yourself along the way.
                 </p>
             </div>
         </section>
@@ -75,25 +76,25 @@
                     <article class="timeline-item">
                         <span>2010</span>
                         <h3>The Inception</h3>
-                        <p>GlobeTrek was founded with a simple idea: to make authentic travel experiences accessible to everyone.</p>
+                        <p>GlobeTrek was founded in Negombo with a simple idea: to showcase the extraordinary beauty of Sri Lanka through authentic, locally-driven travel experiences.</p>
                     </article>
 
                     <article class="timeline-item">
                         <span>2015</span>
-                        <h3>Global Expansion</h3>
-                        <p>Opened our first international offices and expanded our curated destination portfolio across three continents.</p>
+                        <h3>Island-Wide Expansion</h3>
+                        <p>Expanded operations across all nine provinces of Sri Lanka, partnering with local communities, guides, and eco-lodges to offer comprehensive island tours.</p>
                     </article>
 
                     <article class="timeline-item">
                         <span>2020</span>
                         <h3>Sustainable Focus</h3>
-                        <p>Launched our comprehensive sustainability initiative, ensuring all tours are carbon-neutral and support local communities.</p>
+                        <p>Launched our comprehensive sustainability initiative, ensuring all tours support local communities, protect wildlife habitats, and preserve Sri Lanka's natural heritage.</p>
                     </article>
 
                     <article class="timeline-item">
                         <span>Today</span>
-                        <h3>Connecting Millions</h3>
-                        <p>Continuing to innovate and provide extraordinary journeys for passionate travelers worldwide.</p>
+                        <h3>Connecting Thousands</h3>
+                        <p>Continuing to innovate and share the magic of Sri Lanka with passionate travelers from around the globe.</p>
                     </article>
                 </div>
             </div>
@@ -102,20 +103,20 @@
         <section class="team-section" aria-labelledby="team-title">
             <div class="team-inner">
                 <h2 id="team-title">Meet The Team</h2>
-                <p class="team-intro">The passionate people behind GlobeTrek Adventures — dedicated to crafting unforgettable journeys around the world.</p>
+                <p class="team-intro">The passionate people behind GlobeTrek Adventures — dedicated to sharing the magic of Sri Lanka with the world.</p>
                 <div class="team-grid">
                     <article class="team-member">
                         <div class="team-photo">
-                            <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=400&fit=crop&crop=face" alt="Sarah Jenkins portrait">
+                            <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=face" alt="Kavinda Perera portrait">
                         </div>
-                        <h3>Sarah Jenkins</h3>
+                        <h3>Kavinda Perera</h3>
                         <p class="team-role">Founder &amp; CEO</p>
-                        <p class="team-bio">With over 15 years in the travel industry, Sarah's vision drives GlobeTrek's mission to deliver authentic, sustainable adventures worldwide.</p>
-                        <div class="team-socials" aria-label="Sarah Jenkins social links">
-                            <a href="#" aria-label="Sarah Jenkins on LinkedIn">
+                        <p class="team-bio">Born and raised in Negombo, Kavinda's lifelong passion for Sri Lanka's hidden gems led him to create GlobeTrek. With over 15 years in the tourism industry, his vision is to put authentic Sri Lankan experiences on the global map.</p>
+                        <div class="team-socials" aria-label="Kavinda Perera social links">
+                            <a href="#" aria-label="Kavinda Perera on LinkedIn">
                                 <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.7 10.7l6.6-3.4M8.7 13.3l6.6 3.4"/></svg>
                             </a>
-                            <a href="#" aria-label="Sarah Jenkins on Twitter">
+                            <a href="#" aria-label="Kavinda Perera on Twitter">
                                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"/></svg>
                             </a>
                         </div>
@@ -123,16 +124,16 @@
 
                     <article class="team-member">
                         <div class="team-photo">
-                            <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=face" alt="Marcus Vance portrait">
+                            <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=400&fit=crop&crop=face" alt="Dinesh Fernando portrait">
                         </div>
-                        <h3>Marcus Vance</h3>
+                        <h3>Dinesh Fernando</h3>
                         <p class="team-role">Head of Expeditions</p>
-                        <p class="team-bio">A seasoned explorer who has led over 200 expeditions across six continents, Marcus ensures every journey exceeds expectations.</p>
-                        <div class="team-socials" aria-label="Marcus Vance social links">
-                            <a href="#" aria-label="Marcus Vance on LinkedIn">
+                        <p class="team-bio">A seasoned mountain guide from Nuwara Eliya, Dinesh has led over 200 expeditions across Sri Lanka's hill country, from Horton Plains to Adam's Peak. His expertise ensures every trek is safe, enriching, and unforgettable.</p>
+                        <div class="team-socials" aria-label="Dinesh Fernando social links">
+                            <a href="#" aria-label="Dinesh Fernando on LinkedIn">
                                 <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.7 10.7l6.6-3.4M8.7 13.3l6.6 3.4"/></svg>
                             </a>
-                            <a href="#" aria-label="Marcus Vance on Twitter">
+                            <a href="#" aria-label="Dinesh Fernando on Twitter">
                                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"/></svg>
                             </a>
                         </div>
@@ -140,16 +141,16 @@
 
                     <article class="team-member">
                         <div class="team-photo">
-                            <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop&crop=face" alt="Elena Rodriguez portrait">
+                            <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop&crop=face" alt="Amara Wickramasinghe portrait">
                         </div>
-                        <h3>Elena Rodriguez</h3>
+                        <h3>Amara Wickramasinghe</h3>
                         <p class="team-role">Chief Sustainability Officer</p>
-                        <p class="team-bio">Elena leads our eco-initiatives, partnering with local communities to ensure every trip leaves a positive impact on the planet.</p>
-                        <div class="team-socials" aria-label="Elena Rodriguez social links">
-                            <a href="#" aria-label="Elena Rodriguez on LinkedIn">
+                        <p class="team-bio">Amara leads our eco-initiatives, working closely with rural communities and wildlife conservation projects across Sri Lanka to ensure every trip leaves a positive impact on the island and its people.</p>
+                        <div class="team-socials" aria-label="Amara Wickramasinghe social links">
+                            <a href="#" aria-label="Amara Wickramasinghe on LinkedIn">
                                 <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.7 10.7l6.6-3.4M8.7 13.3l6.6 3.4"/></svg>
                             </a>
-                            <a href="#" aria-label="Elena Rodriguez on Twitter">
+                            <a href="#" aria-label="Amara Wickramasinghe on Twitter">
                                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"/></svg>
                             </a>
                         </div>
@@ -157,16 +158,16 @@
 
                     <article class="team-member">
                         <div class="team-photo">
-                            <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=400&fit=crop&crop=face" alt="David Chen portrait">
+                            <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=400&fit=crop&crop=face" alt="Nuwan Jayawardena portrait">
                         </div>
-                        <h3>David Chen</h3>
+                        <h3>Nuwan Jayawardena</h3>
                         <p class="team-role">Lead Destination Guide</p>
-                        <p class="team-bio">A multilingual travel expert with deep local knowledge, David curates the immersive cultural experiences GlobeTrek is known for.</p>
-                        <div class="team-socials" aria-label="David Chen social links">
-                            <a href="#" aria-label="David Chen on LinkedIn">
+                        <p class="team-bio">Fluent in Sinhala, Tamil, and English, Nuwan is a cultural enthusiast from Kandy who curates the immersive heritage experiences GlobeTrek is known for. His deep local knowledge brings Sri Lanka's history to life.</p>
+                        <div class="team-socials" aria-label="Nuwan Jayawardena social links">
+                            <a href="#" aria-label="Nuwan Jayawardena on LinkedIn">
                                 <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.7 10.7l6.6-3.4M8.7 13.3l6.6 3.4"/></svg>
                             </a>
-                            <a href="#" aria-label="David Chen on Twitter">
+                            <a href="#" aria-label="Nuwan Jayawardena on Twitter">
                                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"/></svg>
                             </a>
                         </div>
@@ -179,7 +180,7 @@
 
         <section class="about-cta" aria-labelledby="cta-title">
             <h2 id="cta-title">Work With Us</h2>
-            <p>Join our passionate team and help us build the future of authentic, sustainable travel.</p>
+            <p>Join our passionate team and help us share the beauty of Sri Lanka with travelers from around the world.</p>
             <a href="guides.php">View Careers</a>
         </section>
     </main>

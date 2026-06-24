@@ -49,6 +49,29 @@
     color: #222;
     text-decoration: none;
     font-weight: 500;
+    position: relative;
+    padding-bottom: 4px;
+}
+
+.navbar .nav-links a::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 50%;
+    width: 100%;
+    height: 2px;
+    background: #e76f51;
+    transform: translateX(-50%) scaleX(0);
+    transform-origin: center;
+    transition: transform 0.3s ease;
+}
+
+.navbar .nav-links a:hover::after {
+    transform: translateX(-50%) scaleX(1);
+}
+
+.navbar .nav-links li.active a::after {
+    transform: translateX(-50%) scaleX(1);
 }
 .login-btn,
 .signup-btn {
@@ -376,9 +399,20 @@
 }
 
 .home-page .navbar .logo,
-.home-page .navbar .logo span,
+.home-page .navbar .logo span {
+    color: #fff;
+}
+
 .home-page .navbar .nav-links a {
     color: #fff;
+}
+
+.home-page .navbar .nav-links a::after {
+    background: #fff;
+}
+
+.home-page .navbar .nav-links li.active a::after {
+    background: #fff;
 }
 
 .home-page .menu-toggle {
@@ -430,9 +464,20 @@
 }
 
 .about-page .navbar .logo,
-.about-page .navbar .logo span,
+.about-page .navbar .logo span {
+    color: #fff;
+}
+
 .about-page .navbar .nav-links a {
     color: #fff;
+}
+
+.about-page .navbar .nav-links a::after {
+    background: #fff;
+}
+
+.about-page .navbar .nav-links li.active a::after {
+    background: #fff;
 }
 
 .about-page .menu-toggle {

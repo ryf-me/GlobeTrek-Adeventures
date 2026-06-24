@@ -1,7 +1,6 @@
 <?php
 $pageTitle = 'Edit Destination';
 require_once __DIR__ . '/includes/header.php';
-include __DIR__ . '/includes/sidebar.php';
 
 $destId = (int)($_GET['id'] ?? 0);
 $isEdit = $destId > 0;
@@ -17,6 +16,9 @@ if ($isEdit) {
 $errors = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!validateCSRFToken($_POST['csrf_token'] ?? null)) {
+        $errors[] = 'Invalid security token. Please try again.';
+    } else {
     $name = trim($_POST['name'] ?? '');
     $description = trim($_POST['description'] ?? '');
     $isFeatured = isset($_POST['is_featured']) ? 1 : 0;
@@ -53,7 +55,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         header('Location: destinations.php?saved=1');
         exit;
     }
+    }
 }
+
+include __DIR__ . '/includes/sidebar.php';
 
 if (!$dest) $dest = ['name'=>'','description'=>'','image'=>'','is_featured'=>0,'is_active'=>1];
 ?>
@@ -78,6 +83,7 @@ if (!$dest) $dest = ['name'=>'','description'=>'','image'=>'','is_featured'=>0,'
         <?php endforeach; ?>
 
         <form method="post" enctype="multipart/form-data" novalidate>
+            <?php csrf_field(); ?>
             <div class="adm-form-card">
                 <h2>Destination Details</h2>
                 <div class="adm-form-grid">

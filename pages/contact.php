@@ -1,6 +1,8 @@
 <?php
 session_start();
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../config/csrf.php';
+require_once __DIR__ . '/../config/rate-limiter.php';
 $db = getDB();
 
 $fields = [
@@ -13,6 +15,16 @@ $errors = [];
 $submitted = false;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // CSRF validation
+    if (!validateCSRFToken($_POST['csrf_token'] ?? null)) {
+        $errors['general'] = 'Invalid security token. Please try again.';
+    }
+
+    // Rate limiting — max 10 contact submissions per hour
+    if (empty($errors) && !checkRateLimit('contact', 10, 3600, false)) {
+        $errors['general'] = 'Too many submissions. Please try again later.';
+    }
+
     foreach ($fields as $key => $value) {
         $fields[$key] = trim($_POST[$key] ?? '');
     }
@@ -99,6 +111,7 @@ function field_error(string $field, array $errors): string
                 <?php endif; ?>
 
                 <form class="contact-form" method="post" action="contact.php#message-title" novalidate>
+                    <?php csrf_field(); ?>
                     <div class="form-field">
                         <label for="name">Name</label>
                         <div class="input-wrapper">

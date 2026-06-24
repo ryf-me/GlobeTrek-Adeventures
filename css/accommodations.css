@@ -44,6 +44,10 @@ body {
     align-items: flex-start;
 }
 
+.flex-grow {
+    flex: 1;
+}
+
 /* ---------- Sidebar Filters ---------- */
 .filters-sidebar {
     flex: 0 0 280px;

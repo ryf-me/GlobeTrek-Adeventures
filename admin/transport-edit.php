@@ -1,7 +1,6 @@
 <?php
 $pageTitle = 'Edit Transport';
 require_once __DIR__ . '/includes/header.php';
-include __DIR__ . '/includes/sidebar.php';
 
 $transportId = (int)($_GET['id'] ?? 0);
 $isEdit = $transportId > 0;
@@ -17,6 +16,9 @@ if ($isEdit) {
 $errors = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!validateCSRFToken($_POST['csrf_token'] ?? null)) {
+        $errors[] = 'Invalid security token. Please try again.';
+    } else {
     $name = trim($_POST['name'] ?? '');
     $description = trim($_POST['description'] ?? '');
     $shortDescription = trim($_POST['short_description'] ?? '');
@@ -67,7 +69,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         header('Location: transportation.php?saved=1');
         exit;
     }
+    }
 }
+
+include __DIR__ . '/includes/sidebar.php';
 
 if (!$transport) $transport = ['name'=>'','description'=>'','short_description'=>'','location'=>'','vehicle_type'=>'Car','price_per_day'=>0,'rating'=>0,'image'=>'','has_ac'=>0,'has_driver'=>0,'has_insurance'=>0,'provider_name'=>'','provider_email'=>'','provider_phone'=>'','is_available'=>1,'is_featured'=>0,'is_active'=>1];
 ?>
@@ -92,6 +97,7 @@ if (!$transport) $transport = ['name'=>'','description'=>'','short_description'=
         <?php endforeach; ?>
 
         <form method="post" enctype="multipart/form-data" novalidate>
+            <?php csrf_field(); ?>
             <div class="adm-form-card">
                 <h2>Transport Details</h2>
                 <div class="adm-form-grid">

@@ -1,7 +1,6 @@
 <?php
 $pageTitle = 'Edit Package';
 require_once __DIR__ . '/includes/header.php';
-include __DIR__ . '/includes/sidebar.php';
 
 $pkgId = (int)($_GET['id'] ?? 0);
 $isEdit = $pkgId > 0;
@@ -18,6 +17,9 @@ $errors = [];
 $success = false;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!validateCSRFToken($_POST['csrf_token'] ?? null)) {
+        $errors[] = 'Invalid security token. Please try again.';
+    } else {
     $title = trim($_POST['title'] ?? '');
     $description = trim($_POST['description'] ?? '');
     $shortDescription = trim($_POST['short_description'] ?? '');
@@ -70,7 +72,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         header('Location: packages.php?saved=1');
         exit;
     }
+    }
 }
+
+include __DIR__ . '/includes/sidebar.php';
 
 // Pre-fill for new
 if (!$pkg) {
@@ -98,6 +103,7 @@ if (!$pkg) {
         <?php endforeach; ?>
 
         <form method="post" enctype="multipart/form-data" novalidate>
+            <?php csrf_field(); ?>
             <div class="adm-form-card">
                 <h2>Basic Information</h2>
                 <div class="adm-form-grid">
