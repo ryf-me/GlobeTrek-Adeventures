@@ -28,6 +28,8 @@ $currentPage = ($currentPage === 'index.php') ? 'home' : str_replace('.php', '',
         <?php if (isset($_SESSION['user_id'])): ?>
             <?php if (($_SESSION['user_role'] ?? '') === 'admin'): ?>
                 <li><a href="<?php echo $basePath; ?>admin/index.php">Admin</a></li>
+            <?php elseif (($_SESSION['user_role'] ?? '') === 'staff'): ?>
+                <li><a href="<?php echo $basePath; ?>admin/staff-dashboard.php">Staff</a></li>
             <?php endif; ?>
             <li>
                 <?php

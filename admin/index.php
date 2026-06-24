@@ -5,9 +5,17 @@
  * Displays key performance indicators (users, bookings, revenue, etc.),
  * Chart.js visualizations (revenue trends, booking status, user growth),
  * and recent activity tables for bookings and inquiries.
+ * Staff members are redirected to staff-dashboard.php.
  */
 $pageTitle = 'Dashboard';
 require_once __DIR__ . '/includes/header.php';
+
+// Redirect staff to their own dashboard
+if (($_SESSION['user_role'] ?? '') === 'staff') {
+    header('Location: staff-dashboard.php');
+    exit;
+}
+
 include __DIR__ . '/includes/sidebar.php';
 
 // --- KPIs ---
@@ -35,6 +43,21 @@ $stats['unread_contacts'] = (int)$res->fetch()['cnt'];
 
 $res = $db->query("SELECT COUNT(*) AS cnt FROM newsletter_subscriptions WHERE is_active = 1");
 $stats['subscribers'] = (int)$res->fetch()['cnt'];
+
+$res = $db->query("SELECT COUNT(*) AS cnt FROM staff_profiles");
+$stats['total_staff'] = (int)$res->fetch()['cnt'];
+
+$res = $db->query("SELECT COUNT(*) AS cnt FROM staff_profiles WHERE is_available = 1");
+$stats['available_staff'] = (int)$res->fetch()['cnt'];
+
+$res = $db->query("SELECT COUNT(*) AS cnt FROM staff_assignments");
+$stats['total_assignments'] = (int)$res->fetch()['cnt'];
+
+$res = $db->query("SELECT COUNT(*) AS cnt FROM staff_assignments WHERE entity_type = 'booking'");
+$stats['booking_assignments'] = (int)$res->fetch()['cnt'];
+
+$res = $db->query("SELECT COUNT(*) AS cnt FROM staff_assignments WHERE entity_type = 'inquiry'");
+$stats['inquiry_assignments'] = (int)$res->fetch()['cnt'];
 
 // --- Recent Bookings ---
 $recentBookings = $db->query(
@@ -155,6 +178,41 @@ $userGrowth = array_reverse($userGrowth);
                     <div class="adm-stat-card-label">Newsletter Subscribers</div>
                 </div>
             </div>
+            <div class="adm-stat-card">
+                <div class="adm-stat-card-icon"><span class="material-symbols-outlined">badge</span></div>
+                <div class="adm-stat-card-info">
+                    <div class="adm-stat-card-num"><?= number_format($stats['total_staff']) ?></div>
+                    <div class="adm-stat-card-label">Total Staff</div>
+                </div>
+            </div>
+            <div class="adm-stat-card">
+                <div class="adm-stat-card-icon"><span class="material-symbols-outlined">check_circle</span></div>
+                <div class="adm-stat-card-info">
+                    <div class="adm-stat-card-num"><?= number_format($stats['available_staff']) ?></div>
+                    <div class="adm-stat-card-label">Available Staff</div>
+                </div>
+            </div>
+            <div class="adm-stat-card">
+                <div class="adm-stat-card-icon"><span class="material-symbols-outlined">assignment_ind</span></div>
+                <div class="adm-stat-card-info">
+                    <div class="adm-stat-card-num"><?= number_format($stats['total_assignments']) ?></div>
+                    <div class="adm-stat-card-label">Active Assignments</div>
+                </div>
+            </div>
+            <div class="adm-stat-card">
+                <div class="adm-stat-card-icon"><span class="material-symbols-outlined">flight_takeoff</span></div>
+                <div class="adm-stat-card-info">
+                    <div class="adm-stat-card-num"><?= number_format($stats['booking_assignments']) ?></div>
+                    <div class="adm-stat-card-label">Booking Assignments</div>
+                </div>
+            </div>
+            <div class="adm-stat-card">
+                <div class="adm-stat-card-icon"><span class="material-symbols-outlined">chat</span></div>
+                <div class="adm-stat-card-info">
+                    <div class="adm-stat-card-num"><?= number_format($stats['inquiry_assignments']) ?></div>
+                    <div class="adm-stat-card-label">Inquiry Assignments</div>
+                </div>
+            </div>
         </div>
 
         <!-- Charts -->
@@ -259,10 +317,67 @@ $userGrowth = array_reverse($userGrowth);
                 </table>
             </div>
         <?php endif; ?>
-    </div>
-</main>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+        <!-- Staff Overview -->
+        <div class="adm-page-header">
+            <h2>Staff Overview</h2>
+            <a href="staff.php" class="adm-btn adm-btn-secondary">Manage Staff</a>
+        </div>
+        <?php
+        $staffOverview = $db->query(
+            "SELECT sp.*, u.full_name, u.email,
+                    (SELECT COUNT(*) FROM staff_assignments sa WHERE sa.staff_id = sp.id) AS assignment_count
+             FROM staff_profiles sp
+             JOIN users u ON sp.user_id = u.id
+             ORDER BY sp.is_available DESC, u.full_name ASC
+             LIMIT 8"
+        )->fetchAll();
+
+        $deptLabels = [
+            'operations' => 'Operations',
+            'customer_service' => 'Customer Service',
+            'sales' => 'Sales',
+            'marketing' => 'Marketing',
+        ];
+        ?>
+        <?php if (empty($staffOverview)): ?>
+            <div class="adm-empty" style="padding:2rem;">
+                <p>No staff members added yet. <a href="staff-edit.php">Add your first staff member</a>.</p>
+            </div>
+        <?php else: ?>
+            <div class="adm-table-wrap" style="margin-bottom:2rem;">
+                <table class="adm-table">
+                    <thead>
+                        <tr>
+                            <th>Staff Member</th>
+                            <th>Department</th>
+                            <th>Position</th>
+                            <th>Status</th>
+                            <th>Active Tasks</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($staffOverview as $s): ?>
+                            <tr>
+                                <td class="cell-main"><?= htmlspecialchars($s['full_name']) ?></td>
+                                <td>
+                                    <span class="adm-status-badge adm-status-confirmed">
+                                        <?= $deptLabels[$s['department']] ?? $s['department'] ?>
+                                    </span>
+                                </td>
+                                <td><?= htmlspecialchars($s['position']) ?></td>
+                                <td>
+                                    <span class="adm-status-badge adm-status-<?= $s['is_available'] ? 'active' : 'inactive' ?>">
+                                        <?= $s['is_available'] ? 'Available' : 'Unavailable' ?>
+                                    </span>
+                                </td>
+                                <td class="cell-mono"><?= $s['assignment_count'] ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        <?php endif; ?>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     var revenueLabels = <?= json_encode(array_column($revenueData, 'month')) ?>;

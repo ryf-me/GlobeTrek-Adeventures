@@ -20,6 +20,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'updat
     }
 }
 
+// Handle staff assignment
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'assign_staff') {
+    if (!validateCSRFToken($_POST['csrf_token'] ?? null)) {
+        $error = 'Invalid security token. Please try again.';
+    } else {
+        $staffId = (int)($_POST['staff_id'] ?? 0);
+        $bookingId = (int)($_POST['booking_id'] ?? 0);
+        if ($staffId > 0 && $bookingId > 0) {
+            // Check if already assigned
+            $checkStmt = $db->prepare("SELECT id FROM staff_assignments WHERE staff_id = :sid AND entity_type = 'booking' AND entity_id = :eid LIMIT 1");
+            $checkStmt->execute([':sid' => $staffId, ':eid' => $bookingId]);
+            if (!$checkStmt->fetch()) {
+                $stmt = $db->prepare("INSERT INTO staff_assignments (staff_id, entity_type, entity_id, assigned_by) VALUES (:sid, 'booking', :eid, :assigned_by)");
+                $stmt->execute([':sid' => $staffId, ':eid' => $bookingId, ':assigned_by' => $_SESSION['user_id']]);
+                logActivity('staff_assigned', 'booking', $bookingId, "Staff #$staffId assigned to booking");
+            }
+            header('Location: bookings.php?assigned=1');
+            exit;
+        }
+    }
+}
+
+// Handle staff unassignment
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'unassign_staff') {
+    if (!validateCSRFToken($_POST['csrf_token'] ?? null)) {
+        $error = 'Invalid security token. Please try again.';
+    } else {
+        $assignmentId = (int)($_POST['assignment_id'] ?? 0);
+        if ($assignmentId > 0) {
+            $stmt = $db->prepare("DELETE FROM staff_assignments WHERE id = :id");
+            $stmt->execute([':id' => $assignmentId]);
+            logActivity('staff_unassigned', 'booking', 0, "Assignment #$assignmentId removed");
+            header('Location: bookings.php?unassigned=1');
+            exit;
+        }
+    }
+}
+
 include __DIR__ . '/includes/sidebar.php';
 
 $filter = $_GET['filter'] ?? 'all';
@@ -63,6 +101,41 @@ $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
 $stmt->execute();
 $bookings = $stmt->fetchAll();
 
+// Load staff assignments for displayed bookings
+$bookingIds = array_column($bookings, 'id');
+$staffAssignments = [];
+if (!empty($bookingIds)) {
+    $placeholders = implode(',', array_fill(0, count($bookingIds), '?'));
+    $assignStmt = $db->prepare(
+        "SELECT sa.entity_id, sa.id AS assignment_id, u.full_name AS staff_name, sp.department
+         FROM staff_assignments sa
+         JOIN staff_profiles sp ON sa.staff_id = sp.id
+         JOIN users u ON sp.user_id = u.id
+         WHERE sa.entity_type = 'booking' AND sa.entity_id IN ($placeholders)
+         ORDER BY u.full_name ASC"
+    );
+    $assignStmt->execute($bookingIds);
+    foreach ($assignStmt->fetchAll() as $a) {
+        $staffAssignments[$a['entity_id']][] = $a;
+    }
+}
+
+// Load available staff for assignment dropdown
+$availableStaff = $db->query(
+    "SELECT sp.id, u.full_name, sp.department
+     FROM staff_profiles sp
+     JOIN users u ON sp.user_id = u.id
+     WHERE sp.is_available = 1
+     ORDER BY u.full_name ASC"
+)->fetchAll();
+
+$deptLabels = [
+    'operations' => 'Ops',
+    'customer_service' => 'CS',
+    'sales' => 'Sales',
+    'marketing' => 'Mkt',
+];
+
 // Stats
 $stats = [];
 $res = $db->query("SELECT status, COUNT(*) AS cnt FROM bookings GROUP BY status");
@@ -88,6 +161,12 @@ $totalBookings = array_sum($stats);
     <div class="adm-content">
         <?php if (isset($_GET['updated'])): ?>
             <div class="adm-alert adm-alert-success"><span class="material-symbols-outlined">check_circle</span> Booking status updated.</div>
+        <?php endif; ?>
+        <?php if (isset($_GET['assigned'])): ?>
+            <div class="adm-alert adm-alert-success"><span class="material-symbols-outlined">check_circle</span> Staff member assigned to booking.</div>
+        <?php endif; ?>
+        <?php if (isset($_GET['unassigned'])): ?>
+            <div class="adm-alert adm-alert-success"><span class="material-symbols-outlined">check_circle</span> Staff assignment removed.</div>
         <?php endif; ?>
 
         <div class="adm-page-header">
@@ -123,6 +202,7 @@ $totalBookings = array_sum($stats);
                             <th>Reference</th>
                             <th>User</th>
                             <th>Package</th>
+                            <th>Assigned Staff</th>
                             <th>Travellers</th>
                             <th>Amount</th>
                             <th>Travel Date</th>
@@ -140,6 +220,35 @@ $totalBookings = array_sum($stats);
                                     <div class="cell-sub"><?= htmlspecialchars($b['email']) ?></div>
                                 </td>
                                 <td><?= htmlspecialchars($b['package_title'] ?? 'N/A') ?></td>
+                                <td>
+                                    <?php if (!empty($staffAssignments[$b['id']])): ?>
+                                        <?php foreach ($staffAssignments[$b['id']] as $sa): ?>
+                                            <div style="display:flex;align-items:center;gap:0.35rem;margin-bottom:0.25rem;">
+                                                <span class="adm-status-badge adm-status-active" style="font-size:0.7rem;padding:0.15rem 0.4rem;">
+                                                    <?= htmlspecialchars($sa['staff_name']) ?>
+                                                </span>
+                                                <form method="post" style="display:inline;" data-confirm="Remove assignment?">
+                                                    <?php csrf_field(); ?>
+                                                    <input type="hidden" name="action" value="unassign_staff">
+                                                    <input type="hidden" name="assignment_id" value="<?= $sa['assignment_id'] ?>">
+                                                    <button type="submit" class="adm-btn-icon adm-btn-icon-danger" style="width:20px;height:20px;" title="Remove">
+                                                        <span class="material-symbols-outlined" style="font-size:14px;">close</span>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        <?php endforeach; ?>
+                                    <?php else: ?>
+                                        <span class="cell-muted">Unassigned</span>
+                                    <?php endif; ?>
+                                    <div style="margin-top:0.35rem;">
+                                        <select onchange="assignStaffToBooking(this, <?= $b['id'] ?>)" style="padding:0.2rem 0.4rem;border:1px solid var(--adm-outline-variant);font-size:0.75rem;font-family:inherit;background:transparent;border-radius:4px;">
+                                            <option value="">+ Assign Staff</option>
+                                            <?php foreach ($availableStaff as $s): ?>
+                                                <option value="<?= $s['id'] ?>"><?= htmlspecialchars($s['full_name']) ?> (<?= $deptLabels[$s['department']] ?? $s['department'] ?>)</option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
+                                </td>
                                 <td><?= $b['num_travellers'] ?></td>
                                 <td class="cell-mono">Rs.<?= number_format($b['total_price'], 2) ?></td>
                                 <td class="cell-muted"><?= $b['travel_date'] ? date('M d, Y', strtotime($b['travel_date'])) : '—' ?></td>
@@ -182,4 +291,45 @@ $totalBookings = array_sum($stats);
         <?php endif; ?>
     </div>
 </main>
+
+<script>
+function assignStaffToBooking(select, bookingId) {
+    var staffId = select.value;
+    if (!staffId) return;
+
+    var form = document.createElement('form');
+    form.method = 'POST';
+    form.style.display = 'none';
+
+    var csrfToken = document.querySelector('input[name="csrf_token"]').value;
+
+    var csrfInput = document.createElement('input');
+    csrfInput.type = 'hidden';
+    csrfInput.name = 'csrf_token';
+    csrfInput.value = csrfToken;
+    form.appendChild(csrfInput);
+
+    var actionInput = document.createElement('input');
+    actionInput.type = 'hidden';
+    actionInput.name = 'action';
+    actionInput.value = 'assign_staff';
+    form.appendChild(actionInput);
+
+    var staffInput = document.createElement('input');
+    staffInput.type = 'hidden';
+    staffInput.name = 'staff_id';
+    staffInput.value = staffId;
+    form.appendChild(staffInput);
+
+    var bookingInput = document.createElement('input');
+    bookingInput.type = 'hidden';
+    bookingInput.name = 'booking_id';
+    bookingInput.value = bookingId;
+    form.appendChild(bookingInput);
+
+    document.body.appendChild(form);
+    form.submit();
+}
+</script>
+
 <?php require_once __DIR__ . '/includes/footer.php'; ?>

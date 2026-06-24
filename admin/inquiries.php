@@ -50,6 +50,33 @@ if ($action === 'update_status') {
     }
 }
 
+if ($action === 'assign_staff') {
+    $staffId = (int)($_POST['staff_id'] ?? 0);
+    $inquiryId = (int)($_POST['inquiry_id'] ?? 0);
+    if ($staffId > 0 && $inquiryId > 0) {
+        $checkStmt = $db->prepare("SELECT id FROM staff_assignments WHERE staff_id = :sid AND entity_type = 'inquiry' AND entity_id = :eid LIMIT 1");
+        $checkStmt->execute([':sid' => $staffId, ':eid' => $inquiryId]);
+        if (!$checkStmt->fetch()) {
+            $stmt = $db->prepare("INSERT INTO staff_assignments (staff_id, entity_type, entity_id, assigned_by) VALUES (:sid, 'inquiry', :eid, :assigned_by)");
+            $stmt->execute([':sid' => $staffId, ':eid' => $inquiryId, ':assigned_by' => $_SESSION['user_id']]);
+            logActivity('staff_assigned', 'inquiry', $inquiryId, "Staff #$staffId assigned to inquiry");
+        }
+        header('Location: inquiries.php?assigned=1');
+        exit;
+    }
+}
+
+if ($action === 'unassign_staff') {
+    $assignmentId = (int)($_POST['assignment_id'] ?? 0);
+    if ($assignmentId > 0) {
+        $stmt = $db->prepare("DELETE FROM staff_assignments WHERE id = :id");
+        $stmt->execute([':id' => $assignmentId]);
+        logActivity('staff_unassigned', 'inquiry', 0, "Assignment #$assignmentId removed");
+        header('Location: inquiries.php?unassigned=1');
+        exit;
+    }
+}
+
 include __DIR__ . '/includes/sidebar.php';
 
 $stmt = $db->query("SELECT status, COUNT(*) AS cnt FROM inquiries GROUP BY status");
@@ -78,6 +105,41 @@ $stmt = $db->prepare(
 );
 $stmt->execute($params);
 $inquiries = $stmt->fetchAll();
+
+// Load staff assignments for displayed inquiries
+$inquiryIds = array_column($inquiries, 'id');
+$staffAssignments = [];
+if (!empty($inquiryIds)) {
+    $placeholders = implode(',', array_fill(0, count($inquiryIds), '?'));
+    $assignStmt = $db->prepare(
+        "SELECT sa.entity_id, sa.id AS assignment_id, u.full_name AS staff_name, sp.department
+         FROM staff_assignments sa
+         JOIN staff_profiles sp ON sa.staff_id = sp.id
+         JOIN users u ON sp.user_id = u.id
+         WHERE sa.entity_type = 'inquiry' AND sa.entity_id IN ($placeholders)
+         ORDER BY u.full_name ASC"
+    );
+    $assignStmt->execute($inquiryIds);
+    foreach ($assignStmt->fetchAll() as $a) {
+        $staffAssignments[$a['entity_id']][] = $a;
+    }
+}
+
+// Load available staff for assignment dropdown
+$availableStaff = $db->query(
+    "SELECT sp.id, u.full_name, sp.department
+     FROM staff_profiles sp
+     JOIN users u ON sp.user_id = u.id
+     WHERE sp.is_available = 1
+     ORDER BY u.full_name ASC"
+)->fetchAll();
+
+$deptLabels = [
+    'operations' => 'Ops',
+    'customer_service' => 'CS',
+    'sales' => 'Sales',
+    'marketing' => 'Mkt',
+];
 
 $viewThread = null;
 $threadReplies = [];
@@ -131,6 +193,12 @@ if ($threadId > 0) {
         <?php if (isset($_GET['updated'])): ?>
             <div class="adm-alert adm-alert-success"><span class="material-symbols-outlined">check_circle</span> Status updated successfully.</div>
         <?php endif; ?>
+        <?php if (isset($_GET['assigned'])): ?>
+            <div class="adm-alert adm-alert-success"><span class="material-symbols-outlined">check_circle</span> Staff member assigned to inquiry.</div>
+        <?php endif; ?>
+        <?php if (isset($_GET['unassigned'])): ?>
+            <div class="adm-alert adm-alert-success"><span class="material-symbols-outlined">check_circle</span> Staff assignment removed.</div>
+        <?php endif; ?>
 
         <div class="adm-page-header">
             <h1>Manage Inquiries</h1>
@@ -173,6 +241,7 @@ if ($threadId > 0) {
                             <th>User</th>
                             <th>Package</th>
                             <th>Subject</th>
+                            <th>Assigned Staff</th>
                             <th>Status</th>
                             <th>Date</th>
                         </tr>
@@ -186,11 +255,40 @@ if ($threadId > 0) {
                                 elseif ($inq['status'] === 'under_review') { $statusClass = 'review'; $statusLabel = 'Under Review'; }
                                 elseif ($inq['status'] === 'resolved') { $statusClass = 'resolved'; $statusLabel = 'Resolved'; }
                             ?>
-                            <tr onclick="openAdminThread(<?= $inq['id'] ?>)">
-                                <td class="cell-mono"><?= htmlspecialchars($inq['inquiry_id_code']) ?></td>
-                                <td class="cell-main"><?= htmlspecialchars($inq['user_name'] ?? 'Unknown') ?></td>
-                                <td><?= htmlspecialchars($inq['package_title'] ?? 'General') ?></td>
-                                <td><?= htmlspecialchars($inq['subject']) ?></td>
+                            <tr>
+                                <td class="cell-mono" onclick="openAdminThread(<?= $inq['id'] ?>)"><?= htmlspecialchars($inq['inquiry_id_code']) ?></td>
+                                <td class="cell-main" onclick="openAdminThread(<?= $inq['id'] ?>)"><?= htmlspecialchars($inq['user_name'] ?? 'Unknown') ?></td>
+                                <td onclick="openAdminThread(<?= $inq['id'] ?>)"><?= htmlspecialchars($inq['package_title'] ?? 'General') ?></td>
+                                <td onclick="openAdminThread(<?= $inq['id'] ?>)"><?= htmlspecialchars($inq['subject']) ?></td>
+                                <td onclick="event.stopPropagation()">
+                                    <?php if (!empty($staffAssignments[$inq['id']])): ?>
+                                        <?php foreach ($staffAssignments[$inq['id']] as $sa): ?>
+                                            <div style="display:flex;align-items:center;gap:0.35rem;margin-bottom:0.25rem;">
+                                                <span class="adm-status-badge adm-status-active" style="font-size:0.7rem;padding:0.15rem 0.4rem;">
+                                                    <?= htmlspecialchars($sa['staff_name']) ?>
+                                                </span>
+                                                <form method="post" style="display:inline;" data-confirm="Remove assignment?">
+                                                    <?php csrf_field(); ?>
+                                                    <input type="hidden" name="action" value="unassign_staff">
+                                                    <input type="hidden" name="assignment_id" value="<?= $sa['assignment_id'] ?>">
+                                                    <button type="submit" class="adm-btn-icon adm-btn-icon-danger" style="width:20px;height:20px;" title="Remove">
+                                                        <span class="material-symbols-outlined" style="font-size:14px;">close</span>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        <?php endforeach; ?>
+                                    <?php else: ?>
+                                        <span class="cell-muted">Unassigned</span>
+                                    <?php endif; ?>
+                                    <div style="margin-top:0.35rem;">
+                                        <select onchange="assignStaffToInquiry(this, <?= $inq['id'] ?>)" style="padding:0.2rem 0.4rem;border:1px solid var(--adm-outline-variant);font-size:0.75rem;font-family:inherit;background:transparent;border-radius:4px;">
+                                            <option value="">+ Assign Staff</option>
+                                            <?php foreach ($availableStaff as $s): ?>
+                                                <option value="<?= $s['id'] ?>"><?= htmlspecialchars($s['full_name']) ?> (<?= $deptLabels[$s['department']] ?? $s['department'] ?>)</option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
+                                </td>
                                 <td>
                                     <span class="adm-status-badge adm-status-<?= $statusClass ?>"><?= $statusLabel ?></span>
                                 </td>
@@ -318,4 +416,42 @@ document.getElementById('threadModal').addEventListener('click', function(e) {
         closeAdminThread();
     }
 });
+
+function assignStaffToInquiry(select, inquiryId) {
+    var staffId = select.value;
+    if (!staffId) return;
+
+    var form = document.createElement('form');
+    form.method = 'POST';
+    form.style.display = 'none';
+
+    var csrfToken = document.querySelector('input[name="csrf_token"]').value;
+
+    var csrfInput = document.createElement('input');
+    csrfInput.type = 'hidden';
+    csrfInput.name = 'csrf_token';
+    csrfInput.value = csrfToken;
+    form.appendChild(csrfInput);
+
+    var actionInput = document.createElement('input');
+    actionInput.type = 'hidden';
+    actionInput.name = 'action';
+    actionInput.value = 'assign_staff';
+    form.appendChild(actionInput);
+
+    var staffInput = document.createElement('input');
+    staffInput.type = 'hidden';
+    staffInput.name = 'staff_id';
+    staffInput.value = staffId;
+    form.appendChild(staffInput);
+
+    var inquiryInput = document.createElement('input');
+    inquiryInput.type = 'hidden';
+    inquiryInput.name = 'inquiry_id';
+    inquiryInput.value = inquiryId;
+    form.appendChild(inquiryInput);
+
+    document.body.appendChild(form);
+    form.submit();
+}
 </script>
