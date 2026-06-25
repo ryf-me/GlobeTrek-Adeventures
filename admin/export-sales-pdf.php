@@ -5,8 +5,12 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'admin') 
     exit;
 }
 
+require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/../config/database.php';
 $db = getDB();
+
+use Dompdf\Dompdf;
+use Dompdf\Options;
 
 $dateFrom = $_GET['from'] ?? date('Y-m-01');
 $dateTo = $_GET['to'] ?? date('Y-m-d');
@@ -32,7 +36,7 @@ foreach ($bookings as $b) {
     }
 }
 
-$pdfContent = '<!DOCTYPE html>
+$html = '<!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
@@ -62,7 +66,7 @@ tr:nth-child(even) { background: #f9f9f9; }
 <tr><th>Reference</th><th>Customer</th><th>Package</th><th>Travellers</th><th>Amount</th><th>Status</th><th>Date</th></tr>';
 
 foreach ($bookings as $b) {
-    $pdfContent .= '<tr>
+    $html .= '<tr>
         <td>' . htmlspecialchars($b['booking_reference']) . '</td>
         <td>' . htmlspecialchars($b['customer_name'] ?? 'N/A') . '</td>
         <td>' . htmlspecialchars($b['package_title']) . '</td>
@@ -73,11 +77,21 @@ foreach ($bookings as $b) {
     </tr>';
 }
 
-$pdfContent .= '</table>
+$html .= '</table>
 <div class="footer">Generated on ' . date('d M Y, h:i A') . ' - GlobeTrek Admin</div>
 </body></html>';
 
-header('Content-Type: text/html');
-header('Content-Disposition: inline; filename="sales-report-' . $dateFrom . '-to-' . $dateTo . '.html"');
-echo $pdfContent;
+$options = new Options();
+$options->set('isHtml5ParserEnabled', true);
+$options->set('isRemoteEnabled', false);
+$dompdf = new Dompdf($options);
+$dompdf->loadHtml($html);
+$dompdf->setPaper('A4', 'landscape');
+$dompdf->render();
+
+$filename = 'sales-report-' . $dateFrom . '-to-' . $dateTo . '.pdf';
+header('Content-Type: application/pdf');
+header('Content-Disposition: attachment; filename="' . $filename . '"');
+header('Cache-Control: no-cache, must-revalidate');
+echo $dompdf->output();
 exit;

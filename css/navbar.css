@@ -1,11 +1,10 @@
 @import url('https://fonts.googleapis.com/css2?family=Unkempt:wght@400;700&family=Winky+Sans:ital,wght@0,300..900;1,300..900&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Bungee&family=Rubik+Doodle+Shadow&family=Unkempt:wght@400;700&family=Winky+Sans:ital,wght@0,300..900;1,300..900&display=swap');
+
 /* Navigation */
 .navbar {
-    background: rgba(255, 255, 255, 0.2);
-    backdrop-filter: blur(8px);
-    color: #222;
-    padding: 1rem 2rem;
+    background: #1a2332;
+    color: #fff;
+    padding: 0.75rem 2rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -15,27 +14,40 @@
     width: 100%;
     z-index: 10;
     font-family: 'Segoe UI', Roboto, system-ui, -apple-system, sans-serif;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .navbar .logo {
     display: flex;
     align-items: center;
-    gap: 1rem;
-    color: #222;
+    gap: 0.75rem;
+    color: #fff;
     text-decoration: none;
-    font-size: 1.5rem;
-    font-weight: bold;
 }
 
-.navbar .logo span {
-    color: #222;
-    font-family:'Rubik Doodle Shadow', cursive;
+.logo-text {
+    display: flex;
+    flex-direction: column;
+}
+
+.logo .brand-name {
+    color: #fff;
+    font-size: 1.35rem;
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -0.5px;
+}
+
+.logo .brand-tagline {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.65rem;
+    font-weight: 400;
+    letter-spacing: 0.5px;
 }
 
 .navbar .logo img {
-    width: 50px;
-    height: 50px;
+    width: 42px;
+    height: 42px;
     object-fit: contain;
 }
 
@@ -46,11 +58,17 @@
     gap: 1.5rem;
 }
 .navbar .nav-links a {
-    color: #222;
+    color: rgba(255, 255, 255, 0.85);
     text-decoration: none;
     font-weight: 500;
+    font-size: 0.9rem;
     position: relative;
     padding-bottom: 4px;
+    transition: color 0.2s ease;
+}
+
+.navbar .nav-links a:hover {
+    color: #fff;
 }
 
 .navbar .nav-links a::after {
@@ -73,6 +91,42 @@
 .navbar .nav-links li.active a::after {
     transform: translateX(-50%) scaleX(1);
 }
+
+.nav-phone {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 0.9rem;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.nav-phone .material-symbols-outlined {
+    font-size: 18px;
+}
+
+.book-now-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.55rem 1.25rem;
+    background: #e76f51;
+    color: #fff !important;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.book-now-btn:hover {
+    background: #d4603f;
+    transform: translateY(-1px);
+}
+
 .login-btn,
 .signup-btn {
     min-width: 82px;
@@ -90,34 +144,34 @@
     transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
 }
 .login-btn {
-    border: 2px solid #ccc;
-    background: #fff;
-    color: #222;
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    background: transparent;
+    color: #fff;
 }
 .signup-btn {
     margin-left: -0.75rem;
-    border: 2px solid #000000;
-    background: #e68f70;
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    background: rgba(255, 255, 255, 0.15);
     color: #fff;
 }
 .navbar .nav-links a.login-btn {
-    color: #222;
+    color: #fff;
 }
 .login-btn:hover,
 .login-btn:focus-visible {
-    border-color: #e76f51;
-    background: #f0f0f0;
+    border-color: #fff;
+    background: rgba(255, 255, 255, 0.15);
     transform: translateY(-1px);
 }
 .signup-btn:hover,
 .signup-btn:focus-visible {
-    border-color: #b0b0b0;
-    background: #b0b0b0;
+    border-color: #fff;
+    background: rgba(255, 255, 255, 0.3);
     transform: translateY(-1px);
 }
 .login-btn:focus-visible,
 .signup-btn:focus-visible {
-    outline: 2px solid #222;
+    outline: 2px solid #fff;
     outline-offset: 3px;
 }
 
@@ -126,19 +180,22 @@
     display: none;
     border: 0;
     background: transparent;
-    color: #222;
+    color: #fff;
     font-size: 2rem;
     cursor: pointer;
 }
 
 @media (max-width: 768px) {
     .navbar {
-        padding: 1rem;
-        position: absolute;
+        padding: 0.75rem 1rem;
     }
 
-    .navbar .logo span {
-        font-size: 1.15rem;
+    .logo .brand-name {
+        font-size: 1.1rem;
+    }
+
+    .logo .brand-tagline {
+        font-size: 0.55rem;
     }
 
     .menu-toggle {
@@ -151,7 +208,7 @@
         left: 0;
         width: 100%;
         padding: 1rem;
-        background: rgba(0, 0, 0, 0.9);
+        background: rgba(26, 35, 50, 0.97);
         backdrop-filter: blur(10px);
         display: none;
         flex-direction: column;
@@ -172,6 +229,16 @@
         width: 100%;
         display: block;
         text-align: center;
+    }
+
+    .nav-phone {
+        justify-content: center;
+        padding: 0.5rem 0;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .book-now-btn {
+        margin: 0.5rem 0;
     }
 
     .signup-btn {
@@ -205,14 +272,14 @@
 }
 
 .user-profile-trigger:hover {
-    background: rgba(0, 0, 0, 0.05);
+    background: rgba(255, 255, 255, 0.1);
 }
 
 .user-avatar {
     width: 36px;
     height: 36px;
     border-radius: 50%;
-    background: #264653;
+    background: #e76f51;
     color: #fff;
     display: flex;
     align-items: center;
@@ -231,7 +298,7 @@
 }
 
 .user-name-label {
-    color: #264653;
+    color: #fff;
     font-size: 0.9rem;
     font-weight: 600;
     line-height: 1.2;
@@ -243,7 +310,7 @@
 
 .trigger-chevron {
     font-size: 18px !important;
-    color: #747878;
+    color: rgba(255, 255, 255, 0.7);
     transition: transform 0.25s ease;
 }
 
@@ -258,7 +325,7 @@
     width: 280px;
     background: #fff;
     border: 1px solid #c4c7c7;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
     z-index: 200;
     opacity: 0;
     visibility: hidden;
@@ -330,7 +397,7 @@
     padding: 0.35rem 0;
 }
 
-.dropdown-nav-item {
+.profile-dropdown .dropdown-nav .dropdown-nav-item {
     display: flex;
     align-items: center;
     gap: 0.7rem;
@@ -343,18 +410,27 @@
     transition: background 0.15s ease;
 }
 
-.dropdown-nav-item:hover {
+.profile-dropdown .dropdown-nav .dropdown-nav-item:hover {
     background: #f5f7fa;
+    color: #264653;
 }
 
-.dropdown-nav-item:focus-visible {
+.profile-dropdown .dropdown-nav .dropdown-nav-item:focus-visible {
     outline: 2px solid #000;
     outline-offset: -2px;
 }
 
-.dropdown-nav-item .material-symbols-outlined {
+.profile-dropdown .dropdown-nav .dropdown-nav-item .material-symbols-outlined {
     font-size: 20px !important;
     color: #5e5e5e;
+}
+
+.profile-dropdown .dropdown-nav .dropdown-nav-item::after {
+    display: none;
+}
+
+.navbar .nav-links .profile-dropdown .dropdown-logout::after {
+    display: none;
 }
 
 .dropdown-divider {
@@ -363,7 +439,7 @@
     margin: 0.25rem 0;
 }
 
-.dropdown-logout {
+.navbar .nav-links .profile-dropdown .dropdown-logout {
     display: flex;
     align-items: center;
     gap: 0.7rem;
@@ -376,82 +452,27 @@
     transition: background 0.15s ease;
 }
 
-.dropdown-logout:hover {
+.navbar .nav-links .profile-dropdown .dropdown-logout:hover {
     background: rgba(186, 26, 26, 0.05);
+    color: #ba1a1a;
 }
 
-.dropdown-logout:focus-visible {
+.navbar .nav-links .profile-dropdown .dropdown-logout:focus-visible {
     outline: 2px solid #ba1a1a;
     outline-offset: -2px;
 }
 
-.dropdown-logout .material-symbols-outlined {
+.navbar .nav-links .profile-dropdown .dropdown-logout .material-symbols-outlined {
     font-size: 20px !important;
 }
 
-/* Homepage hero overlay navbar */
+/* Homepage — navbar stays dark (no override needed) */
 .home-page .navbar {
     position: absolute;
     background: transparent;
-    backdrop-filter: none;  /* remove blur/dark effect*/
-    -webkit-backdrop-filter: none; /*ensures the blur is fully killed */
-    border-bottom: none;   /* remove the bottom dark line */
-}
-
-.home-page .navbar .logo,
-.home-page .navbar .logo span {
-    color: #fff;
-}
-
-.home-page .navbar .nav-links a {
-    color: #fff;
-}
-
-.home-page .navbar .nav-links a::after {
-    background: #fff;
-}
-
-.home-page .navbar .nav-links li.active a::after {
-    background: #fff;
-}
-
-.home-page .menu-toggle {
-    color: #fff;
-}
-
-.home-page .login-btn {
-    border-color: rgba(255, 255, 255, 0.5);
-    background: transparent;
-    color: #fff;
-}
-
-.home-page .signup-btn {
-    border-color: rgba(255,255,255,0.5);
-    background: rgba(255,255,255,0.15);
-    color: #fff;
-}
-
-.home-page .login-btn:hover {
-    background: rgba(255, 255, 255, 0.15);
-    border-color: #fff;
-}
-
-.home-page .signup-btn:hover {
-    background: rgba(255, 255, 255, 0.3);
-    border-color:#fff;
-}
-
-/* Homepage dropdown text override */
-.home-page .navbar .nav-links .dropdown-nav-item {
-    color: #1a1c1c;
-}
-
-.home-page .navbar .nav-links .dropdown-nav-item .material-symbols-outlined {
-    color: #5e5e5e;
-}
-
-.home-page .navbar .nav-links .dropdown-logout {
-    color: #ba1a1a;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border-bottom: none;
 }
 
 /* About page overlay navbar */
@@ -520,7 +541,6 @@
 
 /* Mobile */
 @media (max-width: 768px) {
-    .home-page .navbar .nav-links,
     .about-page .navbar .nav-links {
         background: rgba(0, 0, 0, 0.85);
     }

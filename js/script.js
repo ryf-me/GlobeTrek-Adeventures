@@ -2,7 +2,7 @@
  * GlobeTrek Adventures — Main Frontend JavaScript
  *
  * Handles: navigation toggle, password visibility, modals, profile dropdown,
- * stats counter animation, and CSRF token injection for AJAX requests.
+ * stats counter animation, destination filters, testimonial arrows, and CSRF token injection.
  */
 
 // --- Content protection: block copy and cut actions ---
@@ -10,7 +10,6 @@ document.addEventListener('copy', function(e) { e.preventDefault(); });
 document.addEventListener('cut', function(e) { e.preventDefault(); });
 
 // Global CSRF token — read from the variable set by navbar.php
-// Fallback to meta tag if the variable is not available
 var csrfToken = window.csrfToken || (function () {
     var meta = document.querySelector('meta[name="csrf-token"]');
     return meta ? meta.getAttribute('content') : '';
@@ -30,15 +29,14 @@ const navLinks = document.querySelector('.nav-links');
 
 if (menuToggle && navLinks) {
   navLinks.querySelectorAll('a').forEach((link) => {
-  link.addEventListener('click', () => {
-    navLinks.classList.remove('active');
-    menuToggle.setAttribute('aria-expanded', 'false');
-    menuToggle.textContent = '☰';
+    link.addEventListener('click', () => {
+      navLinks.classList.remove('active');
+      menuToggle.setAttribute('aria-expanded', 'false');
+      menuToggle.textContent = '☰';
+    });
   });
-});
   menuToggle.addEventListener('click', () => {
     navLinks.classList.toggle('active');
-
     const isOpen = navLinks.classList.contains('active');
     menuToggle.setAttribute('aria-expanded', isOpen);
     menuToggle.textContent = isOpen ? '×' : '☰';
@@ -51,7 +49,6 @@ document.querySelectorAll('.password-toggle').forEach((btn) => {
     const targetId = btn.getAttribute('data-target');
     const input = document.getElementById(targetId);
     if (!input) return;
-
     const isPassword = input.type === 'password';
     input.type = isPassword ? 'text' : 'password';
     btn.classList.toggle('active', isPassword);
@@ -151,7 +148,6 @@ document.querySelectorAll('.inq-modal-overlay, .adm-modal-overlay').forEach(func
   function animateCounter(el) {
     var target = parseInt(el.getAttribute('data-target'), 10);
     var duration = 2000;
-    var start = 0;
     var startTime = null;
 
     function step(timestamp) {
@@ -183,120 +179,147 @@ document.querySelectorAll('.inq-modal-overlay, .adm-modal-overlay').forEach(func
   });
 })();
 
-// --- Hero typewriter effect for "Sri Lanka" ---
+// --- Destination filter tabs ---
 (function () {
-  var target = document.getElementById('typewriter');
-  var cursor = document.getElementById('typewriter-cursor');
-  if (!target) return;
+  var tabs = document.querySelectorAll('.dest-tab');
+  var cards = document.querySelectorAll('.dest-card');
+  if (!tabs.length || !cards.length) return;
 
-  var words = ['Sri Lanka', 'Paradise', 'the Pearl of the Indian Ocean'];
-  var wordIndex = 0;
-  var charIndex = 0;
-  var isDeleting = false;
-  var typeSpeed = 100;
-  var deleteSpeed = 60;
-  var pauseEnd = 2000;
-  var pauseStart = 500;
+  tabs.forEach(function (tab) {
+    tab.addEventListener('click', function () {
+      var filter = tab.getAttribute('data-filter');
 
-  function tick() {
-    var currentWord = words[wordIndex];
+      tabs.forEach(function (t) { t.classList.remove('active'); });
+      tab.classList.add('active');
 
-    if (!isDeleting) {
-      target.textContent = currentWord.substring(0, charIndex + 1);
-      charIndex++;
-
-      if (charIndex === currentWord.length) {
-        isDeleting = true;
-        setTimeout(tick, pauseEnd);
-        return;
-      }
-      setTimeout(tick, typeSpeed);
-    } else {
-      target.textContent = currentWord.substring(0, charIndex - 1);
-      charIndex--;
-
-      if (charIndex === 0) {
-        isDeleting = false;
-        wordIndex = (wordIndex + 1) % words.length;
-        setTimeout(tick, pauseStart);
-        return;
-      }
-      setTimeout(tick, deleteSpeed);
-    }
-  }
-
-  // Blinking cursor
-  setInterval(function () {
-    if (cursor) {
-      cursor.style.opacity = cursor.style.opacity === '0' ? '1' : '0';
-    }
-  }, 530);
-
-  setTimeout(tick, 800);
-})();
-
-// --- Animated Testimonials Carousel ---
-(function () {
-  var cards = document.querySelectorAll('.testimonial-card');
-  var dots = document.querySelectorAll('.testimonials-dot');
-  if (!cards.length || !dots.length) return;
-
-  var activeIndex = 0;
-  var autoRotateInterval = 6000;
-  var timer = null;
-
-  function setActive(index) {
-    cards.forEach(function (card) {
-      card.classList.remove('active');
-    });
-    dots.forEach(function (dot) {
-      dot.classList.remove('active');
-    });
-
-    cards[index].classList.add('active');
-    dots[index].classList.add('active');
-    activeIndex = index;
-  }
-
-  function next() {
-    setActive((activeIndex + 1) % cards.length);
-  }
-
-  function startAutoRotate() {
-    stopAutoRotate();
-    timer = setInterval(next, autoRotateInterval);
-  }
-
-  function stopAutoRotate() {
-    if (timer) {
-      clearInterval(timer);
-      timer = null;
-    }
-  }
-
-  dots.forEach(function (dot, index) {
-    dot.addEventListener('click', function () {
-      setActive(index);
-      startAutoRotate();
-    });
-  });
-
-  // IntersectionObserver to pause when not visible
-  var section = document.getElementById('testimonials');
-  if (section) {
-    var observer = new IntersectionObserver(function (entries) {
-      entries.forEach(function (entry) {
-        if (entry.isIntersecting) {
-          startAutoRotate();
+      cards.forEach(function (card) {
+        var category = card.getAttribute('data-category');
+        if (filter === 'all' || category === filter) {
+          card.style.display = '';
+          card.style.opacity = '0';
+          card.style.transform = 'translateY(10px)';
+          setTimeout(function () {
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+            card.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+          }, 50);
         } else {
-          stopAutoRotate();
+          card.style.display = 'none';
         }
       });
-    }, { threshold: 0.2 });
+    });
+  });
+})();
 
-    observer.observe(section);
-  }
+// --- Wishlist toggle ---
+(function () {
+  var wishlistBtns = document.querySelectorAll('.pkg-wishlist');
+  wishlistBtns.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      btn.classList.toggle('active');
+    });
+  });
+})();
 
-  // Initialize
-  setActive(0);
+// --- Testimonials carousel (horizontal scroll with arrows) ---
+(function () {
+  var track = document.querySelector('.testimonials-track');
+  var prevBtn = document.querySelector('.test-prev');
+  var nextBtn = document.querySelector('.test-next');
+  if (!track || !prevBtn || !nextBtn) return;
+
+  var scrollAmount = 340;
+
+  nextBtn.addEventListener('click', function () {
+    track.parentElement.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+  });
+
+  prevBtn.addEventListener('click', function () {
+    track.parentElement.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+  });
+})();
+
+// --- Guides carousel arrows ---
+(function () {
+  var track = document.querySelector('.guides-track');
+  var prevBtn = document.querySelector('.guides-prev');
+  var nextBtn = document.querySelector('.guides-next');
+  if (!track || !prevBtn || !nextBtn) return;
+
+  var scrollAmount = 300;
+
+  nextBtn.addEventListener('click', function () {
+    track.parentElement.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+  });
+
+  prevBtn.addEventListener('click', function () {
+    track.parentElement.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+  });
+})();
+
+// --- Hero Search: Flatpickr Date Range ---
+(function () {
+  var dateInput = document.getElementById('hero-date-range');
+  var checkinHidden = document.getElementById('hero-checkin');
+  var checkoutHidden = document.getElementById('hero-checkout');
+  if (!dateInput || typeof flatpickr === 'undefined') return;
+
+  flatpickr(dateInput, {
+    mode: 'range',
+    dateFormat: 'Y-m-d',
+    minDate: 'today',
+    disableMobile: true,
+    onChange: function (selectedDates) {
+      if (selectedDates.length === 2) {
+        var fmt = function (d) {
+          var y = d.getFullYear();
+          var m = String(d.getMonth() + 1).padStart(2, '0');
+          var day = String(d.getDate()).padStart(2, '0');
+          return y + '-' + m + '-' + day;
+        };
+        checkinHidden.value = fmt(selectedDates[0]);
+        checkoutHidden.value = fmt(selectedDates[1]);
+      } else {
+        checkinHidden.value = '';
+        checkoutHidden.value = '';
+      }
+    }
+  });
+})();
+
+// --- Hero Search: Travelers Popup ---
+(function () {
+  var display = document.getElementById('hero-travelers-display');
+  var popup = document.getElementById('travelers-popup');
+  var countEl = document.getElementById('travelers-count');
+  var hiddenInput = document.getElementById('hero-travelers');
+  if (!display || !popup || !countEl || !hiddenInput) return;
+
+  var count = 2;
+
+  display.addEventListener('click', function (e) {
+    e.stopPropagation();
+    popup.classList.toggle('open');
+  });
+
+  document.addEventListener('click', function (e) {
+    if (!popup.contains(e.target) && e.target !== display) {
+      popup.classList.remove('open');
+    }
+  });
+
+  popup.querySelectorAll('.travelers-btn').forEach(function (btn) {
+    btn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var action = btn.getAttribute('data-action');
+      if (action === 'increase' && count < 20) {
+        count++;
+      } else if (action === 'decrease' && count > 1) {
+        count--;
+      }
+      countEl.textContent = count;
+      hiddenInput.value = count;
+      display.value = count + ' Traveler' + (count > 1 ? 's' : '');
+    });
+  });
 })();

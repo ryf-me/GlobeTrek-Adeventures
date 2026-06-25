@@ -136,7 +136,7 @@ function e($value)
                                 <h3><?= e($guide['name']) ?></h3>
                                 <p class="specialty"><?= e($guide['specialty']) ?></p>
                                 <p class="guide-description"><?= e($guide['description']) ?></p>
-                                <a href="<?= e($guide['profile_link']) ?>" class="profile-btn">View Profile</a>
+                                <a href="guide-details.php?id=<?= (int)$guide['id'] ?>" class="profile-btn">View Profile</a>
                             </div>
                         </article>
                     <?php endforeach; ?>

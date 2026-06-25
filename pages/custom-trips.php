@@ -118,6 +118,7 @@ function style_selected(string $value, string $current): string
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="../css/navbar.css">
     <link rel="stylesheet" href="../css/custom-trips.css">
@@ -183,7 +184,7 @@ function style_selected(string $value, string $current): string
                                 </div>
                                 <div class="form-field">
                                     <label for="dates">Estimated Dates (Optional)</label>
-                                    <input id="dates" name="dates" type="text" value="<?= old_value('dates', $fields) ?>" placeholder="e.g., Fall 2024">
+                                    <input id="dates" name="dates" type="text" value="<?= old_value('dates', $fields) ?>" placeholder="Select date range" readonly class="ct-date-range">
                                 </div>
                             </div>
                         </fieldset>
@@ -323,5 +324,31 @@ function style_selected(string $value, string $current): string
     <?php $basePath = '../'; include '../includes/footer.php'; ?>
 
     <script src="../js/script.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script>
+    (function () {
+        var dateInput = document.getElementById('dates');
+        if (!dateInput || typeof flatpickr === 'undefined') return;
+        flatpickr(dateInput, {
+            mode: 'range',
+            dateFormat: 'Y-m-d',
+            minDate: 'today',
+            disableMobile: true,
+            altInput: true,
+            altFormat: 'F j, Y',
+            onChange: function (selectedDates) {
+                if (selectedDates.length === 2) {
+                    var fmt = function (d) {
+                        var y = d.getFullYear();
+                        var m = String(d.getMonth() + 1).padStart(2, '0');
+                        var day = String(d.getDate()).padStart(2, '0');
+                        return y + '-' + m + '-' + day;
+                    };
+                    dateInput.value = fmt(selectedDates[0]) + ' to ' + fmt(selectedDates[1]);
+                }
+            }
+        });
+    })();
+    </script>
 </body>
 </html>

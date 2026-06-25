@@ -15,12 +15,12 @@ $r = $db->prepare(
     "SELECT u.full_name, u.email, u.phone, u.country, u.city, u.gender, u.created_at AS joined,
             COUNT(b.id) AS booking_count, COALESCE(SUM(b.total_price), 0) AS total_spent
      FROM users u
-     LEFT JOIN bookings b ON u.id = b.user_id AND b.status = 'confirmed' AND b.created_at BETWEEN :from AND :to
-     WHERE u.created_at BETWEEN :from AND :to
+     LEFT JOIN bookings b ON u.id = b.user_id AND b.status = 'confirmed' AND b.created_at BETWEEN :bfrom AND :bto
+     WHERE u.created_at BETWEEN :ufrom AND :uto
      GROUP BY u.id, u.full_name, u.email, u.phone, u.country, u.city, u.gender, u.created_at
      ORDER BY total_spent DESC"
 );
-$r->execute([':from' => $dateFrom . ' 00:00:00', ':to' => $dateTo . ' 23:59:59']);
+$r->execute([':bfrom' => $dateFrom . ' 00:00:00', ':bto' => $dateTo . ' 23:59:59', ':ufrom' => $dateFrom . ' 00:00:00', ':uto' => $dateTo . ' 23:59:59']);
 $customers = $r->fetchAll();
 
 header('Content-Type: text/csv; charset=utf-8');

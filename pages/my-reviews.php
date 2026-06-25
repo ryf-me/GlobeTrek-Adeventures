@@ -14,7 +14,7 @@ $userId = $_SESSION['user_id'];
 $error = '';
 $success = '';
 
-// Handle edit
+// Handle edit for package/general reviews
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'edit') {
     $reviewId = (int)($_POST['review_id'] ?? 0);
     $rating = (int)($_POST['rating'] ?? 0);
@@ -30,16 +30,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'edit'
     } elseif (mb_strlen($content) > 2000) {
         $error = 'Your review must be no more than 2000 characters.';
     } else {
-        // Verify ownership + 6-hour window
+        // Try package/general review first
         $stmt = $db->prepare(
             "SELECT id FROM testimonials WHERE id = :id AND user_id = :uid AND created_at >= NOW() - INTERVAL 6 HOUR"
         );
         $stmt->execute([':id' => $reviewId, ':uid' => $userId]);
         $review = $stmt->fetch();
 
-        if (!$review) {
-            $error = 'Review not found or the 6-hour edit window has expired.';
-        } else {
+        if ($review) {
             $stmt = $db->prepare(
                 "UPDATE testimonials SET rating = :rating, title = :title, content = :content, status = 'pending' WHERE id = :id"
             );
@@ -52,24 +50,52 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'edit'
             header('Location: my-reviews.php?updated=1');
             exit;
         }
+
+        // Try guide review
+        $stmt = $db->prepare(
+            "SELECT id FROM guide_reviews WHERE id = :id AND user_id = :uid AND created_at >= NOW() - INTERVAL 6 HOUR"
+        );
+        $stmt->execute([':id' => $reviewId, ':uid' => $userId]);
+        $review = $stmt->fetch();
+
+        if ($review) {
+            $stmt = $db->prepare(
+                "UPDATE guide_reviews SET rating = :rating, title = :title, content = :content, status = 'pending' WHERE id = :id"
+            );
+            $stmt->execute([
+                ':rating' => $rating,
+                ':title' => $title,
+                ':content' => $content,
+                ':id' => $reviewId,
+            ]);
+            header('Location: my-reviews.php?updated=1');
+            exit;
+        }
+
+        $error = 'Review not found or the 6-hour edit window has expired.';
     }
 }
 
 // Handle delete
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delete') {
     $reviewId = (int)($_POST['review_id'] ?? 0);
+    $reviewType = $_POST['review_type'] ?? 'package';
 
     if (!validateCSRFToken($_POST['csrf_token'] ?? null)) {
         $error = 'Invalid security token.';
     } elseif ($reviewId > 0) {
-        $stmt = $db->prepare("DELETE FROM testimonials WHERE id = :id AND user_id = :uid");
+        if ($reviewType === 'guide') {
+            $stmt = $db->prepare("DELETE FROM guide_reviews WHERE id = :id AND user_id = :uid");
+        } else {
+            $stmt = $db->prepare("DELETE FROM testimonials WHERE id = :id AND user_id = :uid");
+        }
         $stmt->execute([':id' => $reviewId, ':uid' => $userId]);
         header('Location: my-reviews.php?deleted=1');
         exit;
     }
 }
 
-// Fetch user's reviews
+// Fetch user's package/general reviews
 $filter = $_GET['filter'] ?? 'all';
 $where = 't.user_id = :uid';
 if ($filter === 'approved')   { $where .= " AND t.status = 'approved'"; }
@@ -77,21 +103,44 @@ elseif ($filter === 'pending')   { $where .= " AND t.status = 'pending'"; }
 elseif ($filter === 'rejected')  { $where .= " AND t.status = 'rejected'"; }
 
 $stmt = $db->prepare(
-    "SELECT t.*, p.title AS package_title, p.slug AS package_slug
+    "SELECT t.*, p.title AS package_title, p.slug AS package_slug, 'package' AS review_type,
+            TIMESTAMPDIFF(SECOND, t.created_at, NOW()) AS seconds_elapsed
      FROM testimonials t
      LEFT JOIN packages p ON t.package_id = p.id
      WHERE $where
      ORDER BY t.created_at DESC"
 );
 $stmt->execute([':uid' => $userId]);
-$reviews = $stmt->fetchAll();
+$packageReviews = $stmt->fetchAll();
+
+// Fetch user's guide reviews
+$guideWhere = 'gr.user_id = :uid';
+if ($filter === 'approved')   { $guideWhere .= " AND gr.status = 'approved'"; }
+elseif ($filter === 'pending')   { $guideWhere .= " AND gr.status = 'pending'"; }
+elseif ($filter === 'rejected')  { $guideWhere .= " AND gr.status = 'rejected'"; }
+
+$guideStmt = $db->prepare(
+    "SELECT gr.*, g.name AS guide_name, g.specialty AS guide_specialty, 'guide' AS review_type,
+            TIMESTAMPDIFF(SECOND, gr.created_at, NOW()) AS seconds_elapsed
+     FROM guide_reviews gr
+     LEFT JOIN guides g ON gr.guide_id = g.id
+     WHERE $guideWhere
+     ORDER BY gr.created_at DESC"
+);
+$guideStmt->execute([':uid' => $userId]);
+$guideReviews = $guideStmt->fetchAll();
+
+// Merge and sort by date
+$reviews = array_merge($packageReviews, $guideReviews);
+usort($reviews, function($a, $b) {
+    return strtotime($b['created_at']) - strtotime($a['created_at']);
+});
 
 $activePage = 'my-reviews';
 
-// Helper: check if review is within edit window
+// Helper: check if review is within edit window (uses seconds_elapsed from DB)
 function canEditReview(array $review): bool {
-    $createdAt = strtotime($review['created_at']);
-    return (time() - $createdAt) < 6 * 3600;
+    return (int)($review['seconds_elapsed'] ?? 999999) < 6 * 3600;
 }
 ?>
 <!DOCTYPE html>
@@ -108,6 +157,7 @@ function canEditReview(array $review): bool {
     <link rel="stylesheet" href="../css/navbar.css">
     <link rel="stylesheet" href="../css/user-sidebar.css">
     <link rel="stylesheet" href="../css/my-reviews.css">
+    <link rel="stylesheet" href="../css/my-bookings.css">
     <link rel="stylesheet" href="../css/inquiries.css">
     <link rel="stylesheet" href="../css/footer.css">
 </head>
@@ -177,7 +227,7 @@ function canEditReview(array $review): bool {
                                 : 'No reviews match the selected filter.'
                             ?>
                         </p>
-                        <a href="testimonial.php" class="mb-btn mb-btn-primary" style="margin-top:1rem;display:inline-block;">Write a Review</a>
+                        <a href="../index.php#testimonials" class="mb-btn mb-btn-primary" style="margin-top:1rem;display:inline-block;">Write a Review</a>
                     </div>
                 <?php else: ?>
                     <div class="mr-list">
@@ -191,15 +241,21 @@ function canEditReview(array $review): bool {
                             $statusLabels = ['approved' => 'Approved', 'pending' => 'Pending', 'rejected' => 'Rejected'];
                             $sc = $statusColors[$review['status']] ?? ['#888', '#eee'];
                             $sl = $statusLabels[$review['status']] ?? 'Unknown';
-                            $canEdit = canEditReview($review);
-                            $timeSince = time() - strtotime($review['created_at']);
-                            $editHoursRemaining = max(0, floor((6 * 3600 - $timeSince) / 3600));
-                            $editMinutesRemaining = max(0, floor(((6 * 3600 - $timeSince) % 3600) / 60));
+                            $canEdit = (int)$review['seconds_elapsed'] < 6 * 3600;
+                            $editSecondsRemaining = max(0, 6 * 3600 - (int)$review['seconds_elapsed']);
+                            $editHoursRemaining = floor($editSecondsRemaining / 3600);
+                            $editMinutesRemaining = floor(($editSecondsRemaining % 3600) / 60);
+                            $isGuideReview = ($review['review_type'] ?? '') === 'guide';
                             ?>
                             <div class="mr-card" data-review-id="<?= $review['id'] ?>">
                                 <div class="mr-card-header">
                                     <div class="mr-card-meta">
-                                        <?php if ($review['package_title']): ?>
+                                        <?php if ($isGuideReview): ?>
+                                            <a href="guide-details.php?id=<?= (int)($review['guide_id'] ?? 0) ?>" class="mr-card-package">
+                                                <span class="material-symbols-outlined">person_raised_hand</span>
+                                                <?= htmlspecialchars($review['guide_name'] ?? 'Guide') ?> — <?= htmlspecialchars($review['guide_specialty'] ?? '') ?>
+                                            </a>
+                                        <?php elseif (!empty($review['package_title'])): ?>
                                             <a href="package-details.php?slug=<?= urlencode($review['package_slug']) ?>" class="mr-card-package">
                                                 <span class="material-symbols-outlined">luggage</span>
                                                 <?= htmlspecialchars($review['package_title']) ?>
@@ -224,7 +280,7 @@ function canEditReview(array $review): bool {
                                     <?php endfor; ?>
                                 </div>
 
-                                <?php if ($review['title']): ?>
+                                <?php if (!empty($review['title'])): ?>
                                     <h3 class="mr-card-title"><?= htmlspecialchars($review['title']) ?></h3>
                                 <?php endif; ?>
 
@@ -256,6 +312,7 @@ function canEditReview(array $review): bool {
                                         <?php csrf_field(); ?>
                                         <input type="hidden" name="action" value="delete">
                                         <input type="hidden" name="review_id" value="<?= $review['id'] ?>">
+                                        <input type="hidden" name="review_type" value="<?= $isGuideReview ? 'guide' : 'package' ?>">
                                         <button type="submit" class="mr-btn mr-btn-text-danger">
                                             <span class="material-symbols-outlined">delete</span>
                                             Delete
@@ -333,7 +390,7 @@ function canEditReview(array $review): bool {
     const editData = {};
     <?php foreach ($reviews as $review): ?>
     editData[<?= $review['id'] ?>] = <?= json_encode([
-        'id' => (int)$review['rating'],
+        'id' => (int)$review['id'],
         'rating' => (int)$review['rating'],
         'title' => $review['title'],
         'content' => $review['content'],

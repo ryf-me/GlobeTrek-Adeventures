@@ -5,8 +5,12 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'admin') 
     exit;
 }
 
+require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/../config/database.php';
 $db = getDB();
+
+use Dompdf\Dompdf;
+use Dompdf\Options;
 
 $dateFrom = $_GET['from'] ?? date('Y-m-01');
 $dateTo = $_GET['to'] ?? date('Y-m-d');
@@ -15,15 +19,15 @@ $r = $db->prepare(
     "SELECT u.full_name, u.email, u.phone, u.country, u.city, u.gender, u.created_at,
             COUNT(b.id) AS booking_count, COALESCE(SUM(b.total_price), 0) AS total_spent
      FROM users u
-     LEFT JOIN bookings b ON u.id = b.user_id AND b.status = 'confirmed' AND b.created_at BETWEEN :from AND :to
-     WHERE u.created_at BETWEEN :from AND :to
+     LEFT JOIN bookings b ON u.id = b.user_id AND b.status = 'confirmed' AND b.created_at BETWEEN :bfrom AND :bto
+     WHERE u.created_at BETWEEN :ufrom AND :uto
      GROUP BY u.id, u.full_name, u.email, u.phone, u.country, u.city, u.gender, u.created_at
      ORDER BY total_spent DESC"
 );
-$r->execute([':from' => $dateFrom . ' 00:00:00', ':to' => $dateTo . ' 23:59:59']);
+$r->execute([':bfrom' => $dateFrom . ' 00:00:00', ':bto' => $dateTo . ' 23:59:59', ':ufrom' => $dateFrom . ' 00:00:00', ':uto' => $dateTo . ' 23:59:59']);
 $customers = $r->fetchAll();
 
-$pdfContent = '<!DOCTYPE html>
+$html = '<!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
@@ -51,7 +55,7 @@ tr:nth-child(even) { background: #f9f9f9; }
 <tr><th>Name</th><th>Email</th><th>Country</th><th>Gender</th><th>Joined</th><th>Bookings</th><th>Spent</th></tr>';
 
 foreach ($customers as $c) {
-    $pdfContent .= '<tr>
+    $html .= '<tr>
         <td>' . htmlspecialchars($c['full_name']) . '</td>
         <td>' . htmlspecialchars($c['email']) . '</td>
         <td>' . htmlspecialchars($c['country'] ?? '—') . '</td>
@@ -62,11 +66,21 @@ foreach ($customers as $c) {
     </tr>';
 }
 
-$pdfContent .= '</table>
+$html .= '</table>
 <div class="footer">Generated on ' . date('d M Y, h:i A') . ' - GlobeTrek Admin</div>
 </body></html>';
 
-header('Content-Type: text/html');
-header('Content-Disposition: inline; filename="customer-report-' . $dateFrom . '-to-' . $dateTo . '.html"');
-echo $pdfContent;
+$options = new Options();
+$options->set('isHtml5ParserEnabled', true);
+$options->set('isRemoteEnabled', false);
+$dompdf = new Dompdf($options);
+$dompdf->loadHtml($html);
+$dompdf->setPaper('A4', 'landscape');
+$dompdf->render();
+
+$filename = 'customer-report-' . $dateFrom . '-to-' . $dateTo . '.pdf';
+header('Content-Type: application/pdf');
+header('Content-Disposition: attachment; filename="' . $filename . '"');
+header('Cache-Control: no-cache, must-revalidate');
+echo $dompdf->output();
 exit;

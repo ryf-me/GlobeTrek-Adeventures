@@ -219,11 +219,12 @@ body {
     position: relative;
     z-index: 1;
     max-width: 1200px;
+    max-height: 80px;
     margin: 0 auto;
     padding: 0 2rem 2rem;
     width: 100%;
     display: flex;
-    align-items: center;
+    align-items: baseline;
     background: #fff;
     border-radius: 12px;
     box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
@@ -301,13 +302,121 @@ body {
     font-size: 20px;
 }
 
+/* Travelers Popup */
+.search-field-travelers {
+    position: relative;
+}
+
+.travelers-popup {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    min-width: 220px;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+    padding: 1rem;
+    z-index: 100;
+}
+
+.travelers-popup.open {
+    display: block;
+}
+
+.travelers-counter {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.travelers-label {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: #333;
+}
+
+.travelers-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.travelers-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1px solid #ccc;
+    background: #fff;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #333;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: border-color 0.2s ease, background 0.2s ease;
+    line-height: 1;
+    padding: 0;
+}
+
+.travelers-btn:hover {
+    border-color: var(--primary);
+    background: var(--primary);
+    color: #fff;
+}
+
+.travelers-count {
+    font-size: 1rem;
+    font-weight: 600;
+    min-width: 20px;
+    text-align: center;
+}
+
+/* Flatpickr overrides */
+.flatpickr-calendar {
+    border-radius: 10px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+    border: none;
+}
+
+.flatpickr-day.selected,
+.flatpickr-day.startRange,
+.flatpickr-day.endRange {
+    background: var(--primary);
+    border-color: var(--primary);
+}
+
+.flatpickr-day:hover {
+    background: #e8e8e8;
+    border-color: transparent;
+}
+
+.flatpickr-day.selected:hover,
+.flatpickr-day.startRange:hover,
+.flatpickr-day.endRange:hover {
+    background: var(--primary);
+}
+
+.flatpickr-months .flatpickr-month {
+    color: var(--primary);
+}
+
+.flatpickr-current-month .flatpickr-monthDropdown-months {
+    font-weight: 600;
+}
+
+span.flatpickr-weekday {
+    color: var(--primary);
+}
+
 /* Trust Badges */
 .trust-badges {
     position: relative;
     z-index: 1;
     max-width: 1200px;
     margin: 0 auto;
-    padding: 0 2rem 2.5rem;
+    padding: 1.5rem 2rem 2.5rem;
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 1.5rem;
@@ -356,18 +465,19 @@ body {
     font-weight: 700;
     color: var(--primary);
     font-family: 'Fraunces', serif;
-    position: relative;
-    padding-bottom: 0.5rem;
+    position: relative;       /* underline container */
+    padding-bottom: 0.5rem;   /* spacing for underline */
 }
 
+/* underline below title */
 .section-header h2::after {
     content: '';
     position: absolute;
     left: 0;
     bottom: 0;
-    width: 60px;
-    height: 3px;
-    background: var(--accent);
+    width: 60px;              /* underline length */
+    height: 3px;              /* underline thickness */
+    background: var(--accent); /* underline color */
 }
 
 .view-all-link {
@@ -746,46 +856,77 @@ body {
    ======================================== */
 .stats-section {
     max-width: none;
-    background: var(--primary);
+    background: url('../images/stats-bg.jpg') center/cover no-repeat;
+    position: relative;
     padding: 3.5rem 2rem;
 }
 
+.stats-section::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(26, 35, 50, 0.75);
+}
+
 .stats-grid {
+    position: relative;
     max-width: 1200px;
     margin: 0 auto;
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 2rem;
-    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0;
 }
 
 .stat-item {
     color: #fff;
     display: flex;
-    flex-direction: column;
     align-items: center;
-    gap: 0.3rem;
+    gap: 1rem;
+    padding: 0 2.5rem;
+    flex: 1;
+    justify-content: center;
+}
+
+.stat-item:not(:last-child) {
+    border-right: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.stat-icon-circle {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
 }
 
 .stat-icon {
-    font-size: 32px;
-    color: rgba(255, 255, 255, 0.6);
-    margin-bottom: 0.25rem;
+    font-size: 28px;
+    color: #fff;
+}
+
+.stat-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
 }
 
 .stat-number {
     display: block;
-    font-size: 2.5rem;
+    font-size: 2.2rem;
     font-weight: 700;
     line-height: 1.1;
-    color: var(--accent);
+    color: #fff;
 }
 
 .stat-label {
     font-size: 0.88rem;
-    color: rgba(255, 255, 255, 0.7);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    color: rgba(255, 255, 255, 0.85);
+    text-transform: capitalize;
+    letter-spacing: 0.3px;
 }
 
 /* ========================================
@@ -794,7 +935,7 @@ body {
 .expert-guides {
     max-width: none;
     padding: 4rem 0;
-    background: var(--site-bg);
+    background: #fff;
 }
 
 .guides-carousel {
@@ -808,30 +949,32 @@ body {
 .guides-track {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 1.5rem;
+    gap: 1rem;
 }
 
 .guide-card {
     background: #fff;
-    border: 1px solid #e8e8e8;
+    border: 1px solid #eee;
     border-radius: 12px;
-    padding: 1.75rem 1.25rem;
-    text-align: center;
+    padding: 0.85rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
     transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
 
 .guide-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.07);
 }
 
 .guide-photo {
-    width: 90px;
-    height: 90px;
+    width: 60px;
+    height: 60px;
+    min-width: 60px;
     border-radius: 50%;
     overflow: hidden;
-    margin: 0 auto 1rem;
-    border: 3px solid #e8e8e8;
+    border: 2px solid #e8e8e8;
 }
 
 .guide-photo img {
@@ -840,27 +983,32 @@ body {
     object-fit: cover;
 }
 
-.guide-card h3 {
-    font-size: 1rem;
+.guide-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.guide-info h3 {
+    font-size: 0.85rem;
     font-weight: 700;
     color: var(--primary);
-    margin-bottom: 0.2rem;
+    margin-bottom: 0.1rem;
+    line-height: 1.3;
 }
 
 .guide-specialty {
-    font-size: 0.78rem;
+    font-size: 0.68rem;
     color: var(--accent);
     font-weight: 600;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.25rem;
 }
 
 .guide-rating {
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 0.3rem;
-    margin-bottom: 0.6rem;
-    font-size: 0.85rem;
+    gap: 0.25rem;
+    margin-bottom: 0.3rem;
+    font-size: 0.75rem;
     font-weight: 600;
 }
 
@@ -868,25 +1016,30 @@ body {
     color: #f59e0b;
 }
 
+.guide-rating .review-count {
+    color: #888;
+    font-weight: 400;
+    font-size: 0.7rem;
+}
+
 .guide-languages {
     display: flex;
     flex-wrap: wrap;
-    justify-content: center;
-    gap: 0.35rem;
-    margin-bottom: 0.6rem;
+    gap: 0.25rem;
+    margin-bottom: 0.3rem;
 }
 
 .lang-tag {
-    padding: 0.2rem 0.5rem;
+    padding: 0.1rem 0.4rem;
     background: #f0f4f5;
     color: #555;
-    font-size: 0.68rem;
+    font-size: 0.6rem;
     border-radius: 4px;
     font-weight: 500;
 }
 
 .guide-experience {
-    font-size: 0.78rem;
+    font-size: 0.68rem;
     color: #888;
 }
 
@@ -1036,6 +1189,10 @@ body {
         grid-template-columns: repeat(4, 1fr);
     }
 
+    .guides-track {
+        grid-template-columns: 1fr;
+    }
+
     .stats-grid {
         grid-template-columns: repeat(2, 1fr);
         gap: 2rem 1rem;
@@ -1080,12 +1237,29 @@ body {
     }
 
     .stats-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 1.5rem 1rem;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .stat-item {
+        padding: 0;
+        width: 100%;
+        justify-content: flex-start;
+        gap: 1rem;
+    }
+
+    .stat-item:not(:last-child) {
+        border-right: none;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+        padding-bottom: 1.5rem;
+    }
+
+    .stat-item:last-child {
+        border-right: none;
     }
 
     .stat-number {
-        font-size: 2rem;
+        font-size: 1.8rem;
     }
 
     .footer-main-new {

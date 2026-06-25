@@ -8,8 +8,11 @@ $currentPage = ($currentPage === 'index.php') ? 'home' : str_replace('.php', '',
 ?>
 <nav class="navbar">
     <a class="logo" href="<?php echo $basePath; ?>index.php#home">
-        <img src="<?php echo $basePath; ?>images/logo.png" alt="Globe Trek Adventures logo" />
-        <span>Globe Trek</span>
+        <img src="<?php echo $basePath; ?>images/logo.png" alt="GlobeTrek Adventures logo" />
+        <div class="logo-text">
+            <span class="brand-name">GlobeTrek</span>
+            <span class="brand-tagline">Explore. Experience. Remember.</span>
+        </div>
     </a>
 
     <button class="menu-toggle" aria-label="Open navigation" aria-expanded="false">
@@ -22,9 +25,15 @@ $currentPage = ($currentPage === 'index.php') ? 'home' : str_replace('.php', '',
         <li<?php if ($currentPage === 'packages') echo ' class="active"'; ?>><a href="<?php echo $basePath; ?>pages/packages.php">Packages</a></li>
         <li<?php if ($currentPage === 'guides') echo ' class="active"'; ?>><a href="<?php echo $basePath; ?>pages/guides.php">Guides</a></li>
         <li<?php if ($currentPage === 'accommodations') echo ' class="active"'; ?>><a href="<?php echo $basePath; ?>pages/accommodations.php">Accommodations</a></li>
-        <li<?php if ($currentPage === 'transportation') echo ' class="active"'; ?>><a href="<?php echo $basePath; ?>pages/transportation.php">Transportation</a></li>
+        <li<?php if ($currentPage === 'transportation') echo ' class="active"'; ?>><a href="<?php echo $basePath; ?>pages/transportation.php">Transport</a></li>
         <li<?php if ($currentPage === 'about') echo ' class="active"'; ?>><a href="<?php echo $basePath; ?>pages/about.php">About Us</a></li>
         <li<?php if ($currentPage === 'contact') echo ' class="active"'; ?>><a href="<?php echo $basePath; ?>pages/contact.php">Contact Us</a></li>
+
+        <li class="nav-phone">
+            <span class="material-symbols-outlined">call</span>
+            <span>+94 77 123 4567</span>
+        </li>
+
         <?php if (isset($_SESSION['user_id'])): ?>
             <?php if (($_SESSION['user_role'] ?? '') === 'admin'): ?>
                 <li><a href="<?php echo $basePath; ?>admin/index.php">Admin</a></li>
@@ -51,7 +60,6 @@ $currentPage = ($currentPage === 'index.php') ? 'home' : str_replace('.php', '',
                             <?php echo $udInitials; ?>
                         <?php endif; ?>
                     </div>
-                    <!-- <span class="user-name-label"><?php echo $udName; ?></span> -->
                     <span class="material-symbols-outlined trigger-chevron">expand_more</span>
 
                     <div class="profile-dropdown" id="profileDropdown" role="menu">
@@ -101,7 +109,7 @@ $currentPage = ($currentPage === 'index.php') ? 'home' : str_replace('.php', '',
                 </div>
             </li>
         <?php else: ?>
-            <li><a class="login-btn" href="<?php echo $basePath; ?>pages/login.php">Login</a></li>
+            <li><a class="login-btn" href="<?php echo $basePath; ?>pages/login.php">Log In</a></li>
             <li><a class="signup-btn" href="<?php echo $basePath; ?>pages/signup.php">Sign Up</a></li>
         <?php endif; ?>
     </ul>

@@ -378,6 +378,7 @@ $userGrowth = array_reverse($userGrowth);
                 </table>
             </div>
         <?php endif; ?>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     var revenueLabels = <?= json_encode(array_column($revenueData, 'month')) ?>;

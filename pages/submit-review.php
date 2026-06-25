@@ -48,15 +48,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } elseif (mb_strlen($title) > 200) {
             $error = 'Title must be no more than 200 characters.';
         } else {
-            // Check user has at least one completed/confirmed booking
+            // Check user has at least one confirmed booking with travel date passed
             $bookingStmt = $db->prepare(
-                "SELECT COUNT(*) FROM bookings WHERE user_id = :uid AND status IN ('confirmed', 'completed')"
+                "SELECT COUNT(*) FROM bookings WHERE user_id = :uid AND status = 'confirmed' AND travel_date <= CURDATE()"
             );
             $bookingStmt->execute([':uid' => $_SESSION['user_id']]);
             $hasBooking = (int)$bookingStmt->fetchColumn() > 0;
 
             if (!$hasBooking) {
-                $error = 'You must have at least one completed or confirmed booking to submit a review.';
+                $error = 'You must have at least one completed trip (confirmed booking with travel date in the past) to submit a review.';
             } else {
                 // Fetch user profile data
                 $stmt = $db->prepare("SELECT full_name, profile_photo, country, city FROM users WHERE id = :id LIMIT 1");

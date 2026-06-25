@@ -71,6 +71,10 @@ $dashboardUrl = $isAdmin ? 'index.php' : 'staff-dashboard.php';
             <span class="material-symbols-outlined">star</span>
             Testimonials
         </a>
+        <a href="guide-reviews.php" class="adm-sidebar-link <?= $currentPage === 'guide-reviews' ? 'active' : '' ?>">
+            <span class="material-symbols-outlined">reviews</span>
+            Guide Reviews
+        </a>
         <?php endif; ?>
         <?php endif; ?>
 

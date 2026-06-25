@@ -60,7 +60,7 @@ $byDate = $r->fetchAll();
         <div class="adm-topbar-right">
             <a href="index.php" class="adm-topbar-link"><span class="material-symbols-outlined">dashboard</span><span>Dashboard</span></a>
             <a href="export-sales.php?from=<?= urlencode($dateFrom) ?>&to=<?= urlencode($dateTo) ?>" class="adm-btn adm-btn-secondary" target="_blank"><span class="material-symbols-outlined">download</span> CSV</a>
-            <a href="export-sales-pdf.php?from=<?= urlencode($dateFrom) ?>&to=<?= urlencode($dateTo) ?>" class="adm-btn adm-btn-secondary" target="_blank"><span class="material-symbols-outlined">picture_as_pdf</span> PDF</a>
+            <a href="export-sales-pdf.php?from=<?= urlencode($dateFrom) ?>&to=<?= urlencode($dateTo) ?>" class="adm-btn adm-btn-secondary"><span class="material-symbols-outlined">picture_as_pdf</span> PDF</a>
         </div>
     </div>
 
@@ -79,24 +79,34 @@ $byDate = $r->fetchAll();
         <!-- KPI Cards -->
         <div class="adm-stats">
             <div class="adm-stat-card">
-                <div class="adm-stat-card-num">Rs.<?= number_format($stats['total_revenue'], 2) ?></div>
-                <div class="adm-stat-card-label">Total Revenue</div>
+                <div class="adm-stat-card-info">
+                    <div class="adm-stat-card-num">Rs.<?= number_format($stats['total_revenue'], 2) ?></div>
+                    <div class="adm-stat-card-label">Total Revenue</div>
+                </div>
             </div>
             <div class="adm-stat-card">
-                <div class="adm-stat-card-num"><?= $stats['total_bookings'] ?></div>
-                <div class="adm-stat-card-label">Confirmed Bookings</div>
+                <div class="adm-stat-card-info">
+                    <div class="adm-stat-card-num"><?= $stats['total_bookings'] ?></div>
+                    <div class="adm-stat-card-label">Confirmed Bookings</div>
+                </div>
             </div>
             <div class="adm-stat-card">
-                <div class="adm-stat-card-num">Rs.<?= number_format($stats['avg_booking_value'], 2) ?></div>
-                <div class="adm-stat-card-label">Average Booking Value</div>
+                <div class="adm-stat-card-info">
+                    <div class="adm-stat-card-num">Rs.<?= number_format($stats['avg_booking_value'], 2) ?></div>
+                    <div class="adm-stat-card-label">Average Booking Value</div>
+                </div>
             </div>
             <div class="adm-stat-card">
-                <div class="adm-stat-card-num"><?= $stats['pending_bookings'] ?></div>
-                <div class="adm-stat-card-label">Pending Bookings</div>
+                <div class="adm-stat-card-info">
+                    <div class="adm-stat-card-num"><?= $stats['pending_bookings'] ?></div>
+                    <div class="adm-stat-card-label">Pending Bookings</div>
+                </div>
             </div>
             <div class="adm-stat-card">
-                <div class="adm-stat-card-num"><?= $stats['cancelled_bookings'] ?></div>
-                <div class="adm-stat-card-label">Cancelled Bookings</div>
+                <div class="adm-stat-card-info">
+                    <div class="adm-stat-card-num"><?= $stats['cancelled_bookings'] ?></div>
+                    <div class="adm-stat-card-label">Cancelled Bookings</div>
+                </div>
             </div>
         </div>
 

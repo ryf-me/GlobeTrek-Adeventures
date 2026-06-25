@@ -62,7 +62,7 @@ $byDate = $r->fetchAll();
         <div class="adm-topbar-right">
             <a href="index.php" class="adm-topbar-link"><span class="material-symbols-outlined">dashboard</span><span>Dashboard</span></a>
             <a href="export-customers.php?from=<?= urlencode($dateFrom) ?>&to=<?= urlencode($dateTo) ?>" class="adm-btn adm-btn-secondary" target="_blank"><span class="material-symbols-outlined">download</span> CSV</a>
-            <a href="export-customers-pdf.php?from=<?= urlencode($dateFrom) ?>&to=<?= urlencode($dateTo) ?>" class="adm-btn adm-btn-secondary" target="_blank"><span class="material-symbols-outlined">picture_as_pdf</span> PDF</a>
+            <a href="export-customers-pdf.php?from=<?= urlencode($dateFrom) ?>&to=<?= urlencode($dateTo) ?>" class="adm-btn adm-btn-secondary"><span class="material-symbols-outlined">picture_as_pdf</span> PDF</a>
         </div>
     </div>
 
@@ -79,16 +79,22 @@ $byDate = $r->fetchAll();
 
         <div class="adm-stats">
             <div class="adm-stat-card">
-                <div class="adm-stat-card-num"><?= $stats['total_users'] ?></div>
-                <div class="adm-stat-card-label">Total Users</div>
+                <div class="adm-stat-card-info">
+                    <div class="adm-stat-card-num"><?= $stats['total_users'] ?></div>
+                    <div class="adm-stat-card-label">Total Users</div>
+                </div>
             </div>
             <div class="adm-stat-card">
-                <div class="adm-stat-card-num"><?= $stats['new_users'] ?></div>
-                <div class="adm-stat-card-label">New Users (Period)</div>
+                <div class="adm-stat-card-info">
+                    <div class="adm-stat-card-num"><?= $stats['new_users'] ?></div>
+                    <div class="adm-stat-card-label">New Users (Period)</div>
+                </div>
             </div>
             <div class="adm-stat-card">
-                <div class="adm-stat-card-num"><?= $stats['active_bookers'] ?></div>
-                <div class="adm-stat-card-label">Active Bookers (Period)</div>
+                <div class="adm-stat-card-info">
+                    <div class="adm-stat-card-num"><?= $stats['active_bookers'] ?></div>
+                    <div class="adm-stat-card-label">Active Bookers (Period)</div>
+                </div>
             </div>
         </div>
 

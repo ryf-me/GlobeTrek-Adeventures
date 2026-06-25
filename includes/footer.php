@@ -1,130 +1,77 @@
-<?php
-$newsletterMessage = '';
-$newsletterMessageClass = '';
-
-if (session_status() === PHP_SESSION_NONE) session_start();
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['newsletter_email'])) {
-    require_once __DIR__ . '/../config/database.php';
-    require_once __DIR__ . '/../config/csrf.php';
-    $db = getDB();
-
-    // CSRF validation
-    if (!validateCSRFToken($_POST['csrf_token'] ?? null)) {
-        $newsletterMessage = 'Invalid security token. Please try again.';
-        $newsletterMessageClass = 'error';
-    } else {
-        $email = filter_var(trim($_POST['newsletter_email']), FILTER_SANITIZE_EMAIL);
-
-        if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            $checkStmt = $db->prepare("SELECT id FROM newsletter_subscriptions WHERE email = :email LIMIT 1");
-            $checkStmt->execute([':email' => $email]);
-            if ($checkStmt->fetch()) {
-                $newsletterMessage = 'This email is already subscribed.';
-                $newsletterMessageClass = 'error';
-            } else {
-                $insertStmt = $db->prepare("INSERT INTO newsletter_subscriptions (email) VALUES (:email)");
-                $insertStmt->execute([':email' => $email]);
-                $safeEmail = htmlspecialchars($email, ENT_QUOTES, 'UTF-8');
-                $newsletterMessage = "Thank you! $safeEmail has been subscribed.";
-                $newsletterMessageClass = 'success';
-            }
-        } else {
-            $newsletterMessage = 'Please enter a valid email address.';
-            $newsletterMessageClass = 'error';
-        }
-    }
-}
-?>
+<?php if (session_status() === PHP_SESSION_NONE) session_start(); ?>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
-<!-- Footer Section-->
-    <footer class="site-footer">
-        <video class="footer-bg" autoplay muted loop playsinline>
-            <source src="<?php echo $basePath; ?>Videos/sl-flag.mp4" type="video/mp4" />
-        </video>
-       <!-- <img class="footer-bg" src="https://images.pexels.com/photos/12650103/pexels-photo-12650103.jpeg" alt="" /> -->
-        <div class="footer-main">
-            <div class="footer-brand">
-                <div class="footer-logo">
-                    <img src="<?php echo $basePath; ?>images/logo.png" alt="Globe Trek Adventures logo" />
-                    <span class="brand">GlobeTrek</span>
-                </div>
-                <address>
-                    123, Main Street, Negombo<br />
-                    +94 11 234 5678<br />
-                    <a href="mailto:info@globetrek.lk">info@globetrek.lk</a>
-                </address>
-            </div>
 
-            <div class="footer-column">
-                <h2>Quick Links</h2>
-                <ul>
-                    <li><a href="<?php echo $basePath; ?>index.php#home">Home</a></li>
-                    <li><a href="<?php echo $basePath; ?>pages/packages.php">Packages</a></li>
-                    <li><a href="<?php echo $basePath; ?>pages/destinations.php">Destinations</a></li>
-                    <li><a href="<?php echo $basePath; ?>pages/guides.php">Guides</a></li>
-                    <li><a href="<?php echo $basePath; ?>pages/accommodations.php">Accommodations</a></li>
-                    <li><a href="<?php echo $basePath; ?>pages/transportation.php">Transportation</a></li>
-                    <li><a href="<?php echo $basePath; ?>pages/custom-trips.php">Custom Trips</a></li>
-                </ul>
-            </div>
-
-            <div class="footer-column">
-                <h2>Support</h2>
-                <ul>
-                    <li><a href="<?php echo $basePath; ?>pages/faq.php">FAQ</a></li>
-                    <li><a href="<?php echo $basePath; ?>pages/terms.php">Terms &amp; Conditions</a></li>
-                    <li><a href="<?php echo $basePath; ?>pages/privacy.php">Privacy Policy</a></li>
-                    <li><a href="<?php echo $basePath; ?>pages/payment-policy.php">Payment Policy</a></li>
-                </ul>
-            </div>
-
-            <div class="footer-column footer-newsletter">
-                <h2>Newsletter</h2>
-                <form class="newsletter-form-footer" method="post" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>">
-                    <?php require_once __DIR__ . '/../config/csrf.php'; csrf_field(); ?>
-                    <label class="sr-only" for="footer-newsletter-email">Email address</label>
-                    <input id="footer-newsletter-email" type="email" name="newsletter_email" placeholder="Enter your email address" required />
-                    <button type="submit" aria-label="Subscribe">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M5 12h14M12 5l7 7-7 7"/>
-                        </svg>
-                    </button>
-                </form>
-                <?php if ($newsletterMessage !== ''): ?>
-                    <p class="newsletter-message <?php echo $newsletterMessageClass; ?>"><?php echo $newsletterMessage; ?></p>
-                <?php endif; ?>
-                <div class="footer-socials" aria-label="Social links">
-                    <a href="#" aria-label="Share GlobeTrek">
-                        <svg viewBox="0 0 24 24" aria-hidden="true">
-                            <circle cx="18" cy="5" r="3" />
-                            <circle cx="6" cy="12" r="3" />
-                            <circle cx="18" cy="19" r="3" />
-                            <path d="M8.7 10.7l6.6-3.4M8.7 13.3l6.6 3.4" />
-                        </svg>
-                    </a>
-                    <a href="https://www.instagram.com/" aria-label="Follow GlobeTrek on Instagram" target="_blank"?>
-                        <svg viewBox="0 0 24 24" aria-hidden="true">
-                            <rect x="5" y="5" width="14" height="14" rx="4" />
-                            <circle cx="12" cy="12" r="3" />
-                            <path d="M16.5 7.5h.1" />
-                        </svg>
-                    </a>
-                    <a href="mailto:info@globetrek.lk" aria-label="Email GlobeTrek" target="_blank">
-                        <svg viewBox="0 0 24 24" aria-hidden="true">
-                            <rect x="4" y="6" width="16" height="12" rx="2" />
-                            <path d="M5 8l7 5 7-5" />
-                        </svg>
-                    </a>
+<footer class="site-footer-new">
+    <div class="footer-main-new">
+        <div class="footer-brand-new">
+            <div class="footer-logo-new">
+                <img src="<?php echo $basePath; ?>images/logo.png" alt="GlobeTrek logo" />
+                <div>
+                    <span class="brand-new">GlobeTrek</span>
+                    <span class="tagline-new">Explore. Experience. Remember.</span>
                 </div>
             </div>
+            <p class="footer-desc">Your trusted travel partner for unforgettable Sri Lankan adventures.</p>
+            <div class="footer-socials-new">
+                <a href="https://web.facebook.com/" aria-label="Facebook" target='_blank'><svg viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg></a>
+                <a href="https://www.instagram.com/" aria-label="Instagram" target='_blank'><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg></a>
+                <a href="https://www.youtube.com/" aria-label="YouTube" target='_blank'><svg viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg></a>
+                <a href="https://www.tiktok.com/" aria-label="TikTok" target='_blank'><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/></svg></a>
+            </div>
         </div>
-        <div class="footer-bottom">
-            <p>&copy; 2026 GlobeTrek Adventures. All rights reserved.</p>
+
+        <div class="footer-links-new">
+            <h3>Quick Links</h3>
+            <ul>
+                <li><a href="<?php echo $basePath; ?>index.php#home">Home</a></li>
+                <li><a href="<?php echo $basePath; ?>pages/packages.php">Packages</a></li>
+                <li><a href="<?php echo $basePath; ?>pages/destinations.php">Destinations</a></li>
+                <li><a href="<?php echo $basePath; ?>pages/guides.php">Guides</a></li>
+                <li><a href="<?php echo $basePath; ?>pages/about.php">About Us</a></li>
+                <li><a href="<?php echo $basePath; ?>pages/contact.php">Contact Us</a></li>
+            </ul>
         </div>
-        
+
+        <div class="footer-links-new">
+            <h3>Support</h3>
+            <ul>
+                <li><a href="<?php echo $basePath; ?>pages/faq.php">FAQ</a></li>
+                <li><a href="<?php echo $basePath; ?>pages/terms.php">Terms &amp; Conditions</a></li>
+                <li><a href="<?php echo $basePath; ?>pages/privacy.php">Privacy Policy</a></li>
+                <li><a href="<?php echo $basePath; ?>pages/payment-policy.php">Payment Policy</a></li>
+                <li><a href="<?php echo $basePath; ?>pages/cancellation-policy.php">Cancellation Policy</a></li>
+            </ul>
+        </div>
+
+        <div class="footer-contact-new">
+            <h3>Contact Info</h3>
+            <ul>
+                <li>
+                    <span class="material-symbols-outlined">call</span>
+                    +94 77 123 4567
+                </li>
+                <li>
+                    <span class="material-symbols-outlined">mail</span>
+                    info@globetrek.lk
+                </li>
+                <li>
+                    <span class="material-symbols-outlined">location_on</span>
+                    123, Main Street,<br>Negombo, Sri Lanka
+                </li>
+            </ul>
+            <a href="<?php echo $basePath; ?>pages/custom-trips.php" class="footer-cta-btn">
+                Plan My Custom Trip
+                <span class="material-symbols-outlined">arrow_forward</span>
+            </a>
+        </div>
+    </div>
+
+    <div class="footer-bottom-new">
+        <p>&copy; 2026 GlobeTrek (Pvt) Ltd. All rights reserved.</p>
+    </div>
+
     <!-- Inquiries Floating Button -->
-<a href="<?php echo $basePath; ?><?php echo isset($_SESSION['user_id']) ? 'pages/inquiries.php' : 'pages/login.php'; ?>" class="inquiries-fab" aria-label="Inquiries">
-    <span class="material-symbols-outlined">chat_bubble</span>
-</a>
-    </footer>
+    <a href="<?php echo $basePath; ?><?php echo isset($_SESSION['user_id']) ? 'pages/inquiries.php' : 'pages/login.php'; ?>" class="inquiries-fab" aria-label="Inquiries">
+        <span class="material-symbols-outlined">chat_bubble</span>
+    </a>
+</footer>

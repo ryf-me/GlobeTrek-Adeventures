@@ -68,9 +68,11 @@ $actions = $r->fetchAll(PDO::FETCH_COLUMN);
         </div>
 
         <div class="adm-filter-bar">
-            <form method="get" class="adm-search" style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
-                <span class="material-symbols-outlined">search</span>
-                <input type="text" name="q" placeholder="Search logs..." value="<?= htmlspecialchars($search) ?>">
+            <form method="get" style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap; flex:1;">
+                <div class="adm-search" style="flex:1; min-width:200px;">
+                    <span class="material-symbols-outlined">search</span>
+                    <input type="text" name="q" placeholder="Search logs..." value="<?= htmlspecialchars($search) ?>">
+                </div>
                 <select name="action_filter" style="padding:0.5rem; border:1px solid var(--adm-outline-variant); border-radius:6px;">
                     <option value="">All Actions</option>
                     <?php foreach ($actions as $act): ?>

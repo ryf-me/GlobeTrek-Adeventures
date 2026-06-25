@@ -18,6 +18,21 @@
  *   ...
  *   <script src="<?= $basePath ?>js/review-modal.js"></script>
  */
+
+// Fetch packages and guides for dropdowns (if DB is available)
+$rvPackages = [];
+$rvGuides = [];
+if (function_exists('getDB')) {
+    try {
+        $rvDb = getDB();
+        $rvPkgs = $rvDb->query("SELECT id, title FROM packages WHERE is_active = 1 ORDER BY title ASC")->fetchAll();
+        if ($rvPkgs) $rvPackages = $rvPkgs;
+        $rvGds = $rvDb->query("SELECT id, name, specialty FROM guides WHERE is_active = 1 ORDER BY name ASC")->fetchAll();
+        if ($rvGds) $rvGuides = $rvGds;
+    } catch (Exception $e) {
+        // Silently fail — dropdowns will be empty
+    }
+}
 ?>
 <div class="inq-modal-overlay" id="reviewModal">
     <div class="inq-modal rv-modal">
@@ -30,9 +45,42 @@
         <form method="post" action="<?= $basePath ?>pages/submit-review.php" id="reviewForm">
             <?php csrf_field(); ?>
             <input type="hidden" name="package_id" id="rv-package-id" value="0">
+            <input type="hidden" name="guide_id" id="rv-guide-id" value="0">
 
             <div class="inq-modal-body">
-                <!-- Package hint -->
+                <!-- Review Type -->
+                <div class="form-field">
+                    <label for="rv-review-type">I'm reviewing a <span style="color:#e76f51;">*</span></label>
+                    <select id="rv-review-type" name="review_type" onchange="onReviewTypeChange()">
+                        <option value="general">General Experience</option>
+                        <option value="package">Package</option>
+                        <option value="guide">Guide</option>
+                    </select>
+                </div>
+
+                <!-- Package Selector (hidden by default) -->
+                <div class="form-field" id="rv-package-field" style="display:none;">
+                    <label for="rv-package-select">Select Package <span style="color:#e76f51;">*</span></label>
+                    <select id="rv-package-select" name="package_id_select">
+                        <option value="0">— Choose a package —</option>
+                        <?php foreach ($rvPackages as $pkg): ?>
+                            <option value="<?= (int)$pkg['id'] ?>"><?= htmlspecialchars($pkg['title']) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <!-- Guide Selector (hidden by default) -->
+                <div class="form-field" id="rv-guide-field" style="display:none;">
+                    <label for="rv-guide-select">Select Guide <span style="color:#e76f51;">*</span></label>
+                    <select id="rv-guide-select" name="guide_id_select">
+                        <option value="0">— Choose a guide —</option>
+                        <?php foreach ($rvGuides as $g): ?>
+                            <option value="<?= (int)$g['id'] ?>"><?= htmlspecialchars($g['name']) ?> — <?= htmlspecialchars($g['specialty']) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <!-- Hint text -->
                 <p id="rv-package-hint" style="font-size:0.85rem;color:#888;margin-bottom:1rem;"></p>
 
                 <!-- Rating -->

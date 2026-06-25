@@ -554,6 +554,53 @@
 }
 
 /* --------------------------------------------
+   Flatpickr Overrides
+   -------------------------------------------- */
+.ct-date-range + .flatpickr-input {
+    cursor: pointer;
+}
+
+.ct-date-range[readonly] {
+    cursor: pointer;
+}
+
+.custom-trips-page .flatpickr-calendar {
+    border-radius: 0;
+    border: 1px solid var(--ct-outline-variant);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+}
+
+.custom-trips-page .flatpickr-day.selected,
+.custom-trips-page .flatpickr-day.startRange,
+.custom-trips-page .flatpickr-day.endRange {
+    background: var(--ct-primary);
+    border-color: var(--ct-primary);
+}
+
+.custom-trips-page .flatpickr-day:hover {
+    background: #e8e8e8;
+    border-color: transparent;
+}
+
+.custom-trips-page .flatpickr-day.selected:hover,
+.custom-trips-page .flatpickr-day.startRange:hover,
+.custom-trips-page .flatpickr-day.endRange:hover {
+    background: var(--ct-primary);
+}
+
+.custom-trips-page .flatpickr-months .flatpickr-month {
+    color: var(--ct-primary);
+}
+
+.custom-trips-page span.flatpickr-weekday {
+    color: var(--ct-primary);
+}
+
+.custom-trips-page .flatpickr-current-month .flatpickr-monthDropdown-months {
+    font-weight: 600;
+}
+
+/* --------------------------------------------
    Responsive
    -------------------------------------------- */
 @media (max-width: 960px) {

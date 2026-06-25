@@ -445,7 +445,7 @@ a { color: inherit; text-decoration: none; }
 }
 
 .adm-stat-card-num {
-    font-size: 1.75rem;
+    font-size: 1.4rem;
     font-weight: 700;
     line-height: 1.1;
     color: var(--adm-on-surface);
