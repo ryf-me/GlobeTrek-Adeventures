@@ -21,6 +21,10 @@ $basePath = $basePath ?? '../';
             <span class="material-symbols-outlined">chat_bubble</span>
             Inquiries
         </a>
+        <a class="usr-sidebar-link <?= $activePage === 'my-reviews' ? 'active' : '' ?>" href="<?= $basePath ?>pages/my-reviews.php">
+            <span class="material-symbols-outlined">rate_review</span>
+            My Reviews
+        </a>
         <a class="usr-sidebar-link <?= $activePage === 'settings' ? 'active' : '' ?>" href="<?= $basePath ?>pages/settings.php">
             <span class="material-symbols-outlined">settings</span>
             Settings

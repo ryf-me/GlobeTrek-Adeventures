@@ -9,7 +9,7 @@ $featuredDestinations = $db->query("SELECT * FROM destinations WHERE is_active =
 
 $featuredGuides = $db->query("SELECT * FROM guides WHERE is_active = 1 AND is_featured = 1 ORDER BY id ASC LIMIT 3")->fetchAll();
 
-$featuredTestimonials = $db->query("SELECT * FROM testimonials WHERE is_approved = 1 AND is_featured = 1 ORDER BY id ASC LIMIT 3")->fetchAll();
+$featuredTestimonials = $db->query("SELECT * FROM testimonials WHERE status = 'approved' AND is_featured = 1 ORDER BY id ASC LIMIT 3")->fetchAll();
 
 $stats = [
     'travelers' => $db->query("SELECT COUNT(*) FROM users WHERE role = 'user'")->fetchColumn(),
@@ -24,9 +24,12 @@ $stats = [
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Globe Trek Adventures</title>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css" />
     <link rel="stylesheet" href="css/navbar.css" />
     <link rel="stylesheet" href="css/footer.css" />
+    <link rel="stylesheet" href="css/inquiries.css" />
+    <link rel="stylesheet" href="css/review-modal.css" />
 </head>
 <body class="home-page">
     <?php $basePath = ''; include 'includes/navbar.php'; ?>
@@ -130,33 +133,65 @@ $stats = [
 
     <!-- Testimonials Section -->
     <section id="testimonials" class="testimonials">
-        <div class="section-heading">
-            <h2>What Our Travelers Say</h2>
-        </div>
-        <div class="testimonials-grid">
-            <?php foreach ($featuredTestimonials as $testimonial): ?>
-                <div class="testimonial-card">
-                    <div class="testimonial-stars">
-                        <?php for ($i = 0; $i < $testimonial['rating']; $i++): ?>
-                            <span class="star">&#9733;</span>
-                        <?php endfor; ?>
-                        <?php for ($i = $testimonial['rating']; $i < 5; $i++): ?>
-                            <span class="star star-empty">&#9733;</span>
-                        <?php endfor; ?>
-                    </div>
-                    <h3 class="testimonial-title"><?= htmlspecialchars($testimonial['title']) ?></h3>
-                    <p class="testimonial-content">"<?= htmlspecialchars($testimonial['content']) ?>"</p>
-                    <div class="testimonial-author">
-                        <img src="<?= htmlspecialchars($testimonial['reviewer_avatar']) ?>" alt="<?= htmlspecialchars($testimonial['reviewer_name']) ?>" class="testimonial-avatar" />
-                        <div class="testimonial-info">
-                            <span class="testimonial-name"><?= htmlspecialchars($testimonial['reviewer_name']) ?></span>
-                            <span class="testimonial-country"><?= htmlspecialchars($testimonial['reviewer_country']) ?></span>
+        <div class="testimonials-inner">
+            <!-- Left side: Heading and navigation -->
+            <div class="testimonials-left">
+                <div class="testimonials-badge">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    <span>Trusted by travelers</span>
+                </div>
+                <h2>What Our Travelers Say</h2>
+                <p class="testimonials-subtitle">Don't just take our word for it. See what adventurers from around the world have to say about their Sri Lanka experience.</p>
+                <div class="testimonials-dots">
+                    <?php foreach ($featuredTestimonials as $i => $testimonial): ?>
+                        <button class="testimonials-dot" aria-label="View testimonial <?= $i + 1 ?>"></button>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+
+            <!-- Right side: Testimonial cards -->
+            <div class="testimonials-right">
+                <?php foreach ($featuredTestimonials as $testimonial): ?>
+                    <div class="testimonial-card">
+                        <div class="testimonial-stars">
+                            <?php for ($i = 0; $i < $testimonial['rating']; $i++): ?>
+                                <span class="star">&#9733;</span>
+                            <?php endfor; ?>
+                            <?php for ($i = $testimonial['rating']; $i < 5; $i++): ?>
+                                <span class="star star-empty">&#9733;</span>
+                            <?php endfor; ?>
+                        </div>
+                        <div class="testimonial-quote">
+                            <svg class="testimonial-quote-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V21z"/><path d="M15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2h.75c0 2.25.25 4-2.75 4v3c0 1 0 1 1 1z"/></svg>
+                            <p class="testimonial-content">"<?= htmlspecialchars($testimonial['content']) ?>"</p>
+                        </div>
+                        <div class="testimonial-author">
+                            <img src="<?= htmlspecialchars($testimonial['reviewer_avatar']) ?>" alt="<?= htmlspecialchars($testimonial['reviewer_name']) ?>" class="testimonial-avatar" />
+                            <div class="testimonial-info">
+                                <span class="testimonial-name"><?= htmlspecialchars($testimonial['reviewer_name']) ?></span>
+                                <span class="testimonial-country"><?= htmlspecialchars($testimonial['reviewer_country']) ?></span>
+                            </div>
                         </div>
                     </div>
-                </div>
-            <?php endforeach; ?>
+                <?php endforeach; ?>
+
+                <!-- Decorative elements -->
+                <div class="testimonial-decor-bottom"></div>
+                <div class="testimonial-decor-top"></div>
+            </div>
         </div>
     </section>
+
+    <!-- Write a Review CTA -->
+    <?php if (isset($_SESSION['user_id'])): ?>
+    <section style="max-width:none;background:transparent;text-align:center;padding:1.5rem 2rem 3rem;background:#f5f7fa;">
+        <p style="color:#666;margin-bottom:0.75rem;font-size:0.95rem;">Have you traveled with us? Share your experience!</p>
+        <button onclick="openReviewModal(0)" class="testimonial-cta-btn" style="display:inline-flex;align-items:center;gap:0.4rem;">
+            <span class="material-symbols-outlined" style="font-size:1.2rem;">rate_review</span>
+            Write a Review
+        </button>
+    </section>
+    <?php endif; ?>
 
     <!-- Trusted Partners Section -->
     <section class="trusted-partners" aria-label="Trusted Partners">
@@ -194,8 +229,10 @@ $stats = [
     </section>
 
 
+<?php include 'includes/review-modal.php'; ?>
 <?php $basePath = ''; include 'includes/footer.php'; ?>
 
     <script src="js/script.js"></script>
+    <script src="js/review-modal.js"></script>
 </body>
 </html>

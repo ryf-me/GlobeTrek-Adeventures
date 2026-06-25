@@ -31,7 +31,7 @@ $currentPage = basename($_SERVER['PHP_SELF'], '.php');
  */
 $departmentPermissions = [
     'operations'      => ['manage_bookings', 'manage_packages', 'manage_accommodations', 'manage_transportation', 'manage_guides', 'manage_destinations'],
-    'customer_service'=> ['manage_inquiries', 'manage_contacts', 'manage_custom_trips', 'view_customers'],
+    'customer_service'=> ['manage_inquiries', 'manage_contacts', 'manage_custom_trips', 'view_customers', 'manage_testimonials'],
     'sales'           => ['view_reports', 'manage_payments', 'view_customers', 'manage_bookings'],
     'marketing'       => ['manage_newsletters', 'manage_destinations', 'manage_testimonials', 'view_reports'],
 ];

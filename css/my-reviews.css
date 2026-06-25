@@ -1,0 +1,255 @@
+/* ============================================
+   My Reviews Page – User Dashboard
+   ============================================ */
+
+/* --------------------------------------------
+   Review Card List
+   -------------------------------------------- */
+.mr-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.mr-card {
+    background: #fff;
+    border: 1px solid #c4c7c8;
+    border-radius: 0.25rem;
+    padding: 1.25rem;
+    transition: border-color 0.2s ease;
+}
+
+.mr-card:hover {
+    border-color: #747878;
+}
+
+/* --------------------------------------------
+   Card Header
+   -------------------------------------------- */
+.mr-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 0.75rem;
+}
+
+.mr-card-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.mr-card-package {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.85rem;
+    color: #264653;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.mr-card-package .material-symbols-outlined {
+    font-size: 16px;
+    color: #2a9d8f;
+}
+
+.mr-card-package:hover {
+    text-decoration: underline;
+}
+
+.mr-card-date {
+    font-size: 0.78rem;
+    color: #888;
+}
+
+/* --------------------------------------------
+   Status Badge
+   -------------------------------------------- */
+.mr-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.2rem 0.6rem;
+    border-radius: 0.125rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+/* --------------------------------------------
+   Stars
+   -------------------------------------------- */
+.mr-card-stars {
+    display: flex;
+    gap: 0.15rem;
+    margin-bottom: 0.65rem;
+}
+
+.mr-card-stars .star-filled {
+    color: #f4a261;
+    font-size: 1rem;
+}
+
+.mr-card-stars .star-empty {
+    color: #d9d9d9;
+    font-size: 1rem;
+}
+
+/* --------------------------------------------
+   Title & Content
+   -------------------------------------------- */
+.mr-card-title {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: #264653;
+    margin-bottom: 0.5rem;
+}
+
+.mr-card-content {
+    color: #555;
+    font-size: 0.92rem;
+    line-height: 1.6;
+    font-style: italic;
+}
+
+/* --------------------------------------------
+   Card Actions
+   -------------------------------------------- */
+.mr-card-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e9e9e9;
+}
+
+.mr-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.3rem;
+    padding: 0.45rem 0.9rem;
+    border-radius: 0.125rem;
+    font-family: 'Winky Sans', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.mr-btn-outline {
+    background: transparent;
+    color: #264653;
+    border: 1px solid #747878;
+}
+
+.mr-btn-outline:hover {
+    background: #f3f3f4;
+}
+
+.mr-btn-text-danger {
+    background: none;
+    border: none;
+    color: #ba1a1a;
+    padding: 0.45rem 0.5rem;
+    font-family: 'Winky Sans', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 500;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    transition: opacity 0.2s ease;
+}
+
+.mr-btn-text-danger:hover {
+    opacity: 0.7;
+}
+
+.mr-btn .material-symbols-outlined,
+.mr-btn-text-danger .material-symbols-outlined {
+    font-size: 16px;
+}
+
+/* --------------------------------------------
+   Edit Window Hint
+   -------------------------------------------- */
+.mr-edit-hint {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.75rem;
+    color: #888;
+}
+
+.mr-edit-hint .material-symbols-outlined {
+    font-size: 14px;
+}
+
+.mr-edit-expired {
+    color: #ba1a1a;
+}
+
+/* --------------------------------------------
+   Rating Selector (Edit Modal)
+   -------------------------------------------- */
+.rating-selector {
+    display: flex;
+    gap: 0.3rem;
+    padding: 0.5rem 0;
+}
+
+.rating-selector .star {
+    font-size: 1.8rem;
+    color: #d9d9d9;
+    cursor: pointer;
+    transition: color 0.15s ease, transform 0.1s ease;
+}
+
+.rating-selector .star:hover,
+.rating-selector .star.selected {
+    color: #f4a261;
+}
+
+.rating-selector .star:active {
+    transform: scale(0.9);
+}
+
+/* --------------------------------------------
+   Character Counter
+   -------------------------------------------- */
+.rv-char-count {
+    font-size: 0.78rem;
+    color: #888;
+    margin-top: 0.35rem;
+    text-align: right;
+}
+
+/* --------------------------------------------
+   Responsive
+   -------------------------------------------- */
+@media (max-width: 640px) {
+    .mr-card-header {
+        flex-direction: column;
+        gap: 0.4rem;
+    }
+
+    .mr-card-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .mr-card-actions .mr-btn,
+    .mr-card-actions .mr-btn-text-danger {
+        width: 100%;
+        justify-content: center;
+    }
+}

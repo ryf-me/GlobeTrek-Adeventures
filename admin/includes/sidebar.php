@@ -34,7 +34,7 @@ $dashboardUrl = $isAdmin ? 'index.php' : 'staff-dashboard.php';
             Dashboard
         </a>
 
-        <?php if ($isAdmin || hasPermission('manage_packages', $db) || hasPermission('manage_destinations', $db) || hasPermission('manage_accommodations', $db) || hasPermission('manage_transportation', $db) || hasPermission('manage_guides', $db)): ?>
+        <?php if ($isAdmin || hasPermission('manage_packages', $db) || hasPermission('manage_destinations', $db) || hasPermission('manage_accommodations', $db) || hasPermission('manage_transportation', $db) || hasPermission('manage_guides', $db) || hasPermission('manage_testimonials', $db)): ?>
         <div class="adm-sidebar-section">Content</div>
         <?php if ($isAdmin || hasPermission('manage_packages', $db)): ?>
         <a href="packages.php" class="adm-sidebar-link <?= $currentPage === 'packages' || $currentPage === 'package-edit' ? 'active' : '' ?>">
@@ -64,6 +64,12 @@ $dashboardUrl = $isAdmin ? 'index.php' : 'staff-dashboard.php';
         <a href="guides.php" class="adm-sidebar-link <?= $currentPage === 'guides' || $currentPage === 'guide-edit' ? 'active' : '' ?>">
             <span class="material-symbols-outlined">person_raised_hand</span>
             Guides
+        </a>
+        <?php endif; ?>
+        <?php if ($isAdmin || hasPermission('manage_testimonials', $db)): ?>
+        <a href="testimonials.php" class="adm-sidebar-link <?= $currentPage === 'testimonials' ? 'active' : '' ?>">
+            <span class="material-symbols-outlined">star</span>
+            Testimonials
         </a>
         <?php endif; ?>
         <?php endif; ?>

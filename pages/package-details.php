@@ -1,8 +1,22 @@
+<?php if (session_status() === PHP_SESSION_NONE) session_start(); ?>
 <?php
 require_once __DIR__ . '/../config/database.php';
 $db = getDB();
 
 $packageId = isset($_GET['id']) ? (int) $_GET['id'] : 0;
+
+// Fetch package-specific approved reviews
+$reviewStmt = $db->prepare(
+    "SELECT t.*, u.full_name AS user_full_name, u.profile_photo AS user_avatar
+     FROM testimonials t
+     LEFT JOIN users u ON t.user_id = u.id
+     WHERE t.package_id = :pid AND t.status = 'approved'
+     ORDER BY t.created_at DESC
+     LIMIT 10"
+);
+$reviewStmt->execute([':pid' => $packageId]);
+$packageReviews = $reviewStmt->fetchAll();
+$reviewCount = count($packageReviews);
 
 $stmt = $db->prepare("SELECT * FROM packages WHERE id = :id AND is_active = 1");
 $stmt->execute([':id' => $packageId]);
@@ -35,7 +49,10 @@ if ($package['duration_days'] > 5) {
     <title><?= htmlspecialchars($package['title']) ?> - GlobeTrek</title>
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="../css/navbar.css">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../css/package-details.css">
+    <link rel="stylesheet" href="../css/inquiries.css">
+    <link rel="stylesheet" href="../css/review-modal.css">
     <link rel="stylesheet" href="../css/footer.css">
 </head>
 <body class="package-details-page">
@@ -150,6 +167,70 @@ if ($package['duration_days'] > 5) {
                         </div>
                     </div>
                 </article>
+
+                <!-- Reviews Tab Content -->
+                <article id="reviews" class="journey-card" style="display:none;">
+                    <div class="journey-heading">
+                        <span class="map-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                            </svg>
+                        </span>
+                        <div>
+                            <p class="eyebrow">Guest Reviews</p>
+                            <h3>What Travelers Say About This Package</h3>
+                        </div>
+                    </div>
+
+                    <?php if (empty($packageReviews)): ?>
+                        <div style="text-align:center;padding:2rem 1rem;color:#888;">
+                            <span class="material-symbols-outlined" style="font-size:40px;color:#ddd;display:block;margin-bottom:0.75rem;">rate_review</span>
+                            <p style="margin-bottom:1rem;">No reviews yet for this package. Be the first to share your experience!</p>
+                    <?php else: ?>
+                        <div style="display:flex;flex-direction:column;gap:1rem;">
+                            <?php foreach ($packageReviews as $pr): ?>
+                                <div style="background:#f8f8f8;border-radius:8px;padding:1.25rem;">
+                                    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.5rem;">
+                                        <div style="display:flex;align-items:center;gap:0.75rem;">
+                                            <?php if (!empty($pr['user_avatar'])): ?>
+                                                <img src="<?= htmlspecialchars($pr['user_avatar']) ?>" alt="" style="width:36px;height:36px;border-radius:50%;object-fit:cover;">
+                                            <?php endif; ?>
+                                            <div>
+                                                <strong style="font-size:0.9rem;color:#264653;"><?= htmlspecialchars($pr['reviewer_name']) ?></strong>
+                                                <span style="font-size:0.75rem;color:#888;display:block;"><?= htmlspecialchars($pr['reviewer_country'] ?? '') ?></span>
+                                            </div>
+                                        </div>
+                                        <span style="color:#f4a261;white-space:nowrap;">
+                                            <?php for ($s = 0; $s < (int)$pr['rating']; $s++): ?>&#9733;<?php endfor; ?>
+                                            <?php for ($s = (int)$pr['rating']; $s < 5; $s++): ?><span style="color:#ddd;">&#9733;</span><?php endfor; ?>
+                                        </span>
+                                    </div>
+                                    <?php if ($pr['title']): ?>
+                                        <h4 style="font-size:0.95rem;font-weight:600;color:#264653;margin-bottom:0.35rem;"><?= htmlspecialchars($pr['title']) ?></h4>
+                                    <?php endif; ?>
+                                    <p style="font-size:0.88rem;color:#555;line-height:1.6;font-style:italic;">"<?= htmlspecialchars($pr['content']) ?>"</p>
+                                    <p style="font-size:0.75rem;color:#aaa;margin-top:0.5rem;"><?= date('M d, Y', strtotime($pr['created_at'])) ?></p>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
+
+                    <?php if (isset($_SESSION['user_id'])): ?>
+                        <div style="text-align:center;margin-top:1.5rem;padding-top:1.25rem;border-top:1px solid #e9e9e9;">
+                            <button onclick="openReviewModal(<?= $packageId ?>)" class="testimonial-cta-btn" style="display:inline-flex;align-items:center;gap:0.4rem;">
+                                <span class="material-symbols-outlined" style="font-size:1.2rem;">rate_review</span>
+                                Write a Review
+                            </button>
+                        </div>
+                    <?php else: ?>
+                        <div style="text-align:center;margin-top:1.5rem;">
+                            <a href="login.php" class="testimonial-cta-btn" style="display:inline-flex;align-items:center;gap:0.4rem;text-decoration:none;">
+                                <span class="material-symbols-outlined" style="font-size:1.2rem;">login</span>
+                                Login to Write a Review
+                            </a>
+                        </div>
+                    <?php endif; ?>
+                </article>
             </section>
 
             <aside class="side-stack" aria-label="Package quick information">
@@ -189,8 +270,49 @@ if ($package['duration_days'] > 5) {
         </div>
     </main>
 
+    <?php include __DIR__ . '/../includes/review-modal.php'; ?>
     <?php $basePath = '../'; include '../includes/footer.php'; ?>
 
     <script src="../js/script.js"></script>
+    <script src="../js/review-modal.js"></script>
+    <script>
+    // Tab switching for package details
+    document.addEventListener('DOMContentLoaded', function() {
+        var tabs = document.querySelectorAll('.tabs a');
+        var articles = {
+            overview: document.getElementById('overview'),
+            itinerary: document.getElementById('itinerary'),
+            inclusions: document.getElementById('inclusions'),
+            exclusions: document.getElementById('exclusions'),
+            stays: document.getElementById('stays'),
+            reviews: document.getElementById('reviews'),
+        };
+
+        // Hide all articles except the one that matches the URL hash
+        function showTab(hash) {
+            var targetId = hash.replace('#', '');
+            Object.keys(articles).forEach(function(key) {
+                var el = articles[key];
+                if (el) el.style.display = (key === targetId) ? 'block' : 'none';
+            });
+            tabs.forEach(function(tab) {
+                tab.classList.toggle('active', tab.getAttribute('href') === hash);
+            });
+        }
+
+        tabs.forEach(function(tab) {
+            tab.addEventListener('click', function(e) {
+                e.preventDefault();
+                var href = this.getAttribute('href');
+                history.replaceState(null, '', href);
+                showTab(href);
+            });
+        });
+
+        // Show initial tab from URL hash or default to overview
+        var initialHash = window.location.hash || '#overview';
+        showTab(initialHash);
+    });
+    </script>
 </body>
 </html>

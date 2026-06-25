@@ -234,3 +234,69 @@ document.querySelectorAll('.inq-modal-overlay, .adm-modal-overlay').forEach(func
 
   setTimeout(tick, 800);
 })();
+
+// --- Animated Testimonials Carousel ---
+(function () {
+  var cards = document.querySelectorAll('.testimonial-card');
+  var dots = document.querySelectorAll('.testimonials-dot');
+  if (!cards.length || !dots.length) return;
+
+  var activeIndex = 0;
+  var autoRotateInterval = 6000;
+  var timer = null;
+
+  function setActive(index) {
+    cards.forEach(function (card) {
+      card.classList.remove('active');
+    });
+    dots.forEach(function (dot) {
+      dot.classList.remove('active');
+    });
+
+    cards[index].classList.add('active');
+    dots[index].classList.add('active');
+    activeIndex = index;
+  }
+
+  function next() {
+    setActive((activeIndex + 1) % cards.length);
+  }
+
+  function startAutoRotate() {
+    stopAutoRotate();
+    timer = setInterval(next, autoRotateInterval);
+  }
+
+  function stopAutoRotate() {
+    if (timer) {
+      clearInterval(timer);
+      timer = null;
+    }
+  }
+
+  dots.forEach(function (dot, index) {
+    dot.addEventListener('click', function () {
+      setActive(index);
+      startAutoRotate();
+    });
+  });
+
+  // IntersectionObserver to pause when not visible
+  var section = document.getElementById('testimonials');
+  if (section) {
+    var observer = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          startAutoRotate();
+        } else {
+          stopAutoRotate();
+        }
+      });
+    }, { threshold: 0.2 });
+
+    observer.observe(section);
+  }
+
+  // Initialize
+  setActive(0);
+})();
