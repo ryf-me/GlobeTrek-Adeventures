@@ -474,6 +474,14 @@
     -webkit-backdrop-filter: none;
     border-bottom: none;
 }
+/* contact page — navbar stays dark (no override needed) */
+.contact-page .navbar {
+    position: absolute;
+    background: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border-bottom: none;
+}
 
 /* About page overlay navbar */
 .about-page .navbar {
