@@ -76,6 +76,10 @@ $dashboardUrl = $isAdmin ? 'index.php' : 'staff-dashboard.php';
             Guide Reviews
         </a>
         <?php endif; ?>
+        <a href="tags.php" class="adm-sidebar-link <?= $currentPage === 'tags' || $currentPage === 'tag-edit' ? 'active' : '' ?>">
+            <span class="material-symbols-outlined">label</span>
+            Tags
+        </a>
         <?php endif; ?>
 
         <?php if ($isAdmin || hasPermission('manage_bookings', $db) || hasPermission('manage_inquiries', $db) || hasPermission('manage_contacts', $db) || hasPermission('manage_custom_trips', $db)): ?>

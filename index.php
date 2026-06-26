@@ -6,6 +6,18 @@ $db = getDB();
 
 $featuredPackages = $db->query("SELECT * FROM packages WHERE is_active = 1 AND is_featured = 1 ORDER BY id ASC LIMIT 4")->fetchAll();
 
+// Fetch tags for featured packages
+$packageTags = [];
+if (!empty($featuredPackages)) {
+    $pkgIds = array_column($featuredPackages, 'id');
+    $placeholders = implode(',', array_fill(0, count($pkgIds), '?'));
+    $tagStmt = $db->prepare("SELECT pt.package_id, t.name FROM package_tags pt JOIN tags t ON pt.tag_id = t.id WHERE pt.package_id IN ($placeholders) ORDER BY t.name");
+    $tagStmt->execute($pkgIds);
+    while ($row = $tagStmt->fetch()) {
+        $packageTags[$row['package_id']][] = $row['name'];
+    }
+}
+
 $featuredDestinations = $db->query("SELECT * FROM destinations WHERE is_active = 1 AND is_featured = 1 ORDER BY id ASC LIMIT 4")->fetchAll();
 
 $featuredGuides = $db->query("
@@ -220,7 +232,7 @@ $destinationCategories = $db->query("SELECT DISTINCT destination_category FROM p
         <div class="pkg-cards">
             <?php
             $badges = ['BEST SELLER', 'POPULAR', 'TRENDING', ''];
-            $tagSets = [
+            $fallbackTags = [
                 ['Beach', 'Relaxation', 'Culture'],
                 ['Hiking', 'Nature', 'Adventure'],
                 ['Safari', 'Wildlife', 'Nature'],
@@ -228,7 +240,7 @@ $destinationCategories = $db->query("SELECT DISTINCT destination_category FROM p
             ];
             foreach ($featuredPackages as $i => $pkg):
                 $badge = $badges[$i % 4];
-                $tags = $tagSets[$i % 4];
+                $tags = $packageTags[$pkg['id']] ?? $fallbackTags[$i % 4];
             ?>
                 <div class="pkg-card">
                     <div class="pkg-card-img">

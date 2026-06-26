@@ -11,6 +11,11 @@ if ($isEdit) {
     $stmt->execute([':id' => $destId]);
     $dest = $stmt->fetch();
     if (!$dest) { header('Location: destinations.php'); exit; }
+
+    // Load existing tags
+    $tagStmt = $db->prepare("SELECT t.name FROM tags t JOIN destination_tags dt ON t.id = dt.tag_id WHERE dt.destination_id = :did ORDER BY t.name");
+    $tagStmt->execute([':did' => $destId]);
+    $existingTags = $tagStmt->fetchAll(PDO::FETCH_COLUMN);
 }
 
 $errors = [];
@@ -48,10 +53,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($isEdit) {
             $stmt = $db->prepare("UPDATE destinations SET name=:name, slug=:slug, description=:desc, image=:image, is_featured=:feat, is_active=:act WHERE id=:id");
             $stmt->execute([':name'=>$name, ':slug'=>$slug, ':desc'=>$description, ':image'=>$imagePath, ':feat'=>$isFeatured, ':act'=>$isActive, ':id'=>$destId]);
+            $entityId = $destId;
         } else {
             $stmt = $db->prepare("INSERT INTO destinations (name, slug, description, image, is_featured, is_active) VALUES (:name, :slug, :desc, :image, :feat, :act)");
             $stmt->execute([':name'=>$name, ':slug'=>$slug, ':desc'=>$description, ':image'=>$imagePath, ':feat'=>$isFeatured, ':act'=>$isActive]);
+            $entityId = $db->lastInsertId();
         }
+
+        // Sync tags
+        $tagInput = trim($_POST['tags'] ?? '');
+        $tagNames = $tagInput !== '' ? array_unique(array_map('trim', explode(',', $tagInput))) : [];
+        $delStmt = $db->prepare("DELETE FROM destination_tags WHERE destination_id = :did");
+        $delStmt->execute([':did' => $entityId]);
+        foreach ($tagNames as $tagName) {
+            if ($tagName === '') continue;
+            $tagSlug = strtolower(preg_replace('/[^a-zA-Z0-9]+/', '-', $tagName));
+            $tagSlug = trim($tagSlug, '-');
+            $findTag = $db->prepare("SELECT id FROM tags WHERE name = :name");
+            $findTag->execute([':name' => $tagName]);
+            $tagRow = $findTag->fetch();
+            if ($tagRow) {
+                $tagIdVal = $tagRow['id'];
+            } else {
+                $insTag = $db->prepare("INSERT INTO tags (name, slug) VALUES (:name, :slug)");
+                $insTag->execute([':name' => $tagName, ':slug' => $tagSlug]);
+                $tagIdVal = $db->lastInsertId();
+            }
+            $insLink = $db->prepare("INSERT IGNORE INTO destination_tags (destination_id, tag_id) VALUES (:did, :tid)");
+            $insLink->execute([':did' => $entityId, ':tid' => $tagIdVal]);
+        }
+
         header('Location: destinations.php?saved=1');
         exit;
     }
@@ -116,6 +147,17 @@ if (!$dest) $dest = ['name'=>'','description'=>'','image'=>'','is_featured'=>0,'
                 <div class="adm-form-actions">
                     <a href="destinations.php" class="adm-btn adm-btn-secondary">Cancel</a>
                     <button type="submit" class="adm-btn adm-btn-primary"><?= $isEdit ? 'Save Changes' : 'Create Destination' ?></button>
+                </div>
+            </div>
+
+            <div class="adm-form-card">
+                <h2>Tags</h2>
+                <div class="adm-form-grid">
+                    <div class="adm-form-field full-width">
+                        <label for="tags">Tags (comma-separated)</label>
+                        <input type="text" id="tags" name="tags" value="<?= htmlspecialchars(implode(', ', $existingTags ?? [])) ?>" placeholder="e.g. Beach, Adventure, Culture">
+                        <div class="adm-form-field-hint">Separate multiple tags with commas. Tags help categorize and filter content.</div>
+                    </div>
                 </div>
             </div>
         </form>

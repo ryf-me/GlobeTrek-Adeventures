@@ -37,6 +37,18 @@ if ($search !== '') {
 $stmt = $db->prepare("SELECT * FROM packages $where ORDER BY created_at DESC");
 $stmt->execute($params);
 $packages = $stmt->fetchAll();
+
+// Fetch all package tags in one query
+$packageTags = [];
+if (!empty($packages)) {
+    $pkgIds = array_column($packages, 'id');
+    $placeholders = implode(',', array_fill(0, count($pkgIds), '?'));
+    $tagStmt = $db->prepare("SELECT pt.package_id, t.name FROM package_tags pt JOIN tags t ON pt.tag_id = t.id WHERE pt.package_id IN ($placeholders) ORDER BY t.name");
+    $tagStmt->execute($pkgIds);
+    while ($row = $tagStmt->fetch()) {
+        $packageTags[$row['package_id']][] = $row['name'];
+    }
+}
 ?>
 
 <div class="adm-sidebar-overlay" id="sidebarOverlay"></div>
@@ -96,6 +108,7 @@ $packages = $stmt->fetchAll();
                             <th>Category</th>
                             <th>Duration</th>
                             <th>Price</th>
+                            <th>Tags</th>
                             <th>Featured</th>
                             <th>Active</th>
                             <th style="text-align:right;">Actions</th>
@@ -109,6 +122,20 @@ $packages = $stmt->fetchAll();
                                 <td><?= htmlspecialchars($p['destination_category'] ?? '—') ?></td>
                                 <td><?= $p['duration_days'] ?>D/<?= $p['duration_nights'] ?>N</td>
                                 <td class="cell-mono">Rs.<?= number_format($p['price'], 2) ?></td>
+                                <td>
+                                    <?php
+                                    $pTags = $packageTags[$p['id']] ?? [];
+                                    if (!empty($pTags)):
+                                        foreach ($pTags as $pTag):
+                                    ?>
+                                        <span class="pkg-tag"><?= htmlspecialchars($pTag) ?></span>
+                                    <?php
+                                        endforeach;
+                                    else:
+                                    ?>
+                                        <span class="cell-muted">—</span>
+                                    <?php endif; ?>
+                                </td>
                                 <td>
                                     <span class="adm-status-badge <?= $p['is_featured'] ? 'adm-status-active' : 'adm-status-inactive' ?>">
                                         <?= $p['is_featured'] ? 'Yes' : 'No' ?>

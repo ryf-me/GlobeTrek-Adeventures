@@ -26,6 +26,18 @@ if ($search !== '') { $where = "WHERE name LIKE :q OR specialty LIKE :q2"; $para
 $stmt = $db->prepare("SELECT * FROM guides $where ORDER BY created_at DESC");
 $stmt->execute($params);
 $guides = $stmt->fetchAll();
+
+// Fetch all guide tags in one query
+$guideTags = [];
+if (!empty($guides)) {
+    $guideIds = array_column($guides, 'id');
+    $placeholders = implode(',', array_fill(0, count($guideIds), '?'));
+    $tagStmt = $db->prepare("SELECT gt.guide_id, t.name FROM guide_tags gt JOIN tags t ON gt.tag_id = t.id WHERE gt.guide_id IN ($placeholders) ORDER BY t.name");
+    $tagStmt->execute($guideIds);
+    while ($row = $tagStmt->fetch()) {
+        $guideTags[$row['guide_id']][] = $row['name'];
+    }
+}
 ?>
 
 <div class="adm-sidebar-overlay" id="sidebarOverlay"></div>
@@ -78,6 +90,7 @@ $guides = $stmt->fetchAll();
                             <th>Name</th>
                             <th>Specialty</th>
                             <th>Region</th>
+                            <th>Tags</th>
                             <th>Featured</th>
                             <th>Active</th>
                             <th style="text-align:right;">Actions</th>
@@ -90,6 +103,20 @@ $guides = $stmt->fetchAll();
                                 <td class="cell-main"><?= htmlspecialchars($g['name']) ?></td>
                                 <td><?= htmlspecialchars($g['specialty'] ?? '—') ?></td>
                                 <td><?= htmlspecialchars($g['region'] ?? '—') ?></td>
+                                <td>
+                                    <?php
+                                    $gTags = $guideTags[$g['id']] ?? [];
+                                    if (!empty($gTags)):
+                                        foreach ($gTags as $gTag):
+                                    ?>
+                                        <span class="pkg-tag"><?= htmlspecialchars($gTag) ?></span>
+                                    <?php
+                                        endforeach;
+                                    else:
+                                    ?>
+                                        <span class="cell-muted">—</span>
+                                    <?php endif; ?>
+                                </td>
                                 <td>
                                     <span class="adm-status-badge <?= $g['is_featured'] ? 'adm-status-active' : 'adm-status-inactive' ?>">
                                         <?= $g['is_featured'] ? 'Yes' : 'No' ?>

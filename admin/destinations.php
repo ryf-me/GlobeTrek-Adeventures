@@ -26,6 +26,18 @@ if ($search !== '') { $where = "WHERE name LIKE :q"; $params[':q'] = "%$search%"
 $stmt = $db->prepare("SELECT * FROM destinations $where ORDER BY created_at DESC");
 $stmt->execute($params);
 $destinations = $stmt->fetchAll();
+
+// Fetch all destination tags in one query
+$destTags = [];
+if (!empty($destinations)) {
+    $destIds = array_column($destinations, 'id');
+    $placeholders = implode(',', array_fill(0, count($destIds), '?'));
+    $tagStmt = $db->prepare("SELECT dt.destination_id, t.name FROM destination_tags dt JOIN tags t ON dt.tag_id = t.id WHERE dt.destination_id IN ($placeholders) ORDER BY t.name");
+    $tagStmt->execute($destIds);
+    while ($row = $tagStmt->fetch()) {
+        $destTags[$row['destination_id']][] = $row['name'];
+    }
+}
 ?>
 
 <div class="adm-sidebar-overlay" id="sidebarOverlay"></div>
@@ -77,6 +89,7 @@ $destinations = $stmt->fetchAll();
                             <th>ID</th>
                             <th>Name</th>
                             <th>Slug</th>
+                            <th>Tags</th>
                             <th>Featured</th>
                             <th>Active</th>
                             <th>Created</th>
@@ -89,6 +102,20 @@ $destinations = $stmt->fetchAll();
                                 <td class="cell-mono">#<?= $d['id'] ?></td>
                                 <td class="cell-main"><?= htmlspecialchars($d['name']) ?></td>
                                 <td class="cell-muted"><?= htmlspecialchars($d['slug']) ?></td>
+                                <td>
+                                    <?php
+                                    $dTags = $destTags[$d['id']] ?? [];
+                                    if (!empty($dTags)):
+                                        foreach ($dTags as $dTag):
+                                    ?>
+                                        <span class="pkg-tag"><?= htmlspecialchars($dTag) ?></span>
+                                    <?php
+                                        endforeach;
+                                    else:
+                                    ?>
+                                        <span class="cell-muted">—</span>
+                                    <?php endif; ?>
+                                </td>
                                 <td>
                                     <span class="adm-status-badge <?= $d['is_featured'] ? 'adm-status-active' : 'adm-status-inactive' ?>">
                                         <?= $d['is_featured'] ? 'Yes' : 'No' ?>

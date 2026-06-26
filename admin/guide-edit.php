@@ -11,6 +11,11 @@ if ($isEdit) {
     $stmt->execute([':id' => $guideId]);
     $guide = $stmt->fetch();
     if (!$guide) { header('Location: guides.php'); exit; }
+
+    // Load existing tags
+    $tagStmt = $db->prepare("SELECT t.name FROM tags t JOIN guide_tags gt ON t.id = gt.tag_id WHERE gt.guide_id = :gid ORDER BY t.name");
+    $tagStmt->execute([':gid' => $guideId]);
+    $existingTags = $tagStmt->fetchAll(PDO::FETCH_COLUMN);
 }
 
 $errors = [];
@@ -48,10 +53,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($isEdit) {
             $stmt = $db->prepare("UPDATE guides SET name=:name, specialty=:spec, region=:region, description=:desc, profile_link=:link, image=:image, is_featured=:feat, is_active=:act WHERE id=:id");
             $stmt->execute([':name'=>$name, ':spec'=>$specialty, ':region'=>$region, ':desc'=>$description, ':link'=>$profileLink, ':image'=>$imagePath, ':feat'=>$isFeatured, ':act'=>$isActive, ':id'=>$guideId]);
+            $entityId = $guideId;
         } else {
             $stmt = $db->prepare("INSERT INTO guides (name, specialty, region, description, profile_link, image, is_featured, is_active) VALUES (:name, :spec, :region, :desc, :link, :image, :feat, :act)");
             $stmt->execute([':name'=>$name, ':spec'=>$specialty, ':region'=>$region, ':desc'=>$description, ':link'=>$profileLink, ':image'=>$imagePath, ':feat'=>$isFeatured, ':act'=>$isActive]);
+            $entityId = $db->lastInsertId();
         }
+
+        // Sync tags
+        $tagInput = trim($_POST['tags'] ?? '');
+        $tagNames = $tagInput !== '' ? array_unique(array_map('trim', explode(',', $tagInput))) : [];
+        $delStmt = $db->prepare("DELETE FROM guide_tags WHERE guide_id = :gid");
+        $delStmt->execute([':gid' => $entityId]);
+        foreach ($tagNames as $tagName) {
+            if ($tagName === '') continue;
+            $tagSlug = strtolower(preg_replace('/[^a-zA-Z0-9]+/', '-', $tagName));
+            $tagSlug = trim($tagSlug, '-');
+            $findTag = $db->prepare("SELECT id FROM tags WHERE name = :name");
+            $findTag->execute([':name' => $tagName]);
+            $tagRow = $findTag->fetch();
+            if ($tagRow) {
+                $tagIdVal = $tagRow['id'];
+            } else {
+                $insTag = $db->prepare("INSERT INTO tags (name, slug) VALUES (:name, :slug)");
+                $insTag->execute([':name' => $tagName, ':slug' => $tagSlug]);
+                $tagIdVal = $db->lastInsertId();
+            }
+            $insLink = $db->prepare("INSERT IGNORE INTO guide_tags (guide_id, tag_id) VALUES (:gid, :tid)");
+            $insLink->execute([':gid' => $entityId, ':tid' => $tagIdVal]);
+        }
+
         header('Location: guides.php?saved=1');
         exit;
     }
@@ -125,6 +156,17 @@ if (!$guide) $guide = ['name'=>'','specialty'=>'','region'=>'','description'=>''
                 <div class="adm-form-actions">
                     <a href="guides.php" class="adm-btn adm-btn-secondary">Cancel</a>
                     <button type="submit" class="adm-btn adm-btn-primary"><?= $isEdit ? 'Save Changes' : 'Create Guide' ?></button>
+                </div>
+            </div>
+
+            <div class="adm-form-card">
+                <h2>Tags</h2>
+                <div class="adm-form-grid">
+                    <div class="adm-form-field full-width">
+                        <label for="tags">Tags (comma-separated)</label>
+                        <input type="text" id="tags" name="tags" value="<?= htmlspecialchars(implode(', ', $existingTags ?? [])) ?>" placeholder="e.g. Beach, Adventure, Culture">
+                        <div class="adm-form-field-hint">Separate multiple tags with commas. Tags help categorize and filter content.</div>
+                    </div>
                 </div>
             </div>
         </form>
