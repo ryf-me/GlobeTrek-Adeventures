@@ -46,9 +46,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $expiresAt = date('Y-m-d H:i:s', time() + 1800); // 30 minutes
 
                 $ins = $db->prepare(
-                    "INSERT INTO password_resets (email, token, expires_at) VALUES (:email, :token, :expires)"
+                    "INSERT INTO password_resets (user_id, email, token, expires_at) VALUES (:user_id, :email, :token, :expires)"
                 );
-                $ins->execute([':email' => $email, ':token' => $token, ':expires' => $expiresAt]);
+                $ins->execute([':user_id' => $user['id'], ':email' => $email, ':token' => $token, ':expires' => $expiresAt]);
 
                 // Send reset email
                 $resetLink = BASE_URL . '/pages/reset-password.php?token=' . $token;
