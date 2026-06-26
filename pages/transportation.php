@@ -176,7 +176,7 @@ function buildQueryString($overrides = []) {
                     <?php else: ?>
                         <?php foreach ($transportations as $t): ?>
                             <div class="transport-card">
-                                <img class="card-image" src="<?= htmlspecialchars($t['image']) ?>" alt="<?= htmlspecialchars($t['name']) ?>">
+                                <img class="card-image" src="<?= htmlspecialchars($basePath . $t['image']) ?>" alt="<?= htmlspecialchars($t['name']) ?>">
                                 <div class="card-body">
                                     <div class="card-top">
                                         <h3><?= htmlspecialchars($t['name']) ?></h3>

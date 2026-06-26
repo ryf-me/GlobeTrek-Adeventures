@@ -36,7 +36,7 @@ $pageTitle = htmlspecialchars($dest['name']) . ' - Destinations';
     <?php $basePath = '../'; include '../includes/navbar.php'; ?>
 
     <div class="dest-detail-hero">
-        <img src="<?= htmlspecialchars($dest['image']) ?>" alt="<?= htmlspecialchars($dest['name']) ?>">
+        <img src="<?= htmlspecialchars($basePath . $dest['image']) ?>" alt="<?= htmlspecialchars($dest['name']) ?>">
         <div class="dest-detail-hero-overlay">
             <?php if ($dest['is_featured']): ?>
                 <span class="dest-badge">Featured</span>

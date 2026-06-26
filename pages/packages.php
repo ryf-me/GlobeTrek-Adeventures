@@ -164,7 +164,7 @@ $hasFilters = !empty($selectedDestinations) || !empty($selectedPrices) || !empty
                                 <span class="material-symbols-outlined">favorite</span>
                             </button>
                         <?php endif; ?>
-                        <img src="<?= htmlspecialchars($pkg['image']) ?>" alt="<?= htmlspecialchars($pkg['title']) ?>">
+                        <img src="<?= htmlspecialchars($basePath . $pkg['image']) ?>" alt="<?= htmlspecialchars($pkg['title']) ?>">
                         <div class="card-content">
                             <h3><?= htmlspecialchars($pkg['title']) ?></h3>
                             <div class="duration"><?= htmlspecialchars($pkg['duration_days'] . ' Days / ' . $pkg['duration_nights'] . ' Nights') ?></div>

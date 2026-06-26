@@ -130,7 +130,7 @@ function e($value)
                 <div class="guides-grid">
                     <?php foreach ($filteredGuides as $guide): ?>
                         <article class="guide-card">
-                            <img src="<?= e($guide['image']) ?>" alt="<?= e($guide['name']) ?>">
+                            <img src="<?= e($basePath . $guide['image']) ?>" alt="<?= e($guide['name']) ?>">
                             <div class="guide-card-body">
                                 <p class="guide-region"><?= e($guide['region']) ?></p>
                                 <h3><?= e($guide['name']) ?></h3>
@@ -152,7 +152,7 @@ function e($value)
 
         <?php if ($guideOfMonth): ?>
         <section class="featured-guide" aria-labelledby="featured-guide-title">
-            <img src="<?= e($guideOfMonth['image']) ?>" alt="<?= e($guideOfMonth['name']) ?>">
+            <img src="<?= e($basePath . $guideOfMonth['image']) ?>" alt="<?= e($guideOfMonth['name']) ?>">
             <div class="featured-content">
                 <p class="badge">Guide of the Month</p>
                 <h2 id="featured-guide-title">Meet <?= e($guideOfMonth['name']) ?></h2>

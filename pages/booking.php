@@ -239,7 +239,7 @@ function field_error(string $field, array $errors): string
                 <div class="sidebar-card">
                     <h3>Booking Summary</h3>
                     <div class="package-summary">
-                        <img class="package-thumb" src="<?= htmlspecialchars($package['image']) ?>" alt="<?= htmlspecialchars($package['title']) ?> package image">
+                        <img class="package-thumb" src="<?= htmlspecialchars($basePath . $package['image']) ?>" alt="<?= htmlspecialchars($package['title']) ?> package image">
                         <div class="package-info">
                             <span class="package-title"><?= htmlspecialchars($package['title']) ?></span>
                             <span class="package-duration"><?= htmlspecialchars($package['duration_days'] . ' Days / ' . $package['duration_nights'] . ' Nights') ?></span>

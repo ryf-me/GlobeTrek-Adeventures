@@ -151,7 +151,7 @@ function buildQueryString($overrides = []) {
                     <?php else: ?>
                         <?php foreach ($accommodations as $acc): ?>
                             <div class="accommodation-card">
-                                <img class="card-image" src="<?= htmlspecialchars($acc['image']) ?>" alt="<?= htmlspecialchars($acc['name']) ?>">
+                                <img class="card-image" src="<?= htmlspecialchars($basePath . $acc['image']) ?>" alt="<?= htmlspecialchars($acc['name']) ?>">
                                 <div class="card-body">
                                     <div class="card-top">
                                         <h3><?= htmlspecialchars($acc['name']) ?></h3>

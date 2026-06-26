@@ -69,7 +69,7 @@ if ($package['duration_days'] > 5) {
 
         <section class="package-hero" aria-label="<?= htmlspecialchars($package['title']) ?> package summary">
             <div class="hero-media">
-                <img src="<?= htmlspecialchars($package['image']) ?>" alt="<?= htmlspecialchars($package['title']) ?> package image">
+                <img src="<?= htmlspecialchars($basePath . $package['image']) ?>" alt="<?= htmlspecialchars($package['title']) ?> package image">
                 <div class="hero-stamp">
                     <span><?= htmlspecialchars($package['destination_category']) ?></span>
                     <strong><?= htmlspecialchars($package['duration_days'] . ' curated days') ?></strong>
@@ -159,7 +159,7 @@ if ($package['duration_days'] > 5) {
                     </ol>
 
                     <div class="route-visual" aria-label="Route visualization">
-                        <img src="<?= htmlspecialchars($package['image']) ?>" alt="<?= htmlspecialchars($package['title']) ?> route highlight">
+                        <img src="<?= htmlspecialchars($basePath . $package['image']) ?>" alt="<?= htmlspecialchars($package['title']) ?> route highlight">
                         <div class="route-line" aria-hidden="true">
                             <span>Negombo</span>
                             <span>Rainforest</span>

@@ -3,8 +3,9 @@
  * User Login Page
  *
  * Authenticates users via email/password. Implements CSRF protection,
- * rate limiting (5 attempts per 15 min per IP), and session fixation
- * prevention via session_regenerate_id().
+ * rate limiting (5 attempts per 15 min per IP), session fixation
+ * prevention via session_regenerate_id(), and persistent "Remember Me"
+ * logins via a secure token stored in the remember_tokens table.
  */
 
 session_start();
@@ -13,10 +14,127 @@ require_once __DIR__ . '/../config/csrf.php';
 require_once __DIR__ . '/../config/rate-limiter.php';
 $db = getDB();
 
-$errors = [];
-$email = '';
+/* -------------------------------------------------------
+ *  Remember-Me helpers
+ * ------------------------------------------------------- */
 
-// --- Handle form submission ---
+/**
+ * Create a persistent login token for the given user.
+ * Stores a SHA-256 hash in the DB and sets a plain-text cookie.
+ */
+function setRememberToken(PDO $db, int $userId): void
+{
+    $rawToken  = bin2hex(random_bytes(32));               // 64-char hex string
+    $tokenHash = hash('sha256', $rawToken);
+    $expiresAt = date('Y-m-d H:i:s', time() + 30 * 24 * 3600); // 30 days
+
+    $stmt = $db->prepare(
+        "INSERT INTO remember_tokens (user_id, token_hash, expires_at)
+         VALUES (:uid, :th, :exp)"
+    );
+    $stmt->execute([
+        ':uid' => $userId,
+        ':th'  => $tokenHash,
+        ':exp' => $expiresAt,
+    ]);
+
+    setcookie('remember_me', $rawToken, [
+        'expires'  => time() + 30 * 24 * 3600,
+        'path'     => '/',
+        'secure'   => !empty($_SERVER['HTTPS']),   // only over HTTPS in production
+        'httponly'  => true,
+        'samesite' => 'Lax',
+    ]);
+}
+
+/**
+ * Attempt to authenticate the visitor from a remember_me cookie.
+ * Returns true if a valid session was created.
+ */
+function tryAutoLogin(PDO $db): bool
+{
+    if (session_status() === PHP_SESSION_ACTIVE && !empty($_SESSION['user_id'])) {
+        return false; // already logged in
+    }
+
+    if (empty($_COOKIE['remember_me'])) {
+        return false;
+    }
+
+    $tokenHash = hash('sha256', $_COOKIE['remember_me']);
+
+    $stmt = $db->prepare(
+        "SELECT rt.*, u.id AS uid, u.full_name, u.email, u.role, u.profile_photo
+         FROM remember_tokens rt
+         JOIN users u ON u.id = rt.user_id
+         WHERE rt.token_hash = :th AND rt.expires_at > NOW()
+         LIMIT 1"
+    );
+    $stmt->execute([':th' => $tokenHash]);
+    $row = $stmt->fetch();
+
+    if (!$row) {
+        // Invalid or expired token — clear the cookie
+        clearRememberCookie();
+        return false;
+    }
+
+    // Valid token — establish session
+    session_regenerate_id(true);
+    $_SESSION['user_id']            = $row['uid'];
+    $_SESSION['user_name']          = $row['full_name'];
+    $_SESSION['user_email']         = $row['email'];
+    $_SESSION['user_role']          = $row['role'];
+    $_SESSION['user_profile_photo'] = $row['profile_photo'] ?? '';
+
+    // Rotate token (delete old, issue new) to limit replay window
+    $del = $db->prepare("DELETE FROM remember_tokens WHERE id = :id");
+    $del->execute([':id' => $row['id']]);
+    setRememberToken($db, $row['uid']);
+
+    return true;
+}
+
+/**
+ * Remove the remember_me cookie.
+ */
+function clearRememberCookie(): void
+{
+    if (isset($_COOKIE['remember_me'])) {
+        setcookie('remember_me', '', [
+            'expires'  => time() - 3600,
+            'path'     => '/',
+            'secure'   => !empty($_SERVER['HTTPS']),
+            'httponly'  => true,
+            'samesite' => 'Lax',
+        ]);
+    }
+}
+
+/**
+ * Purge expired tokens (runs once per request, lightweight).
+ */
+function purgeExpiredTokens(PDO $db): void
+{
+    $db->exec("DELETE FROM remember_tokens WHERE expires_at < NOW()");
+}
+
+/* -------------------------------------------------------
+ *  Auto-login from cookie (before any POST handling)
+ * ------------------------------------------------------- */
+purgeExpiredTokens($db);
+
+if (tryAutoLogin($db)) {
+    header('Location: ../index.php');
+    exit;
+}
+
+/* -------------------------------------------------------
+ *  Handle form submission
+ * ------------------------------------------------------- */
+$errors = [];
+$email  = '';
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // CSRF validation
     if (!validateCSRFToken($_POST['csrf_token'] ?? null)) {
@@ -29,7 +147,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (empty($errors)) {
-        $email = filter_var(trim($_POST['email'] ?? ''), FILTER_SANITIZE_EMAIL);
+        $email    = filter_var(trim($_POST['email'] ?? ''), FILTER_SANITIZE_EMAIL);
         $password = $_POST['password'] ?? '';
 
         if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -49,11 +167,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Regenerate session ID to prevent session fixation
             session_regenerate_id(true);
 
-            $_SESSION['user_id'] = $user['id'];
-            $_SESSION['user_name'] = $user['full_name'];
-            $_SESSION['user_email'] = $user['email'];
-            $_SESSION['user_role'] = $user['role'];
+            $_SESSION['user_id']            = $user['id'];
+            $_SESSION['user_name']          = $user['full_name'];
+            $_SESSION['user_email']         = $user['email'];
+            $_SESSION['user_role']          = $user['role'];
             $_SESSION['user_profile_photo'] = $user['profile_photo'] ?? '';
+
+            // Remember Me — issue persistent token if requested
+            if (!empty($_POST['remember'])) {
+                setRememberToken($db, $user['id']);
+            } else {
+                // Explicitly opt-out: clear any existing token
+                $del = $db->prepare("DELETE FROM remember_tokens WHERE user_id = :uid");
+                $del->execute([':uid' => $user['id']]);
+                clearRememberCookie();
+            }
+
             header('Location: ../index.php');
             exit;
         } else {
@@ -71,18 +200,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700;9..144,800&family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../css/style.css">
-    <link rel="stylesheet" href="../css/navbar.css">
     <link rel="stylesheet" href="../css/login.css">
 </head>
 <body class="login-page">
-    <?php $basePath = '../'; include '../includes/navbar.php'; ?>
+    <div class="login-bg">
+        <img src="../images/login-bg.jpg" alt="" aria-hidden="true">
+        <div class="login-bg-overlay"></div>
+    </div>
+
+    <header class="login-topbar">
+        <a class="login-topbar-logo" href="../index.php">
+            <img src="../images/logo.png" alt="GlobeTrek Adventures logo" />
+            <div class="login-topbar-text">
+                <span class="brand-name">GlobeTrek</span>
+                <span class="brand-tagline">Explore. Experience. Remember.</span>
+            </div>
+        </a>
+    </header>
 
     <main class="login-shell">
         <div class="login-card">
+            <div class="login-lock">
+                <span class="material-symbols-outlined">lock</span>
+            </div>
+
             <div class="login-header">
-                <h1>Welcome Back</h1>
-                <p>Please enter your details to sign in.</p>
+                <h1>Welcome Back!</h1>
+                <p>Login to continue your travel journey with GlobeTrek.</p>
             </div>
 
             <?php if (isset($errors['general'])): ?>
@@ -93,42 +239,112 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             <form class="login-form" action="login.php" method="post">
                 <?php csrf_field(); ?>
+
                 <div class="form-group<?php echo isset($errors['email']) ? ' has-error' : ''; ?>">
                     <label for="email">Email Address</label>
-                    <input id="email" name="email" type="email" placeholder="Enter your email" autocomplete="email" value="<?php echo htmlspecialchars($email, ENT_QUOTES, 'UTF-8'); ?>" required>
+                    <div class="input-icon-wrapper">
+                        <span class="material-symbols-outlined input-icon">mail</span>
+                        <input id="email" name="email" type="email" placeholder="Enter your email" autocomplete="email" value="<?php echo htmlspecialchars($email, ENT_QUOTES, 'UTF-8'); ?>" required>
+                    </div>
                     <?php if (isset($errors['email'])): ?>
                         <p class="field-error"><?php echo $errors['email']; ?></p>
                     <?php endif; ?>
                 </div>
 
                 <div class="form-group<?php echo isset($errors['password']) ? ' has-error' : ''; ?>">
-                    <div class="password-row">
-                        <label for="password">Password</label>
-                        <a href="#">Forgot Password?</a>
+                    <label for="password">Password</label>
+                    <div class="input-icon-wrapper">
+                        <span class="material-symbols-outlined input-icon">lock</span>
+                        <input id="password" name="password" type="password" placeholder="Enter your password" autocomplete="current-password" required>
+                        <button type="button" class="password-toggle" data-target="password" aria-label="Toggle password visibility">
+                            <span class="material-symbols-outlined icon-visible">visibility</span>
+                            <span class="material-symbols-outlined icon-hidden">visibility_off</span>
+                        </button>
                     </div>
-                    <input id="password" name="password" type="password" placeholder="Enter your password" autocomplete="current-password" required>
                     <?php if (isset($errors['password'])): ?>
                         <p class="field-error"><?php echo $errors['password']; ?></p>
                     <?php endif; ?>
                 </div>
 
-                <button class="login-submit" type="submit">Login</button>
+                <a href="#" class="forgot-link">Forgot Password?</a>
+
+                <div class="remember-group">
+                    <input id="remember" name="remember" type="checkbox" checked>
+                    <label for="remember">Remember Me</label>
+                </div>
+
+                <button class="login-submit" type="submit">
+                    <span class="material-symbols-outlined">arrow_forward</span>
+                    Login
+                </button>
             </form>
 
             <div class="login-divider" aria-hidden="true">
                 <span></span>
-                <p>Or continue with</p>
+                <p>or continue with</p>
                 <span></span>
             </div>
 
-            <button class="google-btn" type="button">
-                <span class="google-mark" aria-hidden="true">G</span>
-                <span>Google</span>
-            </button>
+            <div class="social-buttons">
+                <button class="social-btn" type="button">
+                    <svg class="social-icon" viewBox="0 0 24 24" width="20" height="20">
+                        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
+                        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                    </svg>
+                    Google
+                </button>
+                <button class="social-btn" type="button">
+                    <svg class="social-icon" viewBox="0 0 24 24" width="20" height="20" fill="#1877F2">
+                        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                    </svg>
+                    Facebook
+                </button>
+                <button class="social-btn" type="button">
+                    <svg class="social-icon" viewBox="0 0 24 24" width="20" height="20" fill="#000000">
+                        <path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
+                    </svg>
+                    Apple
+                </button>
+            </div>
 
             <p class="signup-prompt">Don't have an account? <a href="signup.php">Sign Up</a></p>
         </div>
     </main>
+
+    <footer class="login-stats">
+        <div class="login-stats-inner">
+            <div class="login-stat">
+                <span class="material-symbols-outlined">groups</span>
+                <div class="login-stat-text">
+                    <strong>10,000+</strong>
+                    <span>Happy Travelers</span>
+                </div>
+            </div>
+            <div class="login-stat">
+                <span class="material-symbols-outlined">luggage</span>
+                <div class="login-stat-text">
+                    <strong>150+</strong>
+                    <span>Tour Packages</span>
+                </div>
+            </div>
+            <div class="login-stat">
+                <span class="material-symbols-outlined">support_agent</span>
+                <div class="login-stat-text">
+                    <strong>24/7</strong>
+                    <span>Customer Support</span>
+                </div>
+            </div>
+            <div class="login-stat">
+                <span class="material-symbols-outlined">verified</span>
+                <div class="login-stat-text">
+                    <strong>Best Price</strong>
+                    <span>Guarantee</span>
+                </div>
+            </div>
+        </div>
+    </footer>
 
     <script src="../js/script.js"></script>
 </body>

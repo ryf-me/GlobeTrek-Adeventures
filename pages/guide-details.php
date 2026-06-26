@@ -66,7 +66,7 @@ $totalReviews = (int)$stats['total'];
         <!-- Guide Hero -->
         <section class="guide-hero">
             <div class="guide-hero-media">
-                <img src="<?= htmlspecialchars($guide['image']) ?>" alt="<?= htmlspecialchars($guide['name']) ?>">
+                <img src="<?= htmlspecialchars($basePath . $guide['image']) ?>" alt="<?= htmlspecialchars($guide['name']) ?>">
             </div>
             <div class="guide-hero-info">
                 <span class="guide-region-badge">
