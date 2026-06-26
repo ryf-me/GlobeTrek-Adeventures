@@ -155,6 +155,10 @@ $dashboardUrl = $isAdmin ? 'index.php' : 'staff-dashboard.php';
             <span class="material-symbols-outlined">history</span>
             System Logs
         </a>
+        <a href="backup.php" class="adm-sidebar-link <?= $currentPage === 'backup' ? 'active' : '' ?>">
+            <span class="material-symbols-outlined">backup</span>
+            Database Backup
+        </a>
         <?php endif; ?>
         <?php endif; ?>
     </nav>

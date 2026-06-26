@@ -3,6 +3,19 @@
    (Sidebar layout in css/user-sidebar.css)
    ============================================ */
 
+/* Visually hide element but keep accessible to screen readers */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}
+
 .usr-page {
     background: var(--inq-surface, #f5f7fa);
     color: var(--inq-on-surface, #264653);

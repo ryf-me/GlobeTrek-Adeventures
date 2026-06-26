@@ -572,3 +572,44 @@
         flex: 1 1 100%;
     }
 }
+
+/* ---- Password Strength Meter ---- */
+.password-strength-meter {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.4rem;
+    height: 6px;
+    position: relative;
+}
+
+.password-strength-bar {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.3s ease, background-color 0.3s ease;
+    position: absolute;
+    left: 0;
+    top: 0;
+}
+
+.password-strength-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    margin-left: auto;
+    white-space: nowrap;
+}
+
+.has-error .password-strength-meter {
+    border: none;
+}
+
+.field-error {
+    color: var(--signup-error);
+    font-size: 0.8rem;
+    margin-top: 0.3rem;
+    display: block;
+}
+
+.has-error input {
+    border-color: var(--signup-error) !important;
+}

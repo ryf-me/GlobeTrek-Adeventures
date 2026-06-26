@@ -27,6 +27,16 @@ if ($action === 'admin_reply') {
             $stmt->execute([':iid' => $inquiryId, ':sid' => $adminId, ':msg' => $replyMsg]);
             logActivity('inquiry_reply', 'inquiry', $inquiryId, 'Admin reply sent');
 
+            // Send reply notification email
+            require_once __DIR__ . '/../includes/notifications.php';
+            $inqStmt = $db->prepare("SELECT * FROM inquiries WHERE id = :id");
+            $inqStmt->execute([':id' => $inquiryId]);
+            $inquiryData = $inqStmt->fetch();
+            if ($inquiryData) {
+                $replyData = ['message' => $replyMsg, 'created_at' => date('Y-m-d H:i:s')];
+                sendInquiryReplyNotification($inquiryData, $replyData);
+            }
+
             if ($newStatus !== '') {
                 $stmt = $db->prepare("UPDATE inquiries SET status = :status WHERE id = :id");
                 $stmt->execute([':status' => $newStatus, ':id' => $inquiryId]);

@@ -9,6 +9,270 @@
 document.addEventListener('copy', function(e) { e.preventDefault(); });
 document.addEventListener('cut', function(e) { e.preventDefault(); });
 
+// --- Client-side Form Validation ---
+function showFieldError(formGroup, message) {
+    formGroup.classList.add('has-error');
+    var existing = formGroup.querySelector('.field-error');
+    if (existing) {
+        existing.textContent = message;
+    } else {
+        var p = document.createElement('p');
+        p.className = 'field-error';
+        p.textContent = message;
+        formGroup.appendChild(p);
+    }
+}
+
+function clearFieldError(formGroup) {
+    formGroup.classList.remove('has-error');
+    var err = formGroup.querySelector('.field-error');
+    if (err) err.remove();
+}
+
+function validateEmailFormat(email) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+function validateLoginForm(e) {
+    var form = e.target;
+    var email = form.querySelector('#email');
+    var password = form.querySelector('#password');
+    var valid = true;
+
+    if (email) {
+        var emailGroup = email.closest('.form-group');
+        clearFieldError(emailGroup);
+        if (email.value.trim() === '') {
+            showFieldError(emailGroup, 'Please enter your email address.');
+            valid = false;
+        } else if (!validateEmailFormat(email.value.trim())) {
+            showFieldError(emailGroup, 'Please enter a valid email address.');
+            valid = false;
+        }
+    }
+
+    if (password) {
+        var pwGroup = password.closest('.form-group');
+        clearFieldError(pwGroup);
+        if (password.value === '') {
+            showFieldError(pwGroup, 'Please enter your password.');
+            valid = false;
+        }
+    }
+
+    if (!valid) e.preventDefault();
+}
+
+function validateSignupForm(e) {
+    var form = e.target;
+    var fields = {
+        'full-name': { label: 'Full name', group: '.form-group' },
+        'signup-email': { label: 'Email', group: '.form-group' },
+        'signup-password': { label: 'Password', group: '.form-group' },
+        'confirm-password': { label: 'Confirm password', group: '.form-group' }
+    };
+    var valid = true;
+
+    // Full name
+    var nameInput = form.querySelector('#full-name');
+    if (nameInput) {
+        var nameGroup = nameInput.closest('.form-group');
+        clearFieldError(nameGroup);
+        if (nameInput.value.trim() === '') {
+            showFieldError(nameGroup, 'Please enter your full name.');
+            valid = false;
+        }
+    }
+
+    // Email
+    var emailInput = form.querySelector('#signup-email');
+    if (emailInput) {
+        var emailGroup = emailInput.closest('.form-group');
+        clearFieldError(emailGroup);
+        if (emailInput.value.trim() === '') {
+            showFieldError(emailGroup, 'Please enter your email address.');
+            valid = false;
+        } else if (!validateEmailFormat(emailInput.value.trim())) {
+            showFieldError(emailGroup, 'Please enter a valid email address.');
+            valid = false;
+        }
+    }
+
+    // Password
+    var pwInput = form.querySelector('#signup-password');
+    if (pwInput) {
+        var pwGroup = pwInput.closest('.form-group');
+        clearFieldError(pwGroup);
+        var pw = pwInput.value;
+        if (pw === '') {
+            showFieldError(pwGroup, 'Please enter a password.');
+            valid = false;
+        } else if (pw.length < 8) {
+            showFieldError(pwGroup, 'Password must be at least 8 characters.');
+            valid = false;
+        } else if (!/[A-Z]/.test(pw)) {
+            showFieldError(pwGroup, 'Password must contain at least one uppercase letter.');
+            valid = false;
+        } else if (!/[0-9]/.test(pw)) {
+            showFieldError(pwGroup, 'Password must contain at least one number.');
+            valid = false;
+        } else if (!/[^A-Za-z0-9]/.test(pw)) {
+            showFieldError(pwGroup, 'Password must contain at least one special character.');
+            valid = false;
+        }
+    }
+
+    // Confirm password
+    var confirmInput = form.querySelector('#confirm-password');
+    if (confirmInput && pwInput) {
+        var confirmGroup = confirmInput.closest('.form-group');
+        clearFieldError(confirmGroup);
+        if (confirmInput.value === '') {
+            showFieldError(confirmGroup, 'Please confirm your password.');
+            valid = false;
+        } else if (confirmInput.value !== pwInput.value) {
+            showFieldError(confirmGroup, 'Passwords must match.');
+            valid = false;
+        }
+    }
+
+    // Terms
+    var terms = form.querySelector('#terms');
+    if (terms) {
+        var termsGroup = terms.closest('.terms-group');
+        if (termsGroup) {
+            var existingErr = termsGroup.parentNode.querySelector('.terms-error');
+            if (existingErr) existingErr.remove();
+        }
+        if (!terms.checked) {
+            var errP = document.createElement('p');
+            errP.className = 'field-error terms-error';
+            errP.textContent = 'Please accept the terms before continuing.';
+            termsGroup.parentNode.insertBefore(errP, termsGroup.nextSibling);
+            valid = false;
+        }
+    }
+
+    if (!valid) e.preventDefault();
+}
+
+function validateForgotForm(e) {
+    var form = e.target;
+    var email = form.querySelector('#forgot-email');
+    var valid = true;
+
+    if (email) {
+        var emailGroup = email.closest('.form-group');
+        clearFieldError(emailGroup);
+        if (email.value.trim() === '') {
+            showFieldError(emailGroup, 'Please enter your email address.');
+            valid = false;
+        } else if (!validateEmailFormat(email.value.trim())) {
+            showFieldError(emailGroup, 'Please enter a valid email address.');
+            valid = false;
+        }
+    }
+
+    if (!valid) e.preventDefault();
+}
+
+function validateResetForm(e) {
+    var form = e.target;
+    var pw = form.querySelector('#new-password');
+    var confirm = form.querySelector('#confirm-password');
+    var valid = true;
+
+    if (pw) {
+        var pwGroup = pw.closest('.form-group');
+        clearFieldError(pwGroup);
+        var val = pw.value;
+        if (val === '') {
+            showFieldError(pwGroup, 'Please enter a new password.');
+            valid = false;
+        } else if (val.length < 8) {
+            showFieldError(pwGroup, 'Password must be at least 8 characters.');
+            valid = false;
+        } else if (!/[A-Z]/.test(val)) {
+            showFieldError(pwGroup, 'Password must contain at least one uppercase letter.');
+            valid = false;
+        } else if (!/[0-9]/.test(val)) {
+            showFieldError(pwGroup, 'Password must contain at least one number.');
+            valid = false;
+        } else if (!/[^A-Za-z0-9]/.test(val)) {
+            showFieldError(pwGroup, 'Password must contain at least one special character.');
+            valid = false;
+        }
+    }
+
+    if (confirm && pw) {
+        var confirmGroup = confirm.closest('.form-group');
+        clearFieldError(confirmGroup);
+        if (confirm.value === '') {
+            showFieldError(confirmGroup, 'Please confirm your password.');
+            valid = false;
+        } else if (confirm.value !== pw.value) {
+            showFieldError(confirmGroup, 'Passwords must match.');
+            valid = false;
+        }
+    }
+
+    if (!valid) e.preventDefault();
+}
+
+// Attach form validators
+document.addEventListener('DOMContentLoaded', function() {
+    var loginForm = document.querySelector('.login-form');
+    if (loginForm) loginForm.addEventListener('submit', validateLoginForm);
+
+    var signupForm = document.querySelector('.signup-form');
+    if (signupForm) signupForm.addEventListener('submit', validateSignupForm);
+
+    var forgotForm = document.querySelector('.forgot-form');
+    if (forgotForm) forgotForm.addEventListener('submit', validateForgotForm);
+
+    var resetForm = document.querySelector('.reset-form');
+    if (resetForm) resetForm.addEventListener('submit', validateResetForm);
+});
+
+// --- Password Strength Meter ---
+function updatePasswordStrength(input) {
+    var val = input.value;
+    var meter = input.closest('.form-group') ? input.closest('.form-group').querySelector('.password-strength-meter') : null;
+    if (!meter) return;
+
+    var score = 0;
+    if (val.length >= 8) score++;
+    if (/[A-Z]/.test(val)) score++;
+    if (/[0-9]/.test(val)) score++;
+    if (/[^A-Za-z0-9]/.test(val)) score++;
+
+    var labels = ['Weak', 'Fair', 'Good', 'Strong'];
+    var colors = ['#ba1a1a', '#e6a817', '#4caf50', '#2e7d32'];
+    var widths = ['25%', '50%', '75%', '100%'];
+
+    meter.innerHTML = '';
+    if (val.length === 0) return;
+
+    var bar = document.createElement('div');
+    bar.className = 'password-strength-bar';
+    bar.style.width = widths[score - 1] || '0%';
+    bar.style.backgroundColor = colors[score - 1] || '#ccc';
+    meter.appendChild(bar);
+
+    var label = document.createElement('span');
+    label.className = 'password-strength-label';
+    label.textContent = labels[score - 1] || '';
+    label.style.color = colors[score - 1] || '#ccc';
+    meter.appendChild(label);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    var pwInputs = document.querySelectorAll('#signup-password, #new-password');
+    pwInputs.forEach(function(input) {
+        input.addEventListener('input', function() { updatePasswordStrength(input); });
+    });
+});
+
 // Global CSRF token — read from the variable set by navbar.php
 var csrfToken = window.csrfToken || (function () {
     var meta = document.querySelector('meta[name="csrf-token"]');
@@ -246,14 +510,51 @@ document.querySelectorAll('.inq-modal-overlay, .adm-modal-overlay').forEach(func
   var nextBtn = document.querySelector('.guides-next');
   if (!track || !prevBtn || !nextBtn) return;
 
-  var scrollAmount = 300;
+  var offset = 0;
+  var gap = 16; // 1rem gap
 
-  nextBtn.addEventListener('click', function () {
-    track.parentElement.scrollBy({ left: scrollAmount, behavior: 'smooth' });
-  });
+  function getCardWidth() {
+    var card = track.querySelector('.guide-card');
+    return card ? card.offsetWidth + gap : 300;
+  }
 
-  prevBtn.addEventListener('click', function () {
-    track.parentElement.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+  function getVisibleCards() {
+    var containerWidth = track.parentElement.offsetWidth;
+    var cardWidth = getCardWidth();
+    return Math.floor(containerWidth / cardWidth);
+  }
+
+  function getMaxOffset() {
+    var totalCards = track.querySelectorAll('.guide-card').length;
+    var visibleCards = getVisibleCards();
+    var cardWidth = getCardWidth();
+    if (totalCards <= visibleCards) return 0;
+    return (totalCards - visibleCards) * cardWidth;
+  }
+
+  function updateArrows() {
+    prevBtn.style.opacity = offset <= 0 ? '0.4' : '1';
+    prevBtn.style.pointerEvents = offset <= 0 ? 'none' : 'auto';
+    nextBtn.style.opacity = offset >= getMaxOffset() ? '0.4' : '1';
+    nextBtn.style.pointerEvents = offset >= getMaxOffset() ? 'none' : 'auto';
+  }
+
+  function slide(dir) {
+    var cardWidth = getCardWidth();
+    var max = getMaxOffset();
+    offset = Math.max(0, Math.min(offset + dir * cardWidth, max));
+    track.style.transform = 'translateX(' + -offset + 'px)';
+    updateArrows();
+  }
+
+  nextBtn.addEventListener('click', function () { slide(1); });
+  prevBtn.addEventListener('click', function () { slide(-1); });
+
+  updateArrows();
+  window.addEventListener('resize', function () {
+    offset = Math.min(offset, getMaxOffset());
+    track.style.transform = 'translateX(' + -offset + 'px)';
+    updateArrows();
   });
 })();
 

@@ -74,6 +74,67 @@ function checkFileRateLimit(string $rateKey, int $maxAttempts, int $windowSecond
 }
 
 /**
+ * Per-account lockout — checks if a specific email has too many failed login attempts.
+ * Uses the login_attempts table for tracking.
+ *
+ * @param string $email         The email address to check
+ * @param int    $maxAttempts   Maximum failed attempts allowed (default 5)
+ * @param int    $windowSeconds Time window in seconds (default 900 = 15 min)
+ * @return bool  true if login is allowed, false if account is locked
+ */
+function checkAccountLockout(string $email, int $maxAttempts = 5, int $windowSeconds = 900): bool
+{
+    try {
+        $db = getDB();
+        $stmt = $db->prepare(
+            "SELECT COUNT(*) AS cnt FROM login_attempts
+             WHERE email = :email AND attempted_at > DATE_SUB(NOW(), INTERVAL :window SECOND)"
+        );
+        $stmt->execute([':email' => $email, ':window' => $windowSeconds]);
+        $count = (int)$stmt->fetch()['cnt'];
+        return $count < $maxAttempts;
+    } catch (Exception $e) {
+        // If DB is down, allow login (fail open)
+        return true;
+    }
+}
+
+/**
+ * Record a failed login attempt.
+ *
+ * @param string $email  The email that failed
+ * @param string $ip     The IP address of the attempt
+ */
+function recordLoginAttempt(string $email, string $ip): void
+{
+    try {
+        $db = getDB();
+        $stmt = $db->prepare(
+            "INSERT INTO login_attempts (email, ip_address) VALUES (:email, :ip)"
+        );
+        $stmt->execute([':email' => $email, ':ip' => $ip]);
+    } catch (Exception $e) {
+        error_log('Failed to record login attempt: ' . $e->getMessage());
+    }
+}
+
+/**
+ * Clear all failed login attempts for an email (called on successful login).
+ *
+ * @param string $email  The email to clear
+ */
+function clearLoginAttempts(string $email): void
+{
+    try {
+        $db = getDB();
+        $stmt = $db->prepare("DELETE FROM login_attempts WHERE email = :email");
+        $stmt->execute([':email' => $email]);
+    } catch (Exception $e) {
+        error_log('Failed to clear login attempts: ' . $e->getMessage());
+    }
+}
+
+/**
  * Session-based rate limiting (for per-user limits).
  */
 function checkSessionRateLimit(string $rateKey, int $maxAttempts, int $windowSeconds): bool {

@@ -8,7 +8,7 @@
  * logins via a secure token stored in the remember_tokens table.
  */
 
-session_start();
+require_once __DIR__ . '/../config/session.php';
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../config/csrf.php';
 require_once __DIR__ . '/../config/rate-limiter.php';
@@ -159,11 +159,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (empty($errors)) {
+        // Per-account lockout check (5 attempts per 15 min)
+        if (!checkAccountLockout($email, 5, 900)) {
+            $errors['general'] = 'Too many failed login attempts for this account. Please try again in 15 minutes.';
+        }
+    }
+
+    if (empty($errors)) {
         $stmt = $db->prepare("SELECT * FROM users WHERE email = :email LIMIT 1");
         $stmt->execute([':email' => $email]);
         $user = $stmt->fetch();
 
-        if ($user && password_verify($password, $user['password'])) {
+        if (!$user) {
+            $errors['general'] = 'Invalid email or password.';
+            recordLoginAttempt($email, $_SERVER['REMOTE_ADDR'] ?? 'unknown');
+        } elseif ($user['is_active'] == 0) {
+            $errors['general'] = 'Your account has been deactivated. Please contact support.';
+        } elseif (isset($user['email_verified']) && $user['email_verified'] == 0) {
+            $errors['general'] = 'Please verify your email first. <a href="resend-verification.php?email=' . urlencode($email) . '" style="color:#e76f51;text-decoration:underline;">Resend verification email</a>';
+        } elseif ($user && password_verify($password, $user['password'])) {
             // Regenerate session ID to prevent session fixation
             session_regenerate_id(true);
 
@@ -172,6 +186,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['user_email']         = $user['email'];
             $_SESSION['user_role']          = $user['role'];
             $_SESSION['user_profile_photo'] = $user['profile_photo'] ?? '';
+
+            // Clear failed login attempts on success
+            clearLoginAttempts($email);
 
             // Remember Me — issue persistent token if requested
             if (!empty($_POST['remember'])) {
@@ -187,6 +204,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
         } else {
             $errors['general'] = 'Invalid email or password.';
+            recordLoginAttempt($email, $_SERVER['REMOTE_ADDR'] ?? 'unknown');
         }
     }
 }
@@ -266,7 +284,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <?php endif; ?>
                 </div>
 
-                <a href="#" class="forgot-link">Forgot Password?</a>
+                <a href="forgot-password.php" class="forgot-link">Forgot Password?</a>
 
                 <div class="remember-group">
                     <input id="remember" name="remember" type="checkbox" checked>

@@ -24,7 +24,12 @@ $r = $db->prepare("SELECT COUNT(*) AS cnt FROM bookings WHERE status = 'cancelle
 $r->execute([':from' => $dateFrom . ' 00:00:00', ':to' => $dateTo . ' 23:59:59']);
 $stats['cancelled_bookings'] = (int)$r->fetch()['cnt'];
 
+$r = $db->prepare("SELECT COUNT(*) AS cnt FROM bookings WHERE created_at BETWEEN :from AND :to");
+$r->execute([':from' => $dateFrom . ' 00:00:00', ':to' => $dateTo . ' 23:59:59']);
+$stats['all_bookings'] = (int)$r->fetch()['cnt'];
+
 $stats['avg_booking_value'] = $stats['total_bookings'] > 0 ? $stats['total_revenue'] / $stats['total_bookings'] : 0;
+$stats['cancellation_rate'] = $stats['all_bookings'] > 0 ? round(($stats['cancelled_bookings'] / $stats['all_bookings']) * 100, 1) : 0;
 
 $r = $db->prepare(
     "SELECT p.title, COUNT(b.id) AS booking_count, SUM(b.total_price) AS revenue
@@ -46,6 +51,21 @@ $r = $db->prepare(
 );
 $r->execute([':from' => $dateFrom . ' 00:00:00', ':to' => $dateTo . ' 23:59:59']);
 $byDate = $r->fetchAll();
+
+// Top destinations
+$r = $db->prepare(
+    "SELECT p.destination_category, COUNT(b.id) AS booking_count, SUM(b.total_price) AS revenue
+     FROM bookings b
+     JOIN packages p ON b.package_id = p.id
+     WHERE b.status = 'confirmed' AND b.created_at BETWEEN :from AND :to
+     GROUP BY p.destination_category
+     ORDER BY booking_count DESC
+     LIMIT 5"
+);
+$r->execute([':from' => $dateFrom . ' 00:00:00', ':to' => $dateTo . ' 23:59:59']);
+$topDestinations = $r->fetchAll();
+
+
 ?>
 
 <div class="adm-sidebar-overlay" id="sidebarOverlay"></div>
@@ -61,6 +81,7 @@ $byDate = $r->fetchAll();
             <a href="index.php" class="adm-topbar-link"><span class="material-symbols-outlined">dashboard</span><span>Dashboard</span></a>
             <a href="export-sales.php?from=<?= urlencode($dateFrom) ?>&to=<?= urlencode($dateTo) ?>" class="adm-btn adm-btn-secondary" target="_blank"><span class="material-symbols-outlined">download</span> CSV</a>
             <a href="export-sales-pdf.php?from=<?= urlencode($dateFrom) ?>&to=<?= urlencode($dateTo) ?>" class="adm-btn adm-btn-secondary"><span class="material-symbols-outlined">picture_as_pdf</span> PDF</a>
+            <a href="export-sales-excel.php?from=<?= urlencode($dateFrom) ?>&to=<?= urlencode($dateTo) ?>" class="adm-btn adm-btn-secondary"><span class="material-symbols-outlined">table_view</span> Excel</a>
         </div>
     </div>
 
@@ -104,10 +125,46 @@ $byDate = $r->fetchAll();
             </div>
             <div class="adm-stat-card">
                 <div class="adm-stat-card-info">
-                    <div class="adm-stat-card-num"><?= $stats['cancelled_bookings'] ?></div>
-                    <div class="adm-stat-card-label">Cancelled Bookings</div>
+                    <div class="adm-stat-card-num"><?= $stats['cancellation_rate'] ?>%</div>
+                    <div class="adm-stat-card-label">Cancellation Rate</div>
                 </div>
             </div>
+        </div>
+
+
+
+        <!-- Top Destinations -->
+        <div class="adm-form-card">
+            <h2>Top Destinations</h2>
+            <?php if (empty($topDestinations)): ?>
+                <div class="adm-empty">
+                    <span class="material-symbols-outlined adm-empty-icon">travel_explore</span>
+                    <h2>No data for this period</h2>
+                </div>
+            <?php else: ?>
+                <div class="adm-table-wrap">
+                    <table class="adm-table">
+                        <thead>
+                            <tr>
+                                <th>Destination</th>
+                                <th>Bookings</th>
+                                <th>Revenue</th>
+                                <th>% of Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($topDestinations as $dest): ?>
+                                <tr>
+                                    <td class="cell-main"><?= htmlspecialchars($dest['destination_category'] ?: 'Uncategorized') ?></td>
+                                    <td><?= $dest['booking_count'] ?></td>
+                                    <td class="cell-mono">Rs.<?= number_format($dest['revenue'], 2) ?></td>
+                                    <td><?= $stats['total_revenue'] > 0 ? round(($dest['revenue'] / $stats['total_revenue']) * 100, 1) . '%' : '0%' ?></td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            <?php endif; ?>
         </div>
 
         <!-- Revenue by Package -->
@@ -178,4 +235,6 @@ $byDate = $r->fetchAll();
         </div>
     </div>
 </main>
+
+
 <?php require_once __DIR__ . '/includes/footer.php'; ?>

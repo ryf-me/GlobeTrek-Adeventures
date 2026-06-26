@@ -42,8 +42,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $errorMsg = 'All password fields are required.';
         } elseif (!password_verify($currentPassword, $user['password'])) {
             $errorMsg = 'Current password is incorrect.';
-        } elseif (strlen($newPassword) < 6) {
-            $errorMsg = 'New password must be at least 6 characters.';
+        } elseif (strlen($newPassword) < 8) {
+            $errorMsg = 'New password must be at least 8 characters.';
+        } elseif (!preg_match('/[A-Z]/', $newPassword)) {
+            $errorMsg = 'New password must contain at least one uppercase letter.';
+        } elseif (!preg_match('/[0-9]/', $newPassword)) {
+            $errorMsg = 'New password must contain at least one number.';
+        } elseif (!preg_match('/[^A-Za-z0-9]/', $newPassword)) {
+            $errorMsg = 'New password must contain at least one special character.';
         } elseif ($newPassword !== $confirmPassword) {
             $errorMsg = 'New passwords do not match.';
         } else {
@@ -150,7 +156,8 @@ $activePage = 'settings';
                             <div class="settings-form-row">
                                 <div class="settings-form-group">
                                     <label for="new-password">New Password</label>
-                                    <input type="password" id="new-password" name="new_password" placeholder="••••••••" minlength="6" required>
+                                    <input type="password" id="new-password" name="new_password" placeholder="••••••••" minlength="8" required>
+                                    <div class="password-strength-meter"></div>
                                 </div>
                                 <div class="settings-form-group">
                                     <label for="confirm-password">Confirm New Password</label>

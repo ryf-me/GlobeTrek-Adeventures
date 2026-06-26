@@ -6,10 +6,11 @@
  * Includes CSRF protection and rate limiting (3 attempts per hour per IP).
  */
 
-session_start();
+require_once __DIR__ . '/../config/session.php';
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../config/csrf.php';
 require_once __DIR__ . '/../config/rate-limiter.php';
+require_once __DIR__ . '/../config/otp.php';
 $db = getDB();
 
 $errors = [];
@@ -51,8 +52,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         if ($password === '') {
             $errors['password'] = 'Please enter a password.';
-        } elseif (strlen($password) < 6) {
-            $errors['password'] = 'Password must be at least 6 characters.';
+        } elseif (strlen($password) < 8) {
+            $errors['password'] = 'Password must be at least 8 characters.';
+        } elseif (!preg_match('/[A-Z]/', $password)) {
+            $errors['password'] = 'Password must contain at least one uppercase letter.';
+        } elseif (!preg_match('/[0-9]/', $password)) {
+            $errors['password'] = 'Password must contain at least one number.';
+        } elseif (!preg_match('/[^A-Za-z0-9]/', $password)) {
+            $errors['password'] = 'Password must contain at least one special character.';
         }
         if ($confirmPassword === '') {
             $errors['confirm_password'] = 'Please confirm your password.';
@@ -83,8 +90,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ':password' => $hashedPassword,
             ]);
 
+            $newUserId = $db->lastInsertId();
+
+            // Generate email verification token
+            $verifyToken = bin2hex(random_bytes(32));
+            $expiresAt = date('Y-m-d H:i:s', time() + 86400); // 24 hours
+            $stmt = $db->prepare(
+                "INSERT INTO email_verifications (user_id, token, expires_at) VALUES (:uid, :token, :expires)"
+            );
+            $stmt->execute([
+                ':uid'     => $newUserId,
+                ':token'   => $verifyToken,
+                ':expires' => $expiresAt,
+            ]);
+
+            // Send verification email
+            $verifyLink = BASE_URL . '/pages/verify-email.php?token=' . $verifyToken;
+            require_once __DIR__ . '/../includes/mailer.php';
+            $emailContent = '
+                <h2 style="margin:0 0 16px;color:#264653;">Welcome to GlobeTrek Adventures!</h2>
+                <p>Thank you for creating an account. Please verify your email address by clicking the button below:</p>
+                <div style="text-align:center;margin:24px 0;">
+                    <a href="' . htmlspecialchars($verifyLink) . '" style="display:inline-block;background:#e76f51;color:#ffffff;padding:12px 32px;border-radius:8px;text-decoration:none;font-weight:600;">Verify Email Address</a>
+                </div>
+                <p style="color:#666;font-size:13px;">Or copy this link: ' . htmlspecialchars($verifyLink) . '</p>
+                <p style="color:#666;font-size:13px;">This link expires in <strong>24 hours</strong>.</p>
+                <p style="color:#666;font-size:13px;">If you did not create this account, please ignore this email.</p>
+            ';
+            $htmlBody = wrapEmailTemplate($emailContent);
+            $textBody = "Welcome to GlobeTrek Adventures!\n\nPlease verify your email by visiting:\n$verifyLink\n\nThis link expires in 24 hours.";
+            sendMail($values['email'], 'Verify Your Email — GlobeTrek Adventures', $htmlBody, $textBody);
+
             $safeEmail = htmlspecialchars($values['email'], ENT_QUOTES, 'UTF-8');
-            $successMessage = "Account created for $safeEmail. You can now log in.";
+            $successMessage = "Account created for $safeEmail. Please check your email to verify your account.";
             $values = array_fill_keys(array_keys($values), '');
         }
     }
@@ -191,6 +229,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <?php if (isset($errors['password'])): ?>
                         <p class="field-error"><?php echo $errors['password']; ?></p>
                     <?php endif; ?>
+                    <div class="password-strength-meter"></div>
                 </div>
 
                 <div class="form-group<?php echo isset($errors['confirm_password']) ? ' has-error' : ''; ?>">

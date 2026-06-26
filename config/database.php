@@ -4,6 +4,24 @@ define('DB_NAME', 'globetrek');      // Database name
 define('DB_USER', 'root');           // Database username (XAMPP default)
 define('DB_PASS', '');               // Database password (empty for XAMPP default)
 
+// Auto-detect base URL (handles subdirectory installs like /GlobeTrek-Adeventures/)
+if (!defined('BASE_URL')) {
+    $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+    $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+
+    // If host is localhost/127.0.0.1, use the server's network IP so links work from other devices
+    if (in_array($host, ['localhost', '127.0.0.1', '::1'], true)) {
+        $ip = gethostbyname(gethostname());
+        if ($ip && $ip !== '127.0.0.1') {
+            $host = $ip;
+        }
+    }
+
+    $scriptDir = rtrim(dirname($_SERVER['SCRIPT_NAME'] ?? ''), '/');
+    $basePath = preg_replace('#/pages$#', '', $scriptDir);
+    define('BASE_URL', $protocol . '://' . $host . $basePath);
+}
+
 // Function to get database connection (singleton pattern)
 function getDB() {
     static $pdo = null;              // Static variable persists between function calls

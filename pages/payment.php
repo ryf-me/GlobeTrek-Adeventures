@@ -172,6 +172,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $paymentSuccess = true;
         unset($_SESSION['payment_booking_ref']);
+
+        // Send notification emails
+        require_once __DIR__ . '/../includes/notifications.php';
+        // Build package array from JOINed booking data
+        $package = [
+            'title'           => $booking['title'] ?? '',
+            'price'           => $booking['price'] ?? 0,
+            'image'           => $booking['image'] ?? '',
+            'duration_days'   => $booking['duration_days'] ?? null,
+            'duration_nights' => $booking['duration_nights'] ?? null,
+        ];
+        $notifyBooking = $booking;
+        $notifyPackage = $package;
+        $notifyPayment = [
+            'amount' => $total,
+            'payment_method' => $fields['paymentMethod'],
+            'card_last_four' => $cardLastFour,
+            'transaction_id' => $transactionId,
+            'created_at' => date('Y-m-d H:i:s'),
+        ];
+        sendBookingConfirmation($notifyBooking, $notifyPackage);
+        sendPaymentReceipt($notifyPayment, $notifyBooking);
     }
 }
 

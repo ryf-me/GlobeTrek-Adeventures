@@ -30,6 +30,24 @@ if (empty($error) && $_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] 
     }
 }
 
+// Deactivate / Reactivate staff account
+if (empty($error) && $_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'toggle_active') {
+    $staffId = (int)($_POST['staff_id'] ?? 0);
+    if ($staffId > 0) {
+        // Get user_id
+        $stmt = $db->prepare("SELECT user_id FROM staff_profiles WHERE id = :id");
+        $stmt->execute([':id' => $staffId]);
+        $staff = $stmt->fetch();
+        if ($staff) {
+            $stmt = $db->prepare("UPDATE users SET is_active = NOT is_active WHERE id = :uid");
+            $stmt->execute([':uid' => $staff['user_id']]);
+            logActivity('staff_account_toggled', 'staff', $staffId, 'Staff account active status toggled');
+            header('Location: staff.php?updated=1');
+            exit;
+        }
+    }
+}
+
 if (empty($error) && $_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delete') {
     $staffId = (int)($_POST['staff_id'] ?? 0);
     if ($staffId > 0) {
@@ -83,7 +101,7 @@ $whereSQL = !empty($where) ? 'WHERE ' . implode(' AND ', $where) : '';
 
 // Query staff
 $stmt = $db->prepare(
-    "SELECT sp.*, u.full_name, u.email, u.profile_photo, u.created_at AS user_created_at,
+    "SELECT sp.*, u.full_name, u.email, u.profile_photo, u.is_active, u.created_at AS user_created_at,
             (SELECT COUNT(*) FROM staff_assignments sa WHERE sa.staff_id = sp.id) AS assignment_count
      FROM staff_profiles sp
      JOIN users u ON sp.user_id = u.id
@@ -232,6 +250,7 @@ $departmentLabels = [
                             <th>Department</th>
                             <th>Position</th>
                             <th>Status</th>
+                            <th>Account</th>
                             <th>Active Tasks</th>
                             <th>Hire Date</th>
                             <th style="text-align:right;">Actions</th>
@@ -255,6 +274,11 @@ $departmentLabels = [
                                         <?= $s['is_available'] ? 'Available' : 'Unavailable' ?>
                                     </span>
                                 </td>
+                                <td>
+                                    <span class="adm-status-badge adm-status-<?= $s['is_active'] ? 'active' : 'cancelled' ?>">
+                                        <?= $s['is_active'] ? 'Active' : 'Deactivated' ?>
+                                    </span>
+                                </td>
                                 <td class="cell-mono"><?= $s['assignment_count'] ?> / <?= $s['max_concurrent_tasks'] ?></td>
                                 <td class="cell-muted"><?= $s['hire_date'] ? date('M d, Y', strtotime($s['hire_date'])) : '—' ?></td>
                                 <td>
@@ -268,6 +292,14 @@ $departmentLabels = [
                                             <input type="hidden" name="staff_id" value="<?= $s['id'] ?>">
                                             <button type="submit" class="adm-btn-icon" title="<?= $s['is_available'] ? 'Mark Unavailable' : 'Mark Available' ?>">
                                                 <span class="material-symbols-outlined"><?= $s['is_available'] ? 'do_not_disturb' : 'check_circle' ?></span>
+                                            </button>
+                                        </form>
+                                        <form method="post" style="display:inline;" data-confirm="<?= $s['is_active'] ? 'Deactivate this staff account? They will not be able to log in.' : 'Reactivate this staff account?' ?>">
+                                            <?php csrf_field(); ?>
+                                            <input type="hidden" name="action" value="toggle_active">
+                                            <input type="hidden" name="staff_id" value="<?= $s['id'] ?>">
+                                            <button type="submit" class="adm-btn-icon" title="<?= $s['is_active'] ? 'Deactivate Account' : 'Reactivate Account' ?>" style="<?= $s['is_active'] ? 'color:#ba1a1a;' : 'color:#286f45;' ?>">
+                                                <span class="material-symbols-outlined"><?= $s['is_active'] ? 'person_off' : 'person' ?></span>
                                             </button>
                                         </form>
                                         <form method="post" style="display:inline;" data-confirm="Delete this staff member permanently?">

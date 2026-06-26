@@ -4,5 +4,5 @@
 RewriteEngine On
 
 # Custom error documents
-ErrorDocument 404 /globetrek/pages/404.php
-ErrorDocument 500 /globetrek/pages/500.php
+ErrorDocument 404 /GlobeTrek-Adeventures/pages/404.php
+ErrorDocument 500 /GlobeTrek-Adeventures/pages/500.php

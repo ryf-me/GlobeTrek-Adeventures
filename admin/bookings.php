@@ -11,9 +11,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'updat
         $bid = (int)($_POST['booking_id'] ?? 0);
         $newStatus = $_POST['status'] ?? '';
         if ($bid > 0 && in_array($newStatus, ['pending', 'confirmed', 'cancelled'])) {
+            // Get old status before updating
+            $oldStmt = $db->prepare("SELECT status FROM bookings WHERE id = :id");
+            $oldStmt->execute([':id' => $bid]);
+            $oldStatus = $oldStmt->fetch()['status'] ?? '';
+
             $stmt = $db->prepare("UPDATE bookings SET status = :status WHERE id = :id");
             $stmt->execute([':status' => $newStatus, ':id' => $bid]);
             logActivity('booking_status_updated', 'booking', $bid, 'Status changed to ' . $newStatus);
+
+            // Send status update notification
+            if ($oldStatus !== $newStatus && $oldStatus !== '') {
+                require_once __DIR__ . '/../includes/notifications.php';
+                $bStmt = $db->prepare("SELECT * FROM bookings WHERE id = :id");
+                $bStmt->execute([':id' => $bid]);
+                $bookingData = $bStmt->fetch();
+                if ($bookingData && !empty($bookingData['email'])) {
+                    $bookingData['status'] = $newStatus;
+                    sendBookingStatusUpdate($bookingData, $oldStatus);
+                }
+            }
+
             header('Location: bookings.php?updated=1');
             exit;
         }

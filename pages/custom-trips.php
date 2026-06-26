@@ -328,8 +328,17 @@ function style_selected(string $value, string $current): string
     <script>
     (function () {
         var dateInput = document.getElementById('dates');
+        var durationInput = document.getElementById('duration');
         if (!dateInput || typeof flatpickr === 'undefined') return;
-        flatpickr(dateInput, {
+
+        var fmt = function (d) {
+            var y = d.getFullYear();
+            var m = String(d.getMonth() + 1).padStart(2, '0');
+            var day = String(d.getDate()).padStart(2, '0');
+            return y + '-' + m + '-' + day;
+        };
+
+        var fp = flatpickr(dateInput, {
             mode: 'range',
             dateFormat: 'Y-m-d',
             minDate: 'today',
@@ -338,16 +347,25 @@ function style_selected(string $value, string $current): string
             altFormat: 'F j, Y',
             onChange: function (selectedDates) {
                 if (selectedDates.length === 2) {
-                    var fmt = function (d) {
-                        var y = d.getFullYear();
-                        var m = String(d.getMonth() + 1).padStart(2, '0');
-                        var day = String(d.getDate()).padStart(2, '0');
-                        return y + '-' + m + '-' + day;
-                    };
                     dateInput.value = fmt(selectedDates[0]) + ' to ' + fmt(selectedDates[1]);
+                    var diff = Math.ceil((selectedDates[1] - selectedDates[0]) / 86400000);
+                    if (durationInput && diff > 0) durationInput.value = diff;
                 }
             }
         });
+
+        if (durationInput) {
+            durationInput.addEventListener('input', function () {
+                var days = parseInt(this.value, 10);
+                if (!days || days < 1) return;
+                var selected = fp.selectedDates;
+                if (selected.length === 0) return;
+                var start = selected[0];
+                var end = new Date(start);
+                end.setDate(start.getDate() + days);
+                fp.setDate([start, end], true);
+            });
+        }
     })();
     </script>
 </body>
