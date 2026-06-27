@@ -6,6 +6,7 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'admin') 
 }
 
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../config/currency.php';
 $db = getDB();
 
 $dateFrom = $_GET['from'] ?? date('Y-m-01');
@@ -33,7 +34,7 @@ fputcsv($output, ['Customer Report']);
 fputcsv($output, ['Date From', $dateFrom, '', 'Date To', $dateTo]);
 fputcsv($output, []);
 
-fputcsv($output, ['Name', 'Email', 'Phone', 'Country', 'City', 'Gender', 'Joined', 'Bookings (Period)', 'Total Spent (Rs.)']);
+fputcsv($output, ['Name', 'Email', 'Phone', 'Country', 'City', 'Gender', 'Joined', 'Bookings (Period)', 'Total Spent (' . CURRENCY_CODE . ')']);
 
 foreach ($customers as $c) {
     fputcsv($output, [

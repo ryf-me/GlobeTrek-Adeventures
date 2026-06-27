@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../config/currency.php';
 $db = getDB();
 
 $propertyTypes = ['Hotel', 'Villa', 'Boutique', 'Resort'];
@@ -183,7 +184,7 @@ function buildQueryString($overrides = []) {
                                     </div>
                                     <div class="card-footer">
                                         <div class="card-price">
-                                            Rs.<?= number_format($acc['price_per_night'], 0) ?>
+                                            <?= formatPrice($acc['price_per_night'], 0) ?>
                                             <span>/ night</span>
                                         </div>
                                         <a href="#" class="view-btn">View Details</a>

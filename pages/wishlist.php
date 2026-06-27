@@ -8,6 +8,7 @@ if (!isset($_SESSION['user_id'])) {
 
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../config/csrf.php';
+require_once __DIR__ . '/../config/currency.php';
 $db = getDB();
 $userId = $_SESSION['user_id'];
 
@@ -42,7 +43,7 @@ $activePage = 'wishlist';
 
 function wl_format_price(float $price): string
 {
-    return '$' . number_format($price, 0);
+    return formatPrice($price, 0);
 }
 
 function wl_duration_string(int $days, int $nights): string

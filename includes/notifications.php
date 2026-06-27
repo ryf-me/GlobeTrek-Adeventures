@@ -12,6 +12,7 @@
  */
 
 require_once __DIR__ . '/mailer.php';
+require_once __DIR__ . '/../config/currency.php';
 
 /**
  * Send booking confirmation email.
@@ -26,7 +27,7 @@ function sendBookingConfirmation(array $booking, array $package): bool
     $ref = htmlspecialchars($booking['booking_reference']);
     $pkg = htmlspecialchars($package['title']);
     $date = date('d M Y', strtotime($booking['travel_date']));
-    $price = 'Rs.' . number_format($booking['total_price'], 2);
+    $price = formatPrice($booking['total_price'], 2);
     $travellers = (int)$booking['num_travellers'];
 
     $content = "
@@ -76,7 +77,7 @@ function sendPaymentReceipt(array $payment, array $booking): bool
 {
     $name = htmlspecialchars($booking['first_name'] . ' ' . $booking['last_name']);
     $ref = htmlspecialchars($booking['booking_reference']);
-    $amount = 'Rs.' . number_format($payment['amount'], 2);
+    $amount = formatPrice($payment['amount'], 2);
     $method = ucfirst(str_replace('_', ' ', $payment['payment_method'] ?? ''));
     $txnId = htmlspecialchars($payment['transaction_id']);
     $date = date('d M Y', strtotime($payment['created_at']));

@@ -9,6 +9,7 @@
 $pageTitle = 'Database Backup';
 require_once __DIR__ . '/includes/header.php';
 include __DIR__ . '/includes/sidebar.php';
+require_once __DIR__ . '/../config/logger.php';
 
 if (($_SESSION['user_role'] ?? '') !== 'admin') {
     header('Location: index.php');

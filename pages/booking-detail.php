@@ -7,6 +7,7 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../config/currency.php';
 $db = getDB();
 $userId = $_SESSION['user_id'];
 $bookingRef = isset($_GET['ref']) ? trim($_GET['ref']) : '';
@@ -168,7 +169,7 @@ $activePage = 'bookings';
                                 <?php endif; ?>
                                 <div class="bd-detail">
                                     <span class="bd-detail-label">Amount Paid</span>
-                                    <span class="bd-detail-value bd-mono">Rs.<?= number_format($payment['amount'], 2) ?></span>
+                                    <span class="bd-detail-value bd-mono"><?= formatPrice($payment['amount'], 2) ?></span>
                                 </div>
                                 <div class="bd-detail">
                                     <span class="bd-detail-label">Payment Date</span>
@@ -191,21 +192,21 @@ $activePage = 'bookings';
                             <h2>Price Summary</h2>
                             <div class="bd-price-rows">
                                 <div class="bd-price-row">
-                                    <span>Base Price (Rs.<?= number_format($booking['price'], 2) ?> x <?= $guestCount ?>)</span>
-                                    <span>Rs.<?= number_format($basePrice, 2) ?></span>
+                                    <span>Base Price (<?= formatPrice($booking['price'], 2) ?> x <?= $guestCount ?>)</span>
+                                    <span><?= formatPrice($basePrice, 2) ?></span>
                                 </div>
                                 <div class="bd-price-row">
                                     <span>Taxes (10%)</span>
-                                    <span>Rs.<?= number_format($taxes, 2) ?></span>
+                                    <span><?= formatPrice($taxes, 2) ?></span>
                                 </div>
                                 <div class="bd-price-row">
                                     <span>Service Fees</span>
-                                    <span>Rs.<?= number_format($serviceFees, 2) ?></span>
+                                    <span><?= formatPrice($serviceFees, 2) ?></span>
                                 </div>
                             </div>
                             <div class="bd-price-total">
                                 <span>Total</span>
-                                <span>Rs.<?= number_format($total, 2) ?></span>
+                                <span><?= formatPrice($total, 2) ?></span>
                             </div>
                         </div>
 

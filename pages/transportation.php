@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../config/currency.php';
 $db = getDB();
 
 $vehicleTypes = ['Three-Wheeler', 'Car', 'Bike', 'Minivan'];
@@ -202,7 +203,7 @@ function buildQueryString($overrides = []) {
                                     </div>
                                     <div class="card-footer">
                                         <div class="card-price">
-                                            Rs.<?= number_format($t['price_per_day'], 0) ?>
+                                            <?= formatPrice($t['price_per_day'], 0) ?>
                                             <span>/ day</span>
                                         </div>
                                         <div class="card-rating">

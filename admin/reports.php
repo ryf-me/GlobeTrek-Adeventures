@@ -101,7 +101,7 @@ $topDestinations = $r->fetchAll();
         <div class="adm-stats">
             <div class="adm-stat-card">
                 <div class="adm-stat-card-info">
-                    <div class="adm-stat-card-num">Rs.<?= number_format($stats['total_revenue'], 2) ?></div>
+                    <div class="adm-stat-card-num"><?= formatPrice($stats['total_revenue'], 2) ?></div>
                     <div class="adm-stat-card-label">Total Revenue</div>
                 </div>
             </div>
@@ -113,7 +113,7 @@ $topDestinations = $r->fetchAll();
             </div>
             <div class="adm-stat-card">
                 <div class="adm-stat-card-info">
-                    <div class="adm-stat-card-num">Rs.<?= number_format($stats['avg_booking_value'], 2) ?></div>
+                    <div class="adm-stat-card-num"><?= formatPrice($stats['avg_booking_value'], 2) ?></div>
                     <div class="adm-stat-card-label">Average Booking Value</div>
                 </div>
             </div>
@@ -157,7 +157,7 @@ $topDestinations = $r->fetchAll();
                                 <tr>
                                     <td class="cell-main"><?= htmlspecialchars($dest['destination_category'] ?: 'Uncategorized') ?></td>
                                     <td><?= $dest['booking_count'] ?></td>
-                                    <td class="cell-mono">Rs.<?= number_format($dest['revenue'], 2) ?></td>
+                                    <td class="cell-mono"><?= formatPrice($dest['revenue'], 2) ?></td>
                                     <td><?= $stats['total_revenue'] > 0 ? round(($dest['revenue'] / $stats['total_revenue']) * 100, 1) . '%' : '0%' ?></td>
                                 </tr>
                             <?php endforeach; ?>
@@ -192,7 +192,7 @@ $topDestinations = $r->fetchAll();
                                 <tr>
                                     <td class="cell-main"><?= htmlspecialchars($pkg['title']) ?></td>
                                     <td><?= $pkg['booking_count'] ?></td>
-                                    <td class="cell-mono">Rs.<?= number_format($pkg['revenue'], 2) ?></td>
+                                    <td class="cell-mono"><?= formatPrice($pkg['revenue'], 2) ?></td>
                                     <td><?= $stats['total_revenue'] > 0 ? round(($pkg['revenue'] / $stats['total_revenue']) * 100, 1) . '%' : '0%' ?></td>
                                 </tr>
                             <?php endforeach; ?>
@@ -225,7 +225,7 @@ $topDestinations = $r->fetchAll();
                                 <tr>
                                     <td class="cell-main"><?= date('d M Y', strtotime($day['date'])) ?></td>
                                     <td><?= $day['cnt'] ?></td>
-                                    <td class="cell-mono">Rs.<?= number_format($day['revenue'], 2) ?></td>
+                                    <td class="cell-mono"><?= formatPrice($day['revenue'], 2) ?></td>
                                 </tr>
                             <?php endforeach; ?>
                         </tbody>

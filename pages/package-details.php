@@ -1,6 +1,7 @@
 <?php if (session_status() === PHP_SESSION_NONE) session_start(); ?>
 <?php
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../config/currency.php';
 $db = getDB();
 
 $packageId = isset($_GET['id']) ? (int) $_GET['id'] : 0;
@@ -21,6 +22,14 @@ $reviewCount = count($packageReviews);
 $stmt = $db->prepare("SELECT * FROM packages WHERE id = :id AND is_active = 1");
 $stmt->execute([':id' => $packageId]);
 $package = $stmt->fetch();
+
+// Check if package is in user's wishlist
+$isWishlisted = false;
+if (isset($_SESSION['user_id']) && $package) {
+    $wStmt = $db->prepare("SELECT id FROM wishlist WHERE user_id = :uid AND package_id = :pid");
+    $wStmt->execute([':uid' => $_SESSION['user_id'], ':pid' => $packageId]);
+    $isWishlisted = (bool)$wStmt->fetch();
+}
 
 if (!$package) {
     echo '<!DOCTYPE html><html><head><title>Not Found</title></head><body><h1>Package not found.</h1><a href="packages.php">Back to Packages</a></body></html>';
@@ -105,9 +114,14 @@ if ($package['duration_days'] > 5) {
                     </div>
                 </div>
 
+                <button class="detail-wishlist-btn<?= $isWishlisted ? ' active' : '' ?>" data-id="<?= $package['id'] ?>" onclick="toggleWishlist(this)">
+                    <span class="material-symbols-outlined">favorite</span>
+                    <span><?= $isWishlisted ? 'Saved to Wishlist' : 'Save to Wishlist' ?></span>
+                </button>
+
                 <div class="price-box">
                     <span class="section-label">Starting From</span>
-                    <p>Rs.<?= number_format($package['price']) ?><small>/ per person</small></p>
+                    <p><?= formatPrice($package['price']) ?><small>/ per person</small></p>
                     <a class="primary-action" href="booking.php?id=<?= $package['id'] ?>">
                         Book Now
                         <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -276,6 +290,35 @@ if ($package['duration_days'] > 5) {
     <script src="../js/script.js"></script>
     <script src="../js/review-modal.js"></script>
     <script>
+    // Wishlist toggle
+    function toggleWishlist(btn) {
+        var pkgId = btn.getAttribute('data-id');
+        var label = btn.querySelector('span:last-child');
+        var formData = new FormData();
+        formData.append('package_id', pkgId);
+        formData.append('csrf_token', csrfToken);
+
+        fetch('wishlist-toggle.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.status === 'added') {
+                btn.classList.add('active');
+                if (label) label.textContent = 'Saved to Wishlist';
+            } else if (data.status === 'removed') {
+                btn.classList.remove('active');
+                if (label) label.textContent = 'Save to Wishlist';
+            } else if (data.status === 'error') {
+                alert(data.message || 'Please log in to use the wishlist.');
+            }
+        })
+        .catch(function() {
+            alert('An error occurred. Please try again.');
+        });
+    }
+
     // Tab switching for package details
     document.addEventListener('DOMContentLoaded', function() {
         var tabs = document.querySelectorAll('.tabs a');

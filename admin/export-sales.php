@@ -6,6 +6,7 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'admin') 
 }
 
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../config/currency.php';
 $db = getDB();
 
 $dateFrom = $_GET['from'] ?? date('Y-m-01');
@@ -33,7 +34,7 @@ fputcsv($output, ['Sales Report', '', '', '', '', '', '', '', '']);
 fputcsv($output, ['Date From', $dateFrom, '', 'Date To', $dateTo, '', '', '', '']);
 fputcsv($output, []);
 
-fputcsv($output, ['Booking Reference', 'Customer Name', 'Customer Email', 'Package', 'Travellers', 'Amount (Rs.)', 'Status', 'Payment Method', 'Date']);
+fputcsv($output, ['Booking Reference', 'Customer Name', 'Customer Email', 'Package', 'Travellers', 'Amount (' . CURRENCY_CODE . ')', 'Status', 'Payment Method', 'Date']);
 
 foreach ($bookings as $b) {
     fputcsv($output, [
@@ -62,7 +63,7 @@ fputcsv($output, []);
 fputcsv($output, ['Summary']);
 fputcsv($output, ['Total Bookings', count($bookings)]);
 fputcsv($output, ['Confirmed Bookings', $confirmedCount]);
-fputcsv($output, ['Total Revenue (Rs.)', number_format($totalRevenue, 2)]);
+fputcsv($output, ['Total Revenue (' . CURRENCY_CODE . ')', number_format($totalRevenue, 2)]);
 
 fclose($output);
 exit;

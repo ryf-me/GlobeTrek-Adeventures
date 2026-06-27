@@ -121,7 +121,7 @@ if (!empty($packages)) {
                                 <td class="cell-main"><?= htmlspecialchars($p['title']) ?></td>
                                 <td><?= htmlspecialchars($p['destination_category'] ?? '—') ?></td>
                                 <td><?= $p['duration_days'] ?>D/<?= $p['duration_nights'] ?>N</td>
-                                <td class="cell-mono">Rs.<?= number_format($p['price'], 2) ?></td>
+                                <td class="cell-mono"><?= formatPrice($p['price'], 2) ?></td>
                                 <td>
                                     <?php
                                     $pTags = $packageTags[$p['id']] ?? [];

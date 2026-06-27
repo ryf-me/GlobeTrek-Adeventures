@@ -163,7 +163,7 @@ if ($department === 'operations') {
     $deptKPIs[] = ['label' => 'Unread Messages', 'value' => $r->fetchColumn(), 'icon' => 'mail', 'color' => '#2a9d8f'];
 } elseif ($department === 'sales') {
     $r = $db->query("SELECT COALESCE(SUM(total_price), 0) FROM bookings WHERE status = 'confirmed' AND MONTH(created_at) = MONTH(CURDATE())");
-    $deptKPIs[] = ['label' => 'Revenue This Month', 'value' => 'Rs.' . number_format($r->fetchColumn(), 0), 'icon' => 'payments', 'color' => '#264653'];
+    $deptKPIs[] = ['label' => 'Revenue This Month', 'value' => formatPrice($r->fetchColumn(), 0), 'icon' => 'payments', 'color' => '#264653'];
     $r = $db->query("SELECT COUNT(*) FROM bookings WHERE status = 'confirmed' AND MONTH(created_at) = MONTH(CURDATE())");
     $deptKPIs[] = ['label' => 'Confirmed This Month', 'value' => $r->fetchColumn(), 'icon' => 'trending_up', 'color' => '#2a9d8f'];
     $r = $db->query("SELECT COUNT(*) FROM bookings WHERE status = 'pending'");
@@ -310,7 +310,7 @@ include __DIR__ . '/includes/sidebar.php';
                                     <div class="cell-sub"><?= htmlspecialchars($b['email']) ?></div>
                                 </td>
                                 <td><?= htmlspecialchars($b['package_title']) ?></td>
-                                <td class="cell-mono">Rs.<?= number_format($b['total_price'], 2) ?></td>
+                                <td class="cell-mono"><?= formatPrice($b['total_price'], 2) ?></td>
                                 <td>
                                     <span class="adm-status-badge adm-status-<?= $b['status'] ?>">
                                         <?= ucfirst($b['status']) ?>

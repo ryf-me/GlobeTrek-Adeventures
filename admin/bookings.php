@@ -268,7 +268,7 @@ $totalBookings = array_sum($stats);
                                     </div>
                                 </td>
                                 <td><?= $b['num_travellers'] ?></td>
-                                <td class="cell-mono">Rs.<?= number_format($b['total_price'], 2) ?></td>
+                                <td class="cell-mono"><?= formatPrice($b['total_price'], 2) ?></td>
                                 <td class="cell-muted"><?= $b['travel_date'] ? date('M d, Y', strtotime($b['travel_date'])) : '—' ?></td>
                                 <td>
                                     <span class="adm-status-badge adm-status-<?= $b['status'] ?>">

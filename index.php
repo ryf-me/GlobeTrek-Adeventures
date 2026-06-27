@@ -2,6 +2,7 @@
 <?php
 if (session_status() === PHP_SESSION_NONE) session_start();
 require_once __DIR__ . '/config/database.php';
+require_once __DIR__ . '/config/currency.php';
 $db = getDB();
 
 $featuredPackages = $db->query("SELECT * FROM packages WHERE is_active = 1 AND is_featured = 1 ORDER BY id ASC LIMIT 4")->fetchAll();
@@ -264,7 +265,7 @@ $destinationCategories = $db->query("SELECT DISTINCT destination_category FROM p
                             <?php endforeach; ?>
                         </div>
                         <div class="pkg-footer">
-                            <p class="pkg-price">From Rs. <?= number_format($pkg['price']) ?></p>
+                            <p class="pkg-price">From <?= formatPrice($pkg['price']) ?></p>
                             <a href="pages/package-details.php?id=<?= $pkg['id'] ?>" class="pkg-details-btn">View Details</a>
                         </div>
                     </div>

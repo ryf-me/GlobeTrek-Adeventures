@@ -7,6 +7,7 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../config/currency.php';
 $db = getDB();
 $userId = $_SESSION['user_id'];
 
@@ -97,7 +98,7 @@ function mb_format_date_range(?string $travelDate, ?int $days): string
 
 function mb_format_price(float $price): string
 {
-    return 'Rs.' . number_format($price, 2);
+    return formatPrice($price, 2);
 }
 ?>
 <!DOCTYPE html>

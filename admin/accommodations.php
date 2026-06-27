@@ -91,7 +91,7 @@ $accommodations = $stmt->fetchAll();
                                 <td class="cell-main"><?= htmlspecialchars($a['name']) ?></td>
                                 <td><?= htmlspecialchars($a['property_type']) ?></td>
                                 <td><?= htmlspecialchars($a['location']) ?></td>
-                                <td class="cell-mono">Rs.<?= number_format($a['price_per_night'], 2) ?></td>
+                                <td class="cell-mono"><?= formatPrice($a['price_per_night'], 2) ?></td>
                                 <td><?= number_format($a['rating'], 1) ?></td>
                                 <td>
                                     <span class="adm-status-badge <?= $a['is_active'] ? 'adm-status-active' : 'adm-status-inactive' ?>">

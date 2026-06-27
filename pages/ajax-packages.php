@@ -8,6 +8,7 @@
 
 session_start();
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../config/currency.php';
 $db = getDB();
 
 $userId = $_SESSION['user_id'] ?? null;
@@ -122,7 +123,7 @@ foreach ($packages as $pkg) {
         'id'                    => $pkg['id'],
         'title'                 => $pkg['title'],
         'duration'              => $pkg['duration_days'] . ' Days / ' . $pkg['duration_nights'] . ' Nights',
-        'price'                 => 'Rs.' . number_format($pkg['price']),
+        'price'                 => formatPrice($pkg['price']),
         'price_raw'             => (float)$pkg['price'],
         'destination_category'  => $pkg['destination_category'] ?? '',
         'difficulty_level'      => $pkg['difficulty_level'] ?? '',

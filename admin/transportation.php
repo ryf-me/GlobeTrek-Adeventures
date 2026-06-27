@@ -92,7 +92,7 @@ $transports = $stmt->fetchAll();
                                 <td class="cell-main"><?= htmlspecialchars($t['name']) ?></td>
                                 <td><?= htmlspecialchars($t['vehicle_type']) ?></td>
                                 <td><?= htmlspecialchars($t['location']) ?></td>
-                                <td class="cell-mono">Rs.<?= number_format($t['price_per_day'], 2) ?></td>
+                                <td class="cell-mono"><?= formatPrice($t['price_per_day'], 2) ?></td>
                                 <td><?= number_format($t['rating'], 1) ?></td>
                                 <td>
                                     <span class="adm-status-badge <?= $t['is_available'] ? 'adm-status-active' : 'adm-status-inactive' ?>">

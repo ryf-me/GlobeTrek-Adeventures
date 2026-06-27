@@ -7,6 +7,7 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'admin') 
 
 require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../config/currency.php';
 $db = getDB();
 
 use Dompdf\Dompdf;
@@ -62,7 +63,7 @@ foreach ($customers as $c) {
         <td>' . htmlspecialchars(ucfirst($c['gender'] ?? '—')) . '</td>
         <td>' . date('Y-m-d', strtotime($c['created_at'])) . '</td>
         <td>' . $c['booking_count'] . '</td>
-        <td>Rs. ' . number_format($c['total_spent'], 2) . '</td>
+        <td>' . formatPrice($c['total_spent'], 2) . '</td>
     </tr>';
 }
 

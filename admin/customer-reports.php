@@ -126,7 +126,7 @@ $byDate = $r->fetchAll();
                                     <td><?= htmlspecialchars($c['email']) ?></td>
                                     <td><?= htmlspecialchars($c['country'] ?? '—') ?></td>
                                     <td><?= $c['booking_count'] ?></td>
-                                    <td class="cell-mono">Rs.<?= number_format($c['total_spent'], 2) ?></td>
+                                    <td class="cell-mono"><?= formatPrice($c['total_spent'], 2) ?></td>
                                 </tr>
                             <?php endforeach; ?>
                         </tbody>

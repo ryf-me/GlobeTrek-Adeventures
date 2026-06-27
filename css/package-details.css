@@ -21,6 +21,41 @@
     border-bottom-color: rgba(20, 25, 21, 0.12);
 }
 
+.package-details-page .navbar .logo .brand-name {
+    color: var(--ink);
+}
+
+.package-details-page .navbar .logo .brand-tagline {
+    color: var(--muted);
+}
+
+.package-details-page .navbar .nav-links a {
+    color: var(--ink);
+}
+
+.package-details-page .navbar .nav-links a::after {
+    background: var(--green);
+}
+
+.package-details-page .navbar .nav-phone {
+    color: var(--ink);
+}
+
+.package-details-page .menu-toggle {
+    color: var(--ink);
+}
+
+.package-details-page .navbar .login-btn {
+    border-color: var(--ink);
+    color: var(--ink);
+}
+
+.package-details-page .navbar .signup-btn {
+    border-color: var(--ink);
+    background: var(--ink);
+    color: #fff;
+}
+
 .details-shell {
     width: min(1180px, calc(100% - 40px));
     margin: 0 auto;
@@ -268,6 +303,50 @@
 .secondary-action:focus-visible {
     border-color: var(--green);
     background: rgba(231, 111, 81, 0.08);
+}
+
+.detail-wishlist-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.75rem;
+    margin-top: 1rem;
+    border: 1px solid rgba(231, 111, 81, 0.26);
+    border-radius: 6px;
+    background: rgba(255, 253, 248, 0.82);
+    color: var(--muted);
+    font-size: 0.92rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.detail-wishlist-btn .material-symbols-outlined {
+    font-size: 20px;
+    color: #94a3b8;
+    transition: color 0.2s;
+}
+
+.detail-wishlist-btn:hover {
+    border-color: var(--green);
+    background: rgba(231, 111, 81, 0.06);
+}
+
+.detail-wishlist-btn:hover .material-symbols-outlined {
+    color: #ef4444;
+}
+
+.detail-wishlist-btn.active {
+    border-color: rgba(239, 68, 68, 0.3);
+    background: rgba(239, 68, 68, 0.06);
+    color: #ef4444;
+}
+
+.detail-wishlist-btn.active .material-symbols-outlined {
+    color: #ef4444;
+    font-variation-settings: 'FILL' 1;
 }
 
 .details-grid {

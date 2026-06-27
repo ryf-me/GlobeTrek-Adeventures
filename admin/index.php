@@ -139,7 +139,7 @@ $userGrowth = array_reverse($userGrowth);
             <div class="adm-stat-card">
                 <div class="adm-stat-card-icon"><span class="material-symbols-outlined">payments</span></div>
                 <div class="adm-stat-card-info">
-                    <div class="adm-stat-card-num">Rs.<?= number_format($stats['revenue'], 2) ?></div>
+                    <div class="adm-stat-card-num"><?= formatPrice($stats['revenue'], 2) ?></div>
                     <div class="adm-stat-card-label">Revenue</div>
                 </div>
             </div>
@@ -259,7 +259,7 @@ $userGrowth = array_reverse($userGrowth);
                                 <td class="cell-mono"><?= htmlspecialchars($b['booking_reference']) ?></td>
                                 <td class="cell-main"><?= htmlspecialchars($b['user_name'] ?? 'Guest') ?></td>
                                 <td><?= htmlspecialchars($b['package_title'] ?? 'N/A') ?></td>
-                                <td class="cell-mono">Rs.<?= number_format($b['total_price'], 2) ?></td>
+                                <td class="cell-mono"><?= formatPrice($b['total_price'], 2) ?></td>
                                 <td>
                                     <span class="adm-status-badge adm-status-<?= $b['status'] ?>">
                                         <span class="adm-badge-dot"></span>
@@ -390,7 +390,7 @@ document.addEventListener('DOMContentLoaded', function() {
             data: {
                 labels: revenueLabels,
                 datasets: [{
-                    label: 'Revenue (Rs.)',
+                    label: 'Revenue (<?= CURRENCY_CODE ?>)',
                     data: revenueValues,
                     backgroundColor: '#264653',
                     borderColor: '#264653',
@@ -402,7 +402,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 maintainAspectRatio: false,
                 plugins: { legend: { display: false } },
                 scales: {
-                    y: { beginAtZero: true, ticks: { callback: function(v) { return 'Rs. ' + v.toLocaleString(); } } }
+                    y: { beginAtZero: true, ticks: { callback: function(v) { return '<?= CURRENCY_SYMBOL ?> ' + v.toLocaleString(); } } }
                 }
             }
         });

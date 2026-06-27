@@ -14,6 +14,7 @@ if (!isset($_SESSION['user_id']) || !in_array($_SESSION['user_role'] ?? '', ['ad
 }
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../config/csrf.php';
+require_once __DIR__ . '/../../config/currency.php';
 $db = getDB();
 
 $adminName = htmlspecialchars($_SESSION['user_name'] ?? 'Admin', ENT_QUOTES, 'UTF-8');

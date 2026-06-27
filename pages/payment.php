@@ -17,6 +17,7 @@ if (!isset($_SESSION['user_id'])) {
 
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../config/csrf.php';
+require_once __DIR__ . '/../config/currency.php';
 $db = getDB();
 
 $bookingRef = isset($_GET['ref']) ? trim($_GET['ref']) : ($_SESSION['payment_booking_ref'] ?? '');
@@ -478,21 +479,21 @@ function field_error(string $field, array $errors): string
                     <h3>Price Details</h3>
                     <div class="price-breakdown">
                         <div class="price-row">
-                            <span>Base Price (Rs.<?= number_format($booking['price'], 2) ?> x <?= $guestCount ?>)</span>
-                            <span class="price-value">Rs.<?= number_format($basePrice, 2) ?></span>
+                            <span>Base Price (<?= formatPrice($booking['price'], 2) ?> x <?= $guestCount ?>)</span>
+                            <span class="price-value"><?= formatPrice($basePrice, 2) ?></span>
                         </div>
                         <div class="price-row">
                             <span>Taxes (10%)</span>
-                            <span class="price-value">Rs.<?= number_format($taxes, 2) ?></span>
+                            <span class="price-value"><?= formatPrice($taxes, 2) ?></span>
                         </div>
                         <div class="price-row">
                             <span>Service Fees</span>
-                            <span class="price-value">Rs.<?= number_format($serviceFees, 2) ?></span>
+                            <span class="price-value"><?= formatPrice($serviceFees, 2) ?></span>
                         </div>
                     </div>
                     <div class="price-total">
                         <span class="total-label">Total</span>
-                        <span class="total-value">Rs.<?= number_format($total, 2) ?></span>
+                        <span class="total-value"><?= formatPrice($total, 2) ?></span>
                     </div>
                     <div class="secure-badge">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

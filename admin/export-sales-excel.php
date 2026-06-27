@@ -60,9 +60,9 @@ $cancelRate = $allBookings > 0 ? round(($cancelled / $allBookings) * 100, 1) : 0
 
 $kpis = [
     ['Metric', 'Value'],
-    ['Total Revenue', 'Rs.' . number_format($totalRevenue, 2)],
+    ['Total Revenue', formatPrice($totalRevenue, 2)],
     ['Confirmed Bookings', $totalBookings],
-    ['Average Booking Value', 'Rs.' . number_format($avgValue, 2)],
+    ['Average Booking Value', formatPrice($avgValue, 2)],
     ['Cancellation Rate', $cancelRate . '%'],
 ];
 

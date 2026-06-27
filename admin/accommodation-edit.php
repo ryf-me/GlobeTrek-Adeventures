@@ -134,7 +134,7 @@ if (!$accom) {
                         </select>
                     </div>
                     <div class="adm-form-field">
-                        <label for="price_per_night">Price per Night (Rs.) *</label>
+                        <label for="price_per_night">Price per Night (<?= CURRENCY_CODE ?>) *</label>
                         <input type="number" id="price_per_night" name="price_per_night" min="0" step="0.01" value="<?= $accom['price_per_night'] ?>" required>
                     </div>
                     <div class="adm-form-field">

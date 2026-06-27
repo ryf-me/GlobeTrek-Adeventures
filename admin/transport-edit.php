@@ -118,7 +118,7 @@ if (!$transport) $transport = ['name'=>'','description'=>'','short_description'=
                         <input type="text" id="location" name="location" value="<?= htmlspecialchars($transport['location']) ?>" required>
                     </div>
                     <div class="adm-form-field">
-                        <label for="price_per_day">Price/Day (Rs.) *</label>
+                        <label for="price_per_day">Price/Day (<?= CURRENCY_CODE ?>) *</label>
                         <input type="number" id="price_per_day" name="price_per_day" step="0.01" min="0" value="<?= htmlspecialchars($transport['price_per_day']) ?>" required>
                     </div>
                     <div class="adm-form-field">

@@ -15,6 +15,7 @@ if (!isset($_SESSION['user_id'])) {
 
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../config/csrf.php';
+require_once __DIR__ . '/../config/currency.php';
 $db = getDB();
 
 $packageId = isset($_GET['id']) ? (int) $_GET['id'] : 0;
@@ -119,13 +120,9 @@ function field_error(string $field, array $errors): string
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Booking - <?= htmlspecialchars($package['title']) ?> - GlobeTrek</title>
     <link rel="stylesheet" href="../css/style.css">
-    <link rel="stylesheet" href="../css/navbar.css">
     <link rel="stylesheet" href="../css/booking.css">
-    <link rel="stylesheet" href="../css/footer.css">
 </head>
 <body class="booking-page">
-    <?php $basePath = '../'; include '../includes/navbar.php'; ?>
-
     <main class="booking-shell">
         <nav class="breadcrumbs" aria-label="Breadcrumb">
             <a href="../index.php#home">Home</a>
@@ -271,17 +268,17 @@ function field_error(string $field, array $errors): string
                     <h3>Price Details</h3>
                     <div class="price-breakdown">
                         <div class="price-row">
-                            <span>Price/Person (Rs.<?= number_format($package['price']) ?> x <?= $guestCount ?>)</span>
-                            <span class="price-value">Rs.<?= number_format($subtotal) ?></span>
+                            <span>Price/Person (<?= formatPrice($package['price']) ?> x <?= $guestCount ?>)</span>
+                            <span class="price-value"><?= formatPrice($subtotal) ?></span>
                         </div>
                         <div class="price-row">
                             <span>Taxes &amp; Fees</span>
-                            <span class="price-value">Rs.<?= number_format($taxes) ?></span>
+                            <span class="price-value"><?= formatPrice($taxes) ?></span>
                         </div>
                     </div>
                     <div class="price-total">
                         <span class="total-label">Total</span>
-                        <span class="total-value">Rs.<?= number_format($total) ?></span>
+                        <span class="total-value"><?= formatPrice($total) ?></span>
                     </div>
                     <button type="submit" form="booking-form" class="pay-button">
                         Pay now
@@ -294,8 +291,6 @@ function field_error(string $field, array $errors): string
             </aside>
         </div>
     </main>
-
-    <?php $basePath = '../'; include '../includes/footer.php'; ?>
 
     <script src="../js/script.js"></script>
 </body>

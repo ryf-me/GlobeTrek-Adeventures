@@ -7,6 +7,7 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'admin') 
 
 require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../config/currency.php';
 $db = getDB();
 
 use Dompdf\Dompdf;
@@ -59,7 +60,7 @@ tr:nth-child(even) { background: #f9f9f9; }
 <p><strong>Period:</strong> ' . htmlspecialchars($dateFrom) . ' to ' . htmlspecialchars($dateTo) . '</p>
 <p><strong>Total Bookings:</strong> ' . count($bookings) . '</p>
 <p><strong>Confirmed Bookings:</strong> ' . $confirmedCount . '</p>
-<p><strong>Total Revenue:</strong> Rs. ' . number_format($totalRevenue, 2) . '</p>
+<p><strong>Total Revenue:</strong> ' . formatPrice($totalRevenue, 2) . '</p>
 </div>
 <h2>Booking Details</h2>
 <table>
@@ -71,7 +72,7 @@ foreach ($bookings as $b) {
         <td>' . htmlspecialchars($b['customer_name'] ?? 'N/A') . '</td>
         <td>' . htmlspecialchars($b['package_title']) . '</td>
         <td>' . $b['num_travellers'] . '</td>
-        <td>Rs. ' . number_format($b['total_price'], 2) . '</td>
+        <td>' . formatPrice($b['total_price'], 2) . '</td>
         <td>' . ucfirst($b['status']) . '</td>
         <td>' . date('Y-m-d', strtotime($b['created_at'])) . '</td>
     </tr>';

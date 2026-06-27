@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../config/currency.php';
 $db = getDB();
 
 $userId = $_SESSION['user_id'] ?? null;
@@ -14,10 +15,10 @@ $destinationsList = [
 ];
 
 $priceRanges = [
-    'Rs.0 - Rs.9,999',
-    'Rs.10,000 - Rs.29,999',
-    'Rs.30,000 - Rs.49,999',
-    'Rs.50,000+'
+    CURRENCY_SYMBOL . '0 - ' . CURRENCY_SYMBOL . '9,999',
+    CURRENCY_SYMBOL . '10,000 - ' . CURRENCY_SYMBOL . '29,999',
+    CURRENCY_SYMBOL . '30,000 - ' . CURRENCY_SYMBOL . '49,999',
+    CURRENCY_SYMBOL . '50,000+'
 ];
 
 $tripDurations = [
@@ -38,6 +39,7 @@ $tripDurations = [
     <link rel="stylesheet" href="../css/packages.css">
     <link rel="stylesheet" href="../css/footer.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
     <style>
         .dataTables_wrapper .dataTables_filter input {
             padding: 8px 12px;
@@ -85,6 +87,29 @@ $tripDurations = [
             text-decoration: underline;
         }
         .wishlist-active { color: #e76f51; }
+        .wishlist-btn-table {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.2s;
+        }
+        .wishlist-btn-table .material-symbols-outlined {
+            font-size: 22px;
+            color: #94a3b8;
+            transition: color 0.2s;
+        }
+        .wishlist-btn-table:hover .material-symbols-outlined {
+            color: #ef4444;
+        }
+        .wishlist-btn-table.active .material-symbols-outlined {
+            color: #ef4444;
+            font-variation-settings: 'FILL' 1;
+        }
         .packages-layout { display: flex; gap: 2rem; }
         .filters-sidebar { flex: 0 0 260px; }
         .packages-main { flex: 1; min-width: 0; }
@@ -175,6 +200,7 @@ $tripDurations = [
                             <th>Duration</th>
                             <th>Price</th>
                             <th>Destination</th>
+                            <th>Wishlist</th>
                             <th>Action</th>
                         </tr>
                     </thead>
@@ -189,8 +215,6 @@ $tripDurations = [
 <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
 <script src="../js/script.js"></script>
 <script>
-var csrfToken = '<?= $csrfToken ?? "" ?>';
-var userWishlist = <?= json_encode($userId ? [] : []) ?>;
 
 // Initialize DataTable
 var table = $('#packagesTable').DataTable({
@@ -231,6 +255,16 @@ var table = $('#packagesTable').DataTable({
         },
         { data: 'destination_category' },
         {
+            data: 'wishlist',
+            orderable: false,
+            searchable: false,
+            render: function(data, type, row) {
+                var activeClass = data ? ' active' : '';
+                return '<button class="wishlist-btn-table' + activeClass + '" data-id="' + row.id + '" title="Add to Wishlist" onclick="event.preventDefault();event.stopPropagation();toggleWishlist(this);">' +
+                    '<span class="material-symbols-outlined">favorite</span></button>';
+            }
+        },
+        {
             data: 'detail_url',
             orderable: false,
             searchable: false,
@@ -259,6 +293,32 @@ $('#resetFilters').on('click', function() {
     $('.pkg-filter').prop('checked', false);
     table.ajax.reload();
 });
+
+// Wishlist toggle
+function toggleWishlist(btn) {
+    var pkgId = btn.getAttribute('data-id');
+    var formData = new FormData();
+    formData.append('package_id', pkgId);
+    formData.append('csrf_token', csrfToken);
+
+    fetch('wishlist-toggle.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.status === 'added') {
+            btn.classList.add('active');
+        } else if (data.status === 'removed') {
+            btn.classList.remove('active');
+        } else if (data.status === 'error') {
+            alert(data.message || 'Please log in to use the wishlist.');
+        }
+    })
+    .catch(function() {
+        alert('An error occurred. Please try again.');
+    });
+}
 </script>
 </body>
 </html>
