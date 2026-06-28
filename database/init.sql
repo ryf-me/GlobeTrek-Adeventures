@@ -19,6 +19,8 @@ CREATE TABLE IF NOT EXISTS users (
     bio TEXT DEFAULT NULL,
     profile_photo VARCHAR(500) DEFAULT NULL,
     role ENUM('user', 'staff', 'admin') DEFAULT 'user',
+    email_verified TINYINT(1) DEFAULT 0,
+    is_active TINYINT(1) DEFAULT 1,
     notification_preferences JSON DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
@@ -49,7 +51,11 @@ CREATE TABLE IF NOT EXISTS destinations (
     name VARCHAR(200) NOT NULL,
     slug VARCHAR(200) NOT NULL UNIQUE,
     description TEXT,
+    region VARCHAR(100) DEFAULT NULL,
+    category VARCHAR(100) DEFAULT NULL,
     image VARCHAR(500),
+    rating DECIMAL(2,1) DEFAULT 0.0,
+    review_count INT DEFAULT 0,
     is_featured TINYINT(1) DEFAULT 0,
     is_active TINYINT(1) DEFAULT 1,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -62,6 +68,9 @@ CREATE TABLE IF NOT EXISTS guides (
     specialty VARCHAR(200),
     region VARCHAR(100),
     description TEXT,
+    rating DECIMAL(2,1) DEFAULT 4.5,
+    languages VARCHAR(255) DEFAULT 'English, Sinhala',
+    years_experience INT DEFAULT 5,
     image VARCHAR(500),
     profile_link VARCHAR(500) DEFAULT '#',
     is_featured TINYINT(1) DEFAULT 0,
@@ -160,6 +169,13 @@ CREATE TABLE IF NOT EXISTS newsletter_subscriptions (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
+-- Newsletter subscribers table
+CREATE TABLE IF NOT EXISTS newsletter_subscribers (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    subscribed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
 -- Inquiries table
 CREATE TABLE IF NOT EXISTS inquiries (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -208,10 +224,12 @@ CREATE TABLE IF NOT EXISTS custom_trip_requests (
 CREATE TABLE IF NOT EXISTS wishlist (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
-    package_id INT NOT NULL,
+    package_id INT DEFAULT NULL,
+    destination_id INT DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (package_id) REFERENCES packages(id) ON DELETE CASCADE,
+    FOREIGN KEY (destination_id) REFERENCES destinations(id) ON DELETE CASCADE,
     UNIQUE KEY unique_wishlist_item (user_id, package_id)
 ) ENGINE=InnoDB;
 
@@ -248,15 +266,173 @@ CREATE TABLE IF NOT EXISTS activity_logs (
 -- Testimonials table
 CREATE TABLE IF NOT EXISTS testimonials (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT DEFAULT NULL,
+    package_id INT DEFAULT NULL,
     reviewer_name VARCHAR(150) NOT NULL,
     reviewer_country VARCHAR(100),
     reviewer_avatar VARCHAR(500),
     rating TINYINT NOT NULL,
     title VARCHAR(200),
     content TEXT NOT NULL,
+    status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
     is_featured TINYINT(1) DEFAULT 0,
-    is_approved TINYINT(1) DEFAULT 1,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (package_id) REFERENCES packages(id) ON DELETE SET NULL,
+    INDEX idx_testimonials_status (status),
+    INDEX idx_testimonials_user (user_id),
+    INDEX idx_testimonials_package (package_id)
+) ENGINE=InnoDB;
+
+-- Email verification tokens
+CREATE TABLE IF NOT EXISTS email_verifications (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    token VARCHAR(64) NOT NULL UNIQUE,
+    expires_at DATETIME NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_token (token)
+) ENGINE=InnoDB;
+
+-- Password reset tokens
+CREATE TABLE IF NOT EXISTS password_resets (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    email VARCHAR(150) NOT NULL,
+    token VARCHAR(64) NOT NULL UNIQUE,
+    expires_at DATETIME NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_token (token),
+    INDEX idx_email (email)
+) ENGINE=InnoDB;
+
+-- OTP codes
+CREATE TABLE IF NOT EXISTS otps (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT DEFAULT NULL,
+    email VARCHAR(150) NOT NULL,
+    otp_hash VARCHAR(255) NOT NULL,
+    purpose ENUM('registration','login','password_reset') NOT NULL,
+    expires_at DATETIME NOT NULL,
+    used TINYINT(1) DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_email_purpose (email, purpose)
+) ENGINE=InnoDB;
+
+-- Login attempts
+CREATE TABLE IF NOT EXISTS login_attempts (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    email VARCHAR(150) NOT NULL,
+    ip_address VARCHAR(45) NOT NULL,
+    attempted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_email_time (email, attempted_at)
+) ENGINE=InnoDB;
+
+-- Remember-me persistent login tokens
+CREATE TABLE IF NOT EXISTS remember_tokens (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    token_hash VARCHAR(64) NOT NULL,
+    expires_at DATETIME NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_token_hash (token_hash),
+    INDEX idx_user_id (user_id)
+) ENGINE=InnoDB;
+
+-- Tags system
+CREATE TABLE IF NOT EXISTS tags (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    slug VARCHAR(100) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY unique_tag_name (name),
+    UNIQUE KEY unique_tag_slug (slug)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS package_tags (
+    package_id INT NOT NULL,
+    tag_id INT NOT NULL,
+    PRIMARY KEY (package_id, tag_id),
+    FOREIGN KEY (package_id) REFERENCES packages(id) ON DELETE CASCADE,
+    FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS destination_tags (
+    destination_id INT NOT NULL,
+    tag_id INT NOT NULL,
+    PRIMARY KEY (destination_id, tag_id),
+    FOREIGN KEY (destination_id) REFERENCES destinations(id) ON DELETE CASCADE,
+    FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS guide_tags (
+    guide_id INT NOT NULL,
+    tag_id INT NOT NULL,
+    PRIMARY KEY (guide_id, tag_id),
+    FOREIGN KEY (guide_id) REFERENCES guides(id) ON DELETE CASCADE,
+    FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- Staff management
+CREATE TABLE IF NOT EXISTS staff_profiles (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL UNIQUE,
+    department ENUM('operations', 'customer_service', 'sales', 'marketing') NOT NULL,
+    position VARCHAR(100) NOT NULL,
+    hire_date DATE DEFAULT NULL,
+    is_available TINYINT(1) DEFAULT 1,
+    max_concurrent_tasks INT DEFAULT 10,
+    notes TEXT DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS staff_permissions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    staff_id INT NOT NULL,
+    permission VARCHAR(100) NOT NULL,
+    granted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (staff_id) REFERENCES staff_profiles(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_permission (staff_id, permission)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS staff_assignments (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    staff_id INT NOT NULL,
+    entity_type ENUM('booking', 'inquiry') NOT NULL,
+    entity_id INT NOT NULL,
+    assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    assigned_by INT DEFAULT NULL,
+    FOREIGN KEY (staff_id) REFERENCES staff_profiles(id) ON DELETE CASCADE,
+    FOREIGN KEY (assigned_by) REFERENCES users(id) ON DELETE SET NULL,
+    UNIQUE KEY unique_assignment (staff_id, entity_type, entity_id)
+) ENGINE=InnoDB;
+
+CREATE INDEX idx_staff_profiles_department ON staff_profiles(department);
+CREATE INDEX idx_staff_profiles_available ON staff_profiles(is_available);
+CREATE INDEX idx_staff_assignments_entity ON staff_assignments(entity_type, entity_id);
+CREATE INDEX idx_staff_assignments_staff ON staff_assignments(staff_id);
+
+-- Guide reviews
+CREATE TABLE IF NOT EXISTS guide_reviews (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT DEFAULT NULL,
+    guide_id INT NOT NULL,
+    reviewer_name VARCHAR(150) NOT NULL,
+    reviewer_country VARCHAR(100) DEFAULT NULL,
+    reviewer_avatar VARCHAR(500) DEFAULT NULL,
+    rating TINYINT NOT NULL,
+    title VARCHAR(200) DEFAULT NULL,
+    content TEXT NOT NULL,
+    status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (guide_id) REFERENCES guides(id) ON DELETE CASCADE,
+    INDEX idx_guide_reviews_guide (guide_id),
+    INDEX idx_guide_reviews_status (status),
+    INDEX idx_guide_reviews_user (user_id)
 ) ENGINE=InnoDB;
 
 -- ============================================================
@@ -273,22 +449,28 @@ INSERT INTO packages (title, slug, description, short_description, duration_days
 ('Wild Safari', 'wild-safari', 'Get up close with Sri Lanka incredible wildlife. Visit Yala, Udawalawe, and other renowned national parks for unforgettable safari experiences.', 'Encounter Sri Lanka incredible wildlife on this 5-day safari adventure.', 5, 4, 82490.00, 'https://picsum.photos/seed/safari/400/250', 'National Parks &amp; Wildlife', '50000+', 1);
 
 -- Destinations
-INSERT INTO destinations (name, slug, description, image, is_featured) VALUES
-('Sigiriya Rock Fortress, Matale', 'sigiriya', 'A dramatic, UNESCO-protected ancient palace complex perched atop a massive 180-meter-high granite rock column. Built by King Kashyapa in the 5th century, it is famous for its colorful frescoes, graffiti-mirror wall, and monumental lion''s paw gateway.', 'https://images.unsplash.com/photo-1711797750174-c3750dd9d7c9?w=600&h=400&fit=crop', 1),
-('Galle Fort, Galle', 'galle', 'A living UNESCO World Heritage monument originally built by the Portuguese in 1588 and heavily fortified by the Dutch. Today, its atmospheric cobblestone streets are lined with beautifully preserved colonial villas, boutique cafes, and old churches, bounded by historic seaside ramparts.', 'https://images.unsplash.com/photo-1704797390325-b057758d8c3d?w=600&h=400&fit=crop', 1),
-('Nine Arch Bridge (Ella), Badulla', 'nine-arch', 'An iconic, colonial-era railway bridge built completely out of brick, rock, and cement without using a single piece of steel. It stands hidden amid lush green tea plantations and misty mountains, drawing travelers who come to watch trains slowly pass over its line and admire arches.', 'https://images.unsplash.com/photo-1550679193-d8ec2f2c3a25?w=600&h=400&fit=crop', 0),
-('Ancient City of Polonnaruwa, Polonnaruwa', 'polonnaruwa', 'Sri Lanka''s second ancient royal capital, active from the 10th to the 13th centuries. The vast, park-like archaeological site features marvelous preserved ruins, including the grand Royal Palace, massive stone stupas, and the famous Gal Vihara rock-cut Buddha statues.', 'https://images.unsplash.com/photo-1709729508706-87741ec2d50a?w=600&h=400&fit=crop', 0),
-('Nuwara Eliya', 'nuwara-eliya', 'Famous dubbed "Little England," this high-altitude mountain station was favored by British colonizers for its cool climate. It is the premier destination for exploring manicured green tea estates, sprawling colonial-era bungalows, and dramatic waterfalls.', 'https://images.unsplash.com/photo-1559038300-07cb5d6c3d27?w=600&h=400&fit=crop', 1),
-('Mirissa, Matara', 'mirissa', 'A laid-back coastal paradise renowned as one of the best locations in the world for blue whale watching safaris. It is also widely visited for its crescent-shaped sandy beaches, vibrant beachside restaurants, and the iconic Coconut Turtle Hill viewpoint.', 'https://images.unsplash.com/photo-1734279135115-6d8984e08206?w=600&h=400&fit=crop', 1);
+INSERT INTO destinations (name, slug, description, region, category, image, rating, review_count, is_featured) VALUES
+('Sigiriya Rock Fortress, Matale', 'sigiriya', 'A dramatic, UNESCO-protected ancient palace complex perched atop a massive 180-meter-high granite rock column. Built by King Kashyapa in the 5th century, it is famous for its colorful frescoes, graffiti-mirror wall, and monumental lion''s paw gateway.', 'Central Province', 'Cultural', 'https://images.unsplash.com/photo-1711797750174-c3750dd9d7c9?w=600&h=400&fit=crop', 4.8, 1250, 1),
+('Galle Fort, Galle', 'galle', 'A living UNESCO World Heritage monument originally built by the Portuguese in 1588 and heavily fortified by the Dutch. Today, its atmospheric cobblestone streets are lined with beautifully preserved colonial villas, boutique cafes, and old churches, bounded by historic seaside ramparts.', 'Southern Province', 'Heritage', 'https://images.unsplash.com/photo-1704797390325-b057758d8c3d?w=600&h=400&fit=crop', 4.8, 1050, 1),
+('Nine Arch Bridge (Ella), Badulla', 'nine-arch', 'An iconic, colonial-era railway bridge built completely out of brick, rock, and cement without using a single piece of steel. It stands hidden amid lush green tea plantations and misty mountains, drawing travelers who come to watch trains slowly pass over its line and admire arches.', 'Uva Province', 'Adventure', 'https://images.unsplash.com/photo-1550679193-d8ec2f2c3a25?w=600&h=400&fit=crop', 4.8, 1150, 0),
+('Ancient City of Polonnaruwa, Polonnaruwa', 'polonnaruwa', 'Sri Lanka''s second ancient royal capital, active from the 10th to the 13th centuries. The vast, park-like archaeological site features marvelous preserved ruins, including the grand Royal Palace, massive stone stupas, and the famous Gal Vihara rock-cut Buddha statues.', 'North Central Province', 'Cultural', 'https://images.unsplash.com/photo-1709729508706-87741ec2d50a?w=600&h=400&fit=crop', 4.6, 780, 0),
+('Nuwara Eliya', 'nuwara-eliya', 'Famous dubbed "Little England," this high-altitude mountain station was favored by British colonizers for its cool climate. It is the premier destination for exploring manicured green tea estates, sprawling colonial-era bungalows, and dramatic waterfalls.', 'Central Province', 'Mountain', 'https://images.unsplash.com/photo-1559038300-07cb5d6c3d27?w=600&h=400&fit=crop', 4.7, 900, 1),
+('Mirissa, Matara', 'mirissa', 'A laid-back coastal paradise renowned as one of the best locations in the world for blue whale watching safaris. It is also widely visited for its crescent-shaped sandy beaches, vibrant beachside restaurants, and the iconic Coconut Turtle Hill viewpoint.', 'Southern Province', 'Beach', 'https://images.unsplash.com/photo-1734279135115-6d8984e08206?w=600&h=400&fit=crop', 4.9, 980, 1),
+('Yala National Park', 'yala-national-park', 'Home to leopards, elephants and diverse wildlife. One of the most visited national parks in Sri Lanka, offering incredible safari experiences.', 'Southern Province', 'Wildlife', 'https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?w=600&h=400&fit=crop', 4.9, 1300, 1),
+('Unawatuna', 'unawatuna', 'Tropical beach with clear waters and vibrant life. One of the most popular beach destinations in Sri Lanka with excellent snorkeling.', 'Southern Province', 'Beach', 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&h=400&fit=crop', 4.7, 870, 1),
+('Kandy', 'kandy', 'Cultural capital and home to the Sacred Tooth Relic. Nestled in the hills, Kandy is a UNESCO World Heritage site rich with history.', 'Central Province', 'Cultural', 'https://images.unsplash.com/photo-1586521995568-095a3c17fb89?w=600&h=400&fit=crop', 4.8, 1100, 1),
+('Ella', 'ella', 'Scenic landscapes, hiking trails and breathtaking views. A charming hill country village famous for the Nine Arch Bridge and Little Adam''s Peak.', 'Uva Province', 'Adventure', 'https://images.unsplash.com/photo-1559038300-07cb5d6c3d27?w=600&h=400&fit=crop', 4.8, 1150, 1),
+('Trincomalee', 'trincomalee', 'Pristine beaches and natural harbor on the east coast. Famous for whale watching, Pigeon Island, and beautiful coral reefs.', 'Eastern Province', 'Beach', 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=600&h=400&fit=crop', 4.6, 720, 0),
+('Anuradhapura', 'anuradhapura', 'Ancient sacred city with well-preserved ruins of an entire civilization. One of the oldest continuously inhabited cities in the world.', 'North Central Province', 'Heritage', 'https://images.unsplash.com/photo-1588413949674-6c6e54ab6ea0?w=600&h=400&fit=crop', 4.7, 850, 0);
 
 -- Guides
-INSERT INTO guides (name, specialty, region, description, image, profile_link, is_featured) VALUES
-('Kasun Bandara', 'Hill Country & Tea Plantations', 'Central Highlands', 'Born in Nuwara Eliya, Kasun has over 15 years of experience guiding treks through Sri Lanka misty hill country. Passionate about tea culture and high-altitude flora.', 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=face', '#', 1),
-('Nipuni Silva', 'Cultural Heritage & Temples', 'Cultural Triangle', 'An archaeology enthusiast from Anuradhapura, Nipuni specializes in deep-dive cultural tours across the ancient cities and sacred sites of the cultural triangle.', 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop&crop=face', '#', 0),
-('Ravi Tennakoon', 'Wildlife & Safari', 'Southern Coast', 'An expert tracker and wildlife conservationist from Tissamaharama, Ravi leads transformative safari experiences in Yala and Bundala with minimal ecological impact.', 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&h=400&fit=crop&crop=face', '#', 0),
-('Malsha Fernando', 'Culinary Tours', 'Western Province', 'A culinary enthusiast from Colombo, Malsha brings travelers into local kitchens and street food markets, offering an authentic taste of Sri Lankan cuisine.', 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop&crop=face', '#', 0),
-('Tharaka Perera', 'Urban Exploration', 'Eastern Province', 'Tharaka uncovers the hidden cultural gems of Sri Lanka east, from Trincomalee beaches to Batticaloa lagoons, contrasting colonial history with modern island life.', 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=400&fit=crop&crop=face', '#', 0),
-('Dilini Jayasuriya', 'Marine & Diving', 'Southern Coast', 'A marine biologist turned dive guide from Mirissa, Dilini leads whale watching and scuba trips focused on marine conservation and reef education.', 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=400&fit=crop&crop=face', '#', 0);
+INSERT INTO guides (name, specialty, region, description, rating, languages, years_experience, image, profile_link, is_featured) VALUES
+('Kasun Bandara', 'Hill Country & Tea Plantations', 'Central Highlands', 'Born in Nuwara Eliya, Kasun has over 15 years of experience guiding treks through Sri Lanka misty hill country. Passionate about tea culture and high-altitude flora.', 4.9, 'English, Sinhala, Tamil', 8, 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=face', '#', 1),
+('Nipuni Silva', 'Cultural Heritage & Temples', 'Cultural Triangle', 'An archaeology enthusiast from Anuradhapura, Nipuni specializes in deep-dive cultural tours across the ancient cities and sacred sites of the cultural triangle.', 4.8, 'English, Sinhala', 6, 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop&crop=face', '#', 0),
+('Ravi Tennakoon', 'Wildlife & Safari', 'Southern Coast', 'An expert tracker and wildlife conservationist from Tissamaharama, Ravi leads transformative safari experiences in Yala and Bundala with minimal ecological impact.', 4.9, 'English, Sinhala, Tamil', 10, 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&h=400&fit=crop&crop=face', '#', 0),
+('Malsha Fernando', 'Culinary Tours', 'Western Province', 'A culinary enthusiast from Colombo, Malsha brings travelers into local kitchens and street food markets, offering an authentic taste of Sri Lankan cuisine.', 4.7, 'English, Sinhala', 5, 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop&crop=face', '#', 0),
+('Tharaka Perera', 'Urban Exploration', 'Eastern Province', 'Tharaka uncovers the hidden cultural gems of Sri Lanka east, from Trincomalee beaches to Batticaloa lagoons, contrasting colonial history with modern island life.', 4.8, 'English, Sinhala', 7, 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=400&fit=crop&crop=face', '#', 0),
+('Dilini Jayasuriya', 'Marine & Diving', 'Southern Coast', 'A marine biologist turned dive guide from Mirissa, Dilini leads whale watching and scuba trips focused on marine conservation and reef education.', 4.9, 'English, Sinhala, Tamil', 9, 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=400&fit=crop&crop=face', '#', 0);
 
 -- Transportations
 INSERT INTO transportations (name, slug, description, short_description, location, vehicle_type, price_per_day, rating, image, has_ac, has_driver, has_insurance, is_available, provider_name, provider_email, provider_phone, is_featured) VALUES
@@ -327,10 +509,18 @@ INSERT INTO inquiry_replies (inquiry_id, sender_id, sender_role, message, create
 (3, NULL, 'admin', 'Absolutely! We can include team-building activities such as beach volleyball, cooking classes, and sunset boat tours. I will prepare a comprehensive quote with all options and send it to your email within 24 hours.', '2024-10-06 14:00:00');
 
 -- Testimonials
-INSERT INTO testimonials (reviewer_name, reviewer_country, reviewer_avatar, rating, title, content, is_featured) VALUES
-('Sarah Mitchell', 'United Kingdom', 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop&crop=face', 5, 'An Unforgettable Adventure!', 'The Island Escape package exceeded all our expectations. From the moment we landed, everything was perfectly orchestrated. The Sigiriya climb was breathtaking, and the local guides were incredibly knowledgeable. We will definitely book again!', 1),
-('Hans van der Berg', 'Netherlands', 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face', 5, 'Perfect Honeymoon Trip', 'We chose the Cultural Discovery package for our honeymoon and it was magical. The ancient temples, the lush countryside, and the warm hospitality made it a trip of a lifetime. The team was responsive and accommodating throughout.', 1),
-('Yuki Tanaka', 'Japan', 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face', 4, 'Great Value for Money', 'The Beach Paradise package was exactly what we needed. Beautiful beaches, comfortable accommodations, and plenty of activities. The only minor issue was a slight delay in transfer, but overall an excellent experience.', 1),
-('Marco Rossi', 'Italy', 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face', 5, 'Outstanding Safari Experience', 'The Wild Safari package was the highlight of our Sri Lanka trip. Seeing elephants and leopards in their natural habitat was incredible. Our guide Samir was exceptional - passionate, patient, and incredibly observant.', 0),
-('Emma Chen', 'Australia', 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&h=150&fit=crop&crop=face', 5, 'Dream Trip Come True', 'From the initial planning to the farewell dinner, every detail was taken care of. The Mountain Explorer package gave us stunning views and unforgettable memories. The team truly understands what travelers want.', 0),
-('James Wilson', 'Canada', 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&h=150&fit=crop&crop=face', 4, 'Professional and Caring Team', 'What sets GlobeTrek apart is their attention to detail. They arranged a surprise birthday celebration for my wife during our City Lights tour. That personal touch made all the difference. Highly recommended!', 0);
+INSERT INTO testimonials (reviewer_name, reviewer_country, reviewer_avatar, rating, title, content, status, is_featured) VALUES
+('Sarah Mitchell', 'United Kingdom', 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop&crop=face', 5, 'An Unforgettable Adventure!', 'The Island Escape package exceeded all our expectations. From the moment we landed, everything was perfectly orchestrated. The Sigiriya climb was breathtaking, and the local guides were incredibly knowledgeable. We will definitely book again!', 'approved', 1),
+('Hans van der Berg', 'Netherlands', 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face', 5, 'Perfect Honeymoon Trip', 'We chose the Cultural Discovery package for our honeymoon and it was magical. The ancient temples, the lush countryside, and the warm hospitality made it a trip of a lifetime. The team was responsive and accommodating throughout.', 'approved', 1),
+('Yuki Tanaka', 'Japan', 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face', 4, 'Great Value for Money', 'The Beach Paradise package was exactly what we needed. Beautiful beaches, comfortable accommodations, and plenty of activities. The only minor issue was a slight delay in transfer, but overall an excellent experience.', 'approved', 1),
+('Marco Rossi', 'Italy', 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face', 5, 'Outstanding Safari Experience', 'The Wild Safari package was the highlight of our Sri Lanka trip. Seeing elephants and leopards in their natural habitat was incredible. Our guide Samir was exceptional - passionate, patient, and incredibly observant.', 'approved', 0),
+('Emma Chen', 'Australia', 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&h=150&fit=crop&crop=face', 5, 'Dream Trip Come True', 'From the initial planning to the farewell dinner, every detail was taken care of. The Mountain Explorer package gave us stunning views and unforgettable memories. The team truly understands what travelers want.', 'approved', 0),
+('James Wilson', 'Canada', 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&h=150&fit=crop&crop=face', 4, 'Professional and Caring Team', 'What sets GlobeTrek apart is their attention to detail. They arranged a surprise birthday celebration for my wife during our City Lights tour. That personal touch made all the difference. Highly recommended!', 'approved', 0);
+
+-- Guide Reviews
+INSERT INTO guide_reviews (user_id, guide_id, reviewer_name, reviewer_country, reviewer_avatar, rating, title, content, status) VALUES
+(1, 1, 'Sarah Mitchell', 'United Kingdom', 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop&crop=face', 5, 'Kasun was amazing!', 'Kasun made our hill country trek absolutely unforgettable. His knowledge of tea plantations is incredible, and he shared stories that brought the landscape to life. Highly recommend him for any Nuwara Eliya adventure.', 'approved'),
+(1, 3, 'Hans van der Berg', 'Netherlands', 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face', 4, 'Great safari guide', 'Ravi is passionate about wildlife and it shows. He spotted animals we would have missed on our own. The only reason for 4 stars is that the vehicle could have been more comfortable, but that is not Ravis fault.', 'approved'),
+(1, 2, 'Yuki Tanaka', 'Japan', 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face', 5, 'Nipuni brought history to life', 'Our cultural triangle tour with Nipuni was exceptional. She has a deep understanding of archaeology and made every temple visit fascinating. Her enthusiasm is contagious.', 'approved'),
+(1, 4, 'Emma Chen', 'Australia', 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&h=150&fit=crop&crop=face', 3, 'Decent culinary tour', 'Malsha knew the best street food spots, which was great. However, some of the kitchen visits felt rushed and we did not get enough hands-on cooking time as expected.', 'approved'),
+(1, 6, 'Marco Rossi', 'Italy', 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face', 2, 'Disappointing dive experience', 'Dilini was knowledgeable about marine life, but the dive equipment was outdated and the boat trip was uncomfortable. We also waited over an hour for the boat to depart. Not what I expected for the price.', 'pending');

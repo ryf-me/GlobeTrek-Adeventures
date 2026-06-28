@@ -19,6 +19,7 @@ A full-stack PHP web application for a Sri Lankan travel agency - featuring tour
 - [Admin Panel](#admin-panel)
 - [Setup Instructions](#setup-instructions)
 - [Dependencies](#dependencies)
+- [Developer](#developer)
 
 ---
 
@@ -107,7 +108,7 @@ GlobeTrek-Adeventures/
   css/                               Stylesheets (30 files)
   js/                                JavaScript (3 files)
   images/                            Static image assets
-  database/                          SQL migration and seed files (12 files)
+  database/                          Database schema and seed data (1 file)
   vendor/                            Composer dependencies
 ---
 
@@ -710,27 +711,20 @@ Every admin page starts with:
 
 ### Steps
 
-1. Clone the project into C:\xampp\htdocs\GlobeTrek-Adeventures\
+1. Clone the repository into your XAMPP htdocs folder:
+   git clone https://github.com/your-username/GlobeTrek-Adeventures.git C:\xampp\htdocs\GlobeTrek-Adeventures
 
-2. Start Apache and MySQL via XAMPP Control Panel
+2. Start Apache and MySQL from the XAMPP Control Panel.
 
-3. Create the database:
-   - Open phpMyAdmin (http://localhost/phpmyadmin)
-   - Import database/init.sql (or run database/schema.sql + database/seed.sql separately)
-   - Run additional migrations in order:
-     - database/auth-migration.sql
-     - database/staff-migration.sql
-     - database/tags-migration.sql
-     - database/reviews-migration.sql
-     - database/guide-reviews-migration.sql
-     - database/homepage-migration.sql
-     - database/destinations-upgrade.sql
-     - database/remember-tokens-migration.sql
-     - database/add-destination-ratings.sql
-
-4. Install Composer dependencies:
+3. Install Composer dependencies:
    cd C:\xampp\htdocs\GlobeTrek-Adeventures
    composer install
+
+4. Import the database:
+   - Open phpMyAdmin (http://localhost/phpmyadmin)
+   - Create a new database named globetrek
+   - Select the database, click Import, and choose database/init.sql
+   - Click Go to run the SQL file
 
 5. Configure email (optional):
    - Edit config/mail.php with your Gmail address and App Password
@@ -742,7 +736,7 @@ Every admin page starts with:
 
 ### Default Admin Credentials
 
-Check the seed.sql file for default admin account details.
+Check the seed data in database/init.sql for default admin account details.
 
 ---
 
@@ -765,3 +759,28 @@ Check the seed.sql file for default admin account details.
 | Chart.js | Admin dashboard charts |
 | Flatpickr | Date picker on homepage |
 | Google Fonts | Fraunces, Manrope, Hanken Grotesk |
+
+---
+
+## Developer
+
+<table>
+  <tr>
+    <td>
+      <h1>
+        <img src="https://img.shields.io/badge/👋-Hi,%20I'm-blue?style=flat-square" />
+      </h1>
+      <h1>
+        <img src="https://img.shields.io/badge/Insath_Raif-000000?style=for-the-badge&logo=github&logoColor=white" />
+      </h1>
+      <p>
+        <img src="https://img.shields.io/badge/🎓-3rd_Semester_Web_Development_Assignment-orange?style=flat-square" />
+      </p>
+      <p>
+        <img src="https://img.shields.io/badge/Built%20with-PHP_8.x-777BB4?style=flat-square&logo=php" />
+        <img src="https://img.shields.io/badge/Database-MySQL-4479A1?style=flat-square&logo=mysql" />
+        <img src="https://img.shields.io/badge/Server-XAMPP-FB7A24?style=flat-square&logo=xampp" />
+      </p>
+    </td>
+  </tr>
+</table>
