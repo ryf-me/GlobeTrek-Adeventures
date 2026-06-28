@@ -1,28 +1,41 @@
 <?php
+/**
+ * File: pages/inquiries.php
+ * Purpose: Manages the authenticated user's support inquiries — create new inquiries,
+ *          view inquiry threads, add replies, and filter by active/resolved status.
+ * Dependencies: config/database.php, config/csrf.php, config/rate-limiter.php, js/script.js
+ * Used By: User sidebar navigation (user-sidebar.php)
+ * Parent Files: None (standalone page rendered in browser)
+ * Child Files: Includes navbar.php, user-sidebar.php, footer.php
+ * @package GlobeTrek\Pages
+ */
+
 session_start();
 
+// === AUTH GUARD ===
 if (!isset($_SESSION['user_id'])) {
     header('Location: login.php');
     exit;
 }
 
+// === DATABASE & CONFIG ===
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../config/csrf.php';
 require_once __DIR__ . '/../config/rate-limiter.php';
 $db = getDB();
 $userId = $_SESSION['user_id'];
 
-// --- Handle POST actions ---
+// === HANDLE POST ACTIONS ===
 $action = $_POST['action'] ?? '';
 
-// Create new inquiry
+// === ACTION: CREATE NEW INQUIRY ===
 if ($action === 'create_inquiry') {
     // CSRF validation
     if (!validateCSRFToken($_POST['csrf_token'] ?? null)) {
         $errors['general'] = 'Invalid security token. Please try again.';
     }
 
-    // Rate limiting — max 10 inquiries per hour
+    // Rate limiting — max 10 inquiries per hour to prevent abuse
     if (empty($errors) && !checkRateLimit('inquiries', 10, 3600, false)) {
         $errors['general'] = 'Too many inquiries. Please try again later.';
     }
@@ -31,11 +44,13 @@ if ($action === 'create_inquiry') {
     $subject = trim($_POST['subject'] ?? '');
     $message = trim($_POST['message'] ?? '');
 
+    // === VALIDATION ===
     $errors = [];
     if ($subject === '') $errors['subject'] = 'Please enter a subject.';
     if ($message === '') $errors['message'] = 'Please enter your message.';
 
     if (empty($errors)) {
+        // Generate a unique inquiry ID code for reference (e.g., "INQ-48291")
         $code = 'INQ-' . str_pad(rand(10000, 99999), 5, '0', STR_PAD_LEFT);
         $stmt = $db->prepare(
             "INSERT INTO inquiries (user_id, package_id, inquiry_id_code, subject, message) VALUES (:uid, :pid, :code, :subject, :message)"
@@ -52,7 +67,7 @@ if ($action === 'create_inquiry') {
     }
 }
 
-// Add reply to inquiry
+// === ACTION: ADD REPLY TO EXISTING INQUIRY ===
 if ($action === 'add_reply') {
     // CSRF validation
     if (!validateCSRFToken($_POST['csrf_token'] ?? null)) {
@@ -64,9 +79,11 @@ if ($action === 'add_reply') {
     $replyMsg = trim($_POST['reply_message'] ?? '');
 
     if ($replyMsg !== '' && $inquiryId > 0) {
+        // Verify the inquiry belongs to the current user before allowing a reply
         $stmt = $db->prepare("SELECT id FROM inquiries WHERE id = :id AND user_id = :uid");
         $stmt->execute([':id' => $inquiryId, ':uid' => $userId]);
         if ($stmt->fetch()) {
+            // Insert reply with sender_role = 'user' to distinguish from admin replies
             $stmt = $db->prepare(
                 "INSERT INTO inquiry_replies (inquiry_id, sender_id, sender_role, message) VALUES (:iid, :sid, 'user', :msg)"
             );
@@ -77,7 +94,8 @@ if ($action === 'add_reply') {
     }
 }
 
-// --- Fetch user's bookings for the dropdown ---
+// === FETCH USER'S BOOKINGS FOR INQUIRY FORM DROPDOWN ===
+// Allows user to optionally link an inquiry to a specific booking
 $stmt = $db->prepare(
     "SELECT b.id, b.booking_reference, p.title
      FROM bookings b
@@ -88,12 +106,14 @@ $stmt = $db->prepare(
 $stmt->execute([':uid' => $userId]);
 $userBookings = $stmt->fetchAll();
 
-// --- Fetch inquiries ---
+// === FETCH INQUIRIES LIST ===
+// Filter by active/resolved status based on tab selection
 $filter = $_GET['filter'] ?? 'active';
 $statusWhere = $filter === 'resolved'
     ? "WHERE i.status = 'resolved'"
     : "WHERE i.status != 'resolved'";
 
+// Subqueries compute reply_count and last_reply_at for each inquiry
 $stmt = $db->prepare(
     "SELECT i.*, p.title AS package_title,
             (SELECT COUNT(*) FROM inquiry_replies ir WHERE ir.inquiry_id = i.id) AS reply_count,
@@ -107,7 +127,8 @@ $stmt = $db->prepare(
 $stmt->execute([':uid' => $userId]);
 $inquiries = $stmt->fetchAll();
 
-// Count active/resolved
+// === COUNT ACTIVE AND RESOLVED INQUIRIES ===
+// Used for tab badges
 $stmt = $db->prepare("SELECT COUNT(*) FROM inquiries WHERE user_id = :uid AND status != 'resolved'");
 $stmt->execute([':uid' => $userId]);
 $activeCount = (int)$stmt->fetchColumn();
@@ -116,12 +137,14 @@ $stmt = $db->prepare("SELECT COUNT(*) FROM inquiries WHERE user_id = :uid AND st
 $stmt->execute([':uid' => $userId]);
 $resolvedCount = (int)$stmt->fetchColumn();
 
-// --- Fetch thread if viewing ---
+// === FETCH THREAD VIEW ===
+// If the user is viewing a specific inquiry thread, load it with all replies
 $viewThread = null;
 $threadReplies = [];
 $threadId = isset($_GET['thread']) ? (int)$_GET['thread'] : 0;
 
 if ($threadId > 0) {
+    // Fetch inquiry details with related package and booking reference
     $stmt = $db->prepare(
         "SELECT i.*, p.title AS package_title, b.booking_reference
          FROM inquiries i
@@ -133,6 +156,7 @@ if ($threadId > 0) {
     $viewThread = $stmt->fetch();
 
     if ($viewThread) {
+        // Fetch all replies in chronological order, joined with sender name
         $stmt = $db->prepare(
             "SELECT ir.*, u.full_name AS sender_name
              FROM inquiry_replies ir
@@ -145,11 +169,19 @@ if ($threadId > 0) {
     }
 }
 
+// === TEMPLATE HELPER FUNCTIONS ===
+
+/**
+ * Render a field value for re-populating form inputs.
+ */
 function inq_old(string $field, array $fields): string
 {
     return htmlspecialchars($fields[$field] ?? '', ENT_QUOTES, 'UTF-8');
 }
 
+/**
+ * Render a validation error message for a given field.
+ */
 function inq_error(string $field, array $errors): string
 {
     return htmlspecialchars($errors[$field] ?? '', ENT_QUOTES, 'UTF-8');
@@ -172,9 +204,11 @@ function inq_error(string $field, array $errors): string
     <link rel="stylesheet" href="../css/footer.css">
 </head>
 <body class="inq-page">
+    <!-- === NAVBAR === -->
     <?php $basePath = '../'; include '../includes/navbar.php'; ?>
 
     <main>
+        <!-- === FLASH MESSAGES === -->
         <?php if (isset($_GET['created'])): ?>
             <div class="form-alert success" role="status" style="max-width:1280px;margin:0 auto;padding:0.85rem clamp(1.25rem,4vw,3rem);">
                 Your inquiry has been submitted successfully.
@@ -187,11 +221,12 @@ function inq_error(string $field, array $errors): string
         <?php endif; ?>
 
         <div class="usr-layout">
+            <!-- === SIDEBAR === -->
             <?php $activePage = 'inquiries'; include '../includes/user-sidebar.php'; ?>
 
-            <!-- Canvas Area -->
+            <!-- === MAIN CONTENT === -->
             <div class="usr-canvas">
-                <!-- Header & Actions -->
+                <!-- === HEADER WITH NEW INQUIRY BUTTON === -->
                 <div class="inq-header">
                     <h1>My Inquiries</h1>
                     <button class="inq-new-btn" onclick="document.getElementById('newInquiryModal').classList.add('open')">
@@ -200,7 +235,7 @@ function inq_error(string $field, array $errors): string
                     </button>
                 </div>
 
-                <!-- Tabs -->
+                <!-- === STATUS TABS === -->
                 <div class="inq-tabs">
                     <a href="?filter=active" class="inq-tab <?= $filter !== 'resolved' ? 'active' : '' ?>">
                         Active (<?= $activeCount ?>)
@@ -210,7 +245,7 @@ function inq_error(string $field, array $errors): string
                     </a>
                 </div>
 
-                <!-- Inquiries List -->
+                <!-- === INQUIRIES LIST === -->
                 <?php if (empty($inquiries)): ?>
                     <div class="inq-empty">
                         <span class="material-symbols-outlined inq-empty-icon">chat_bubble</span>
@@ -230,6 +265,7 @@ function inq_error(string $field, array $errors): string
                     <div class="inq-list">
                         <?php foreach ($inquiries as $inq): ?>
                             <?php
+                                // Map DB status values to display classes and labels
                                 $statusClass = 'open';
                                 $statusLabel = 'Open';
                                 if ($inq['status'] === 'waiting_for_response') { $statusClass = 'waiting'; $statusLabel = 'Waiting for Response'; }
@@ -237,6 +273,7 @@ function inq_error(string $field, array $errors): string
                                 elseif ($inq['status'] === 'resolved') { $statusClass = 'resolved'; $statusLabel = 'Resolved'; }
 
                                 $date = date('M d, Y', strtotime($inq['created_at']));
+                                // Show unread indicator if there are replies and inquiry is not resolved
                                 $hasUnread = ($inq['reply_count'] > 0 && $inq['status'] !== 'resolved');
                             ?>
                             <div class="inq-card">
@@ -285,7 +322,7 @@ function inq_error(string $field, array $errors): string
         </div>
     </main>
 
-    <!-- New Inquiry Modal -->
+    <!-- === NEW INQUIRY MODAL === -->
     <div class="inq-modal-overlay" id="newInquiryModal">
         <div class="inq-modal">
             <div class="inq-modal-header">
@@ -304,6 +341,7 @@ function inq_error(string $field, array $errors): string
                         </div>
                     <?php endif; ?>
 
+                    <!-- Optional: link inquiry to an existing booking -->
                     <div class="form-field" style="margin-bottom:1rem;">
                         <label for="new-package">Related Booking (Optional)</label>
                         <select id="new-package" name="package_id">
@@ -345,7 +383,8 @@ function inq_error(string $field, array $errors): string
         </div>
     </div>
 
-    <!-- Thread View Modal -->
+    <!-- === THREAD VIEW MODAL === -->
+    <!-- Displays the full conversation for a selected inquiry -->
     <div class="inq-modal-overlay inq-thread-modal" id="threadModal">
         <div class="inq-modal">
             <div class="inq-modal-header">
@@ -356,6 +395,7 @@ function inq_error(string $field, array $errors): string
             </div>
             <div class="inq-modal-body">
                 <?php if ($viewThread): ?>
+                    <!-- Thread header with inquiry metadata -->
                     <div class="inq-thread-subject"><?= htmlspecialchars($viewThread['subject']) ?></div>
                     <div class="inq-thread-info">
                         <span class="inq-badge inq-badge-id"><?= htmlspecialchars($viewThread['inquiry_id_code']) ?></span>
@@ -371,7 +411,9 @@ function inq_error(string $field, array $errors): string
                         <?php endif; ?>
                     </div>
 
+                    <!-- === MESSAGES LIST === -->
                     <div class="inq-thread-messages">
+                        <!-- Original inquiry message (always from the user) -->
                         <div class="inq-message user-message">
                             <div class="inq-message-header">
                                 <span class="inq-message-sender">You</span>
@@ -380,6 +422,7 @@ function inq_error(string $field, array $errors): string
                             <p class="inq-message-text"><?= nl2br(htmlspecialchars($viewThread['message'])) ?></p>
                         </div>
 
+                        <!-- All replies (user and admin) in chronological order -->
                         <?php foreach ($threadReplies as $reply): ?>
                             <div class="inq-message <?= $reply['sender_role'] === 'admin' ? 'admin-message' : 'user-message' ?>">
                                 <div class="inq-message-header">
@@ -396,6 +439,8 @@ function inq_error(string $field, array $errors): string
                         <?php endforeach; ?>
                     </div>
 
+                    <!-- === REPLY FORM === -->
+                    <!-- Only shown if the inquiry is not resolved -->
                     <?php if ($viewThread['status'] !== 'resolved'): ?>
                         <form method="post" action="inquiries.php" class="inq-reply-form" novalidate>
                             <?php csrf_field(); ?>
@@ -416,23 +461,29 @@ function inq_error(string $field, array $errors): string
         </div>
     </div>
 
+    <!-- === FOOTER === -->
     <?php $basePath = '../'; include '../includes/footer.php'; ?>
 
     <script src="../js/script.js"></script>
     <script>
+    // === THREAD NAVIGATION ===
+    // Navigates to the inquiry thread via URL parameter (server-side rendering)
     function openThread(id) {
         window.location.href = 'inquiries.php?thread=' + id + '<?= $filter === 'resolved' ? '&filter=resolved' : '' ?>';
     }
 
+    // === MODAL CLOSE FUNCTIONS ===
     function closeNewInquiryModal() {
         document.getElementById('newInquiryModal').classList.remove('open');
     }
 
     function closeThreadModal() {
+        // Navigate back to the list view (clears thread parameter)
         window.location.href = 'inquiries.php<?= $filter === 'resolved' ? '?filter=resolved' : '' ?>';
     }
 
-    // Close modals on overlay click
+    // === CLOSE MODALS ON OVERLAY CLICK ===
+    // Clicking the backdrop (not the modal content) closes the modal
     document.querySelectorAll('.inq-modal-overlay').forEach(function(overlay) {
         overlay.addEventListener('click', function(e) {
             if (e.target === overlay) {
@@ -445,7 +496,8 @@ function inq_error(string $field, array $errors): string
         });
     });
 
-    // Open thread modal if thread param exists
+    // === AUTO-OPEN THREAD MODAL ===
+    // If the URL contains a thread parameter, open the thread modal on page load
     <?php if ($viewThread): ?>
     document.getElementById('threadModal').classList.add('open');
     <?php endif; ?>

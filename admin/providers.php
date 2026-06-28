@@ -1,22 +1,42 @@
 <?php
+/**
+ * File: admin/providers.php
+ * Purpose: Admin page to display and filter service providers (accommodation and transport providers).
+ * Dependencies: admin/includes/header.php, admin/includes/sidebar.php, admin/includes/footer.php, config/database.php
+ * Used By: Admin users navigating via admin sidebar
+ * Parent Files: None (entry point for provider listing)
+ * Child Files: admin/includes/header.php, admin/includes/sidebar.php, admin/includes/footer.php
+ * @package GlobeTrek\Admin
+ */
+
+// === PAGE SETUP ===
 $pageTitle = 'Service Providers';
 require_once __DIR__ . '/includes/header.php';
 include __DIR__ . '/includes/sidebar.php';
 
+// === FILTER PARAMETERS ===
+// Search keyword and type filter from query string
 $search = trim($_GET['q'] ?? '');
 $typeFilter = $_GET['type'] ?? 'all';
 
+// === BUILD WHERE CLAUSE ===
+// Filter logic varies by type - each type checks for non-empty provider_name
 $where = '';
 $params = [];
 
 if ($typeFilter === 'accommodation') {
+    // Only show providers linked to accommodations
     $where = "WHERE a.provider_name IS NOT NULL AND a.provider_name != ''";
 } elseif ($typeFilter === 'transport') {
+    // Only show providers linked to transport
     $where = "WHERE t.provider_name IS NOT NULL AND t.provider_name != ''";
 } else {
+    // Show all providers from either service type (OR condition)
     $where = "WHERE (a.provider_name IS NOT NULL AND a.provider_name != '') OR (t.provider_name IS NOT NULL AND t.provider_name != '')";
 }
 
+// === FETCH ACCOMMODATION PROVIDERS ===
+// Union-style query using separate queries merged in PHP for flexibility
 $providers = [];
 
 $accomStmt = $db->prepare(
@@ -27,6 +47,7 @@ $accomStmt = $db->prepare(
      " . ($search ? "AND (a.provider_name LIKE :q OR a.provider_email LIKE :q2)" : "") .
      " ORDER BY a.provider_name ASC"
 );
+// Execute with or without search parameters depending on search state
 if ($search) {
     $accomStmt->execute([':q' => "%$search%", ':q2' => "%$search%"]);
 } else {
@@ -34,6 +55,7 @@ if ($search) {
 }
 $accomProviders = $accomStmt->fetchAll();
 
+// === FETCH TRANSPORT PROVIDERS ===
 $transStmt = $db->prepare(
     "SELECT 'transport' AS type, t.id, t.name, t.location, t.vehicle_type AS service_type,
             t.provider_name, t.provider_email, t.provider_phone, t.updated_at, t.created_at
@@ -49,14 +71,18 @@ if ($search) {
 }
 $transProviders = $transStmt->fetchAll();
 
+// === MERGE & SORT PROVIDERS ===
+// Combine results from both tables and sort alphabetically by provider name
 $providers = array_merge($accomProviders, $transProviders);
 usort($providers, function ($a, $b) {
     return strcmp($a['provider_name'], $b['provider_name']);
 });
 ?>
 
+<!-- === ADMIN LAYOUT === -->
 <div class="adm-sidebar-overlay" id="sidebarOverlay"></div>
 <main class="adm-main">
+    <!-- === TOP BAR === -->
     <div class="adm-topbar">
         <div class="adm-topbar-left">
             <button class="adm-menu-toggle" onclick="document.getElementById('adminSidebar').classList.toggle('open');document.getElementById('sidebarOverlay').classList.toggle('open');">
@@ -70,14 +96,18 @@ usort($providers, function ($a, $b) {
     </div>
 
     <div class="adm-content">
+        <!-- === PAGE HEADER === -->
         <div class="adm-page-header">
             <h1>Providers (<?= count($providers) ?>)</h1>
         </div>
 
+        <!-- === FILTER BAR === -->
+        <!-- Search and type filter form - combines text search with dropdown filter -->
         <div class="adm-filter-bar">
             <form method="get" class="adm-search" style="display:flex; gap:0.5rem; align-items:center;">
                 <span class="material-symbols-outlined">search</span>
                 <input type="text" name="q" placeholder="Search providers..." value="<?= htmlspecialchars($search) ?>">
+                <!-- Type dropdown filter for accommodation/transport/all -->
                 <select name="type" style="padding:0.5rem; border:1px solid var(--adm-outline-variant); border-radius:6px;">
                     <option value="all" <?= $typeFilter === 'all' ? 'selected' : '' ?>>All Types</option>
                     <option value="accommodation" <?= $typeFilter === 'accommodation' ? 'selected' : '' ?>>Accommodations</option>
@@ -87,6 +117,7 @@ usort($providers, function ($a, $b) {
             </form>
         </div>
 
+        <!-- === EMPTY STATE === -->
         <?php if (empty($providers)): ?>
             <div class="adm-empty">
                 <span class="material-symbols-outlined adm-empty-icon">handshake</span>
@@ -94,6 +125,7 @@ usort($providers, function ($a, $b) {
                 <p>Add provider contact info to accommodations or transportation to see them here.</p>
             </div>
         <?php else: ?>
+            <!-- === PROVIDERS TABLE === -->
             <div class="adm-table-wrap">
                 <table class="adm-table">
                     <thead>
@@ -108,20 +140,25 @@ usort($providers, function ($a, $b) {
                         </tr>
                     </thead>
                     <tbody>
+                        <!-- === ROW LOOP === -->
                         <?php foreach ($providers as $p): ?>
                             <tr>
                                 <td class="cell-main"><?= htmlspecialchars($p['provider_name']) ?></td>
+                                <!-- Display dash if email is null/empty -->
                                 <td><?= htmlspecialchars($p['provider_email'] ?? '—') ?></td>
                                 <td><?= htmlspecialchars($p['provider_phone'] ?? '—') ?></td>
+                                <!-- Service name (accommodation name or transport name) -->
                                 <td><?= htmlspecialchars($p['name']) ?></td>
                                 <td><?= htmlspecialchars($p['location']) ?></td>
                                 <td>
+                                    <!-- Color-coded badge: green for accommodation, blue for transport -->
                                     <span class="adm-status-badge <?= $p['type'] === 'accommodation' ? 'adm-status-confirmed' : 'adm-status-active' ?>">
                                         <?= $p['type'] === 'accommodation' ? 'Accommodation' : 'Transport' ?>
                                     </span>
                                 </td>
                                 <td>
                                     <div class="cell-actions">
+                                        <!-- Edit link routes to the correct edit page based on provider type -->
                                         <a href="<?= $p['type'] === 'accommodation' ? 'accommodation-edit.php' : 'transport-edit.php' ?>?id=<?= $p['id'] ?>" class="adm-btn-icon" title="Edit">
                                             <span class="material-symbols-outlined">edit</span>
                                         </a>

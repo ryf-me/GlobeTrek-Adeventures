@@ -1,11 +1,10 @@
-/* ============================================
-   Wishlist Page – User Dashboard
-   (Sidebar layout in css/user-sidebar.css)
-   ============================================ */
+/**
+ * File: css/wishlist.css
+ * Purpose: Styles for the Wishlist page — grid of saved packages, cards with images/pricing, remove button, and empty state
+ * Used By: wishlist/index.html
+ */
 
-/* --------------------------------------------
-   Page Header
-   -------------------------------------------- */
+/* === Page Header === */
 .usr-page-header {
     margin-bottom: 1.5rem;
 }
@@ -23,9 +22,7 @@
     font-size: 0.95rem;
 }
 
-/* --------------------------------------------
-   Wishlist Header Row
-   -------------------------------------------- */
+/* === Wishlist Header Row === */
 .wl-header-row {
     display: flex;
     justify-content: space-between;
@@ -51,18 +48,14 @@
     font-size: 16px;
 }
 
-/* --------------------------------------------
-   Wishlist Grid
-   -------------------------------------------- */
+/* === Wishlist Grid === */
 .wl-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 1.25rem;
 }
 
-/* --------------------------------------------
-   Wishlist Card
-   -------------------------------------------- */
+/* === Wishlist Card === */
 .wl-card {
     display: flex;
     flex-direction: column;
@@ -78,9 +71,7 @@
     transform: translateY(-2px);
 }
 
-/* --------------------------------------------
-   Card Image
-   -------------------------------------------- */
+/* === Card Image === */
 .wl-card-img {
     position: relative;
     aspect-ratio: 4 / 3;
@@ -104,7 +95,21 @@
     transform: scale(1.03);
 }
 
-/* Placeholder when no image */
+.wl-card-badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    padding: 0.2rem 0.6rem;
+    background: rgba(26, 35, 50, 0.85);
+    backdrop-filter: blur(4px);
+    color: #fff;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    border-radius: 6px;
+    text-transform: uppercase;
+}
+
 .wl-placeholder {
     position: relative;
     width: 100%;
@@ -142,9 +147,7 @@
     width: 142%;
 }
 
-/* --------------------------------------------
-   Card Body
-   -------------------------------------------- */
+/* === Card Body === */
 .wl-card-body {
     padding: 1rem 1.25rem;
     display: flex;
@@ -152,9 +155,6 @@
     flex: 1;
 }
 
-/* --------------------------------------------
-   Card Title Row (title + remove button)
-   -------------------------------------------- */
 .wl-card-top {
     display: flex;
     justify-content: space-between;
@@ -192,9 +192,7 @@
     font-size: 20px;
 }
 
-/* --------------------------------------------
-   Card Duration
-   -------------------------------------------- */
+/* === Card Duration === */
 .wl-card-duration {
     display: inline-flex;
     align-items: center;
@@ -208,9 +206,7 @@
     font-size: 16px;
 }
 
-/* --------------------------------------------
-   Card Footer (price + book button)
-   -------------------------------------------- */
+/* === Card Footer === */
 .wl-card-footer {
     margin-top: auto;
     padding-top: 0.75rem;
@@ -261,9 +257,7 @@
     transform: scale(0.97);
 }
 
-/* --------------------------------------------
-   Empty State
-   -------------------------------------------- */
+/* === Empty State === */
 .wl-empty {
     text-align: center;
     padding: clamp(3rem, 6vw, 5rem) 2rem;
@@ -316,9 +310,24 @@
     color: var(--inq-on-primary, #fff);
 }
 
-/* --------------------------------------------
-   Remove Animation
-   -------------------------------------------- */
+.wl-empty-links {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.wl-empty-link-alt {
+    border-color: var(--inq-on-surface-variant, #5e5e5e);
+    color: var(--inq-on-surface-variant, #5e5e5e);
+}
+
+.wl-empty-link-alt:hover {
+    background: var(--inq-on-surface-variant, #5e5e5e);
+    color: #fff;
+}
+
+/* === Remove Animation === */
 .wl-card.removing {
     opacity: 0.4;
     pointer-events: none;
@@ -326,9 +335,7 @@
     transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
-/* --------------------------------------------
-   Responsive
-   -------------------------------------------- */
+/* === Responsive Breakpoints === */
 @media (max-width: 900px) {
     .wl-grid {
         grid-template-columns: repeat(2, 1fr);

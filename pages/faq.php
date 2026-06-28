@@ -1,21 +1,35 @@
+/**
+ * File: pages/faq.php
+ * Purpose: Frequently Asked Questions page with categorized questions and answers about GlobeTrek services
+ * Dependencies: css/style.css, css/navbar.css, css/support.css, css/footer.css, includes/navbar.php, includes/footer.php, js/script.js
+ * Used By: Main website navigation, footer links, support section
+ * Parent Files: index.php (via navigation), navbar.php (via link), contact.php (via FAQ section)
+ * Child Files: None
+ * @package GlobeTrek\Pages
+ */
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FAQ - GlobeTrek Adventures</title>
+    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700;9..144,800&family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <!-- Stylesheets -->
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="../css/navbar.css">
     <link rel="stylesheet" href="../css/support.css">
     <link rel="stylesheet" href="../css/footer.css">
 </head>
 <body class="support-page">
+    <!-- Navigation Bar -->
     <?php $basePath = '../'; include '../includes/navbar.php'; ?>
 
     <main>
+        <!-- Hero Section -->
         <section class="support-hero" aria-labelledby="faq-title">
             <img class="support-hero-bg" src="https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0" alt="">
             <div class="support-hero-content">
@@ -24,7 +38,9 @@
             </div>
         </section>
 
+        <!-- FAQ Content Section -->
         <section class="support-content" aria-labelledby="faq-section-title">
+            <!-- General Questions Category -->
             <h2 id="faq-section-title">General Questions</h2>
 
             <div class="faq-list">
@@ -65,6 +81,7 @@
                 </div>
             </div>
 
+            <!-- Booking & Payments Category -->
             <h2>Booking &amp; Payments</h2>
 
             <div class="faq-list">
@@ -117,6 +134,7 @@
                 </div>
             </div>
 
+            <!-- Tours & Experiences Category -->
             <h2>Tours &amp; Experiences</h2>
 
             <div class="faq-list">
@@ -169,6 +187,7 @@
                 </div>
             </div>
 
+            <!-- Safety & Support Category -->
             <h2>Safety &amp; Support</h2>
 
             <div class="faq-list">
@@ -209,6 +228,7 @@
                 </div>
             </div>
 
+            <!-- Developer Credit -->
             <div class="developer-credit">
                 <p>
                     Developed with care by <span class="dev-name">Insath Raif</span> — a passionate software engineering student and knowledgeable developer dedicated to building innovative digital solutions. GlobeTrek Adventures' platform was designed and developed by Insath Raif to provide travelers with a seamless and enjoyable booking experience.
@@ -217,10 +237,13 @@
         </section>
     </main>
 
+    <!-- Footer -->
     <?php $basePath = '../'; include '../includes/footer.php'; ?>
 
+    <!-- JavaScript -->
     <script src="../js/script.js"></script>
     <script>
+    // FAQ accordion functionality
     document.querySelectorAll('.faq-question').forEach(function(btn) {
         btn.addEventListener('click', function() {
             var item = this.closest('.faq-item');

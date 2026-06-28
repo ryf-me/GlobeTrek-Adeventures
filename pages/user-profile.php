@@ -1,30 +1,46 @@
 <?php
+/**
+ * File: pages/user-profile.php
+ * Purpose: Allows authenticated users to view and update their profile information,
+ *          including name, phone, DOB, gender, location, bio, and profile photo.
+ * Dependencies: config/database.php, config/csrf.php, js/script.js
+ * Used By: User sidebar navigation (user-sidebar.php)
+ * Parent Files: None (standalone page rendered in browser)
+ * Child Files: Includes navbar.php, user-sidebar.php, footer.php
+ * @package GlobeTrek\Pages
+ */
+
 session_start();
 
+// === AUTH GUARD ===
 if (!isset($_SESSION['user_id'])) {
     header('Location: login.php');
     exit;
 }
 
+// === DATABASE & CONFIG ===
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../config/csrf.php';
 $db = getDB();
 $userId = $_SESSION['user_id'];
 
+// === FLASH MESSAGES ===
 $success = '';
 $errors = [];
 
-// Fetch current user data
+// === FETCH CURRENT USER DATA ===
 $stmt = $db->prepare("SELECT * FROM users WHERE id = :id LIMIT 1");
 $stmt->execute([':id' => $userId]);
 $user = $stmt->fetch();
 
+// Safety redirect if user record no longer exists
 if (!$user) {
     header('Location: login.php');
     exit;
 }
 
-// Form field values
+// === FORM FIELD DEFAULTS ===
+// Pre-populate form fields from database; use null coalescing for optional columns
 $fields = [
     'full_name'    => $user['full_name'],
     'phone'        => $user['phone'] ?? '',
@@ -36,13 +52,14 @@ $fields = [
 ];
 $profilePhoto = $user['profile_photo'] ?? '';
 
-// Handle POST
+// === HANDLE FORM SUBMISSION ===
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // CSRF validation
+    // CSRF token validation — prevents cross-site request forgery attacks
     if (!validateCSRFToken($_POST['csrf_token'] ?? null)) {
         $errors['general'] = 'Invalid security token. Please try again.';
     }
 
+    // Sanitize and store form field values
     $fields['full_name']     = trim($_POST['full_name'] ?? '');
     $fields['phone']         = trim($_POST['phone'] ?? '');
     $fields['date_of_birth'] = $_POST['date_of_birth'] ?? '';
@@ -51,6 +68,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $fields['city']          = trim($_POST['city'] ?? '');
     $fields['bio']           = trim($_POST['bio'] ?? '');
 
+    // === VALIDATION ===
     if ($fields['full_name'] === '') {
         $errors['full_name'] = 'Please enter your name.';
     }
@@ -58,21 +76,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors['bio'] = 'Bio must be 500 characters or fewer.';
     }
 
-    // Handle profile photo upload
+    // === PROFILE PHOTO UPLOAD ===
+    // Only process if a file was uploaded without errors
     if (isset($_FILES['profile_photo']) && $_FILES['profile_photo']['error'] === UPLOAD_ERR_OK) {
         $tmpFile = $_FILES['profile_photo']['tmp_name'];
         $fileSize = $_FILES['profile_photo']['size'];
         $fileType = $_FILES['profile_photo']['type'];
         $fileExt = strtolower(pathinfo($_FILES['profile_photo']['name'], PATHINFO_EXTENSION));
 
+        // Security: whitelist allowed image extensions and MIME types
         $allowedExts = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
         $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 
         if (!in_array($fileExt, $allowedExts) || !in_array($fileType, $allowedTypes)) {
             $errors['profile_photo'] = 'Only JPG, PNG, GIF, and WebP images are allowed.';
         } elseif ($fileSize > 2 * 1024 * 1024) {
+            // Enforce 2MB file size limit
             $errors['profile_photo'] = 'Profile photo must be under 2MB.';
         } else {
+            // Generate unique filename to prevent collisions and path traversal
             $newFilename = 'user_' . $userId . '_' . time() . '.' . $fileExt;
             $uploadDir = __DIR__ . '/../images/profiles/';
             if (!is_dir($uploadDir)) {
@@ -81,7 +103,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $destPath = $uploadDir . $newFilename;
 
             if (move_uploaded_file($tmpFile, $destPath)) {
-                // Delete old photo if it exists
+                // Delete old photo file if it exists to prevent orphaned files
                 if ($profilePhoto && file_exists(__DIR__ . '/../' . $profilePhoto)) {
                     unlink(__DIR__ . '/../' . $profilePhoto);
                 }
@@ -92,7 +114,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    // Handle photo removal
+    // === HANDLE PHOTO REMOVAL ===
+    // User can explicitly remove their profile photo via a hidden form field
     if (isset($_POST['remove_photo']) && $_POST['remove_photo'] === '1') {
         if ($profilePhoto && file_exists(__DIR__ . '/../' . $profilePhoto)) {
             unlink(__DIR__ . '/../' . $profilePhoto);
@@ -100,6 +123,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $profilePhoto = '';
     }
 
+    // === UPDATE DATABASE ===
+    // Only persist if no validation errors occurred
     if (empty($errors)) {
         $stmt = $db->prepare(
             "UPDATE users SET
@@ -125,17 +150,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ':id'        => $userId,
         ]);
 
+        // Update session data so navbar/sidebar reflect new name and photo immediately
         $_SESSION['user_name'] = $fields['full_name'];
         $_SESSION['user_profile_photo'] = $profilePhoto;
         $success = 'Profile updated successfully.';
     }
 }
 
+// === TEMPLATE HELPER FUNCTIONS ===
+
+/**
+ * Render a field value for re-populating form inputs after submission.
+ * Uses ENT_QUOTES to escape both single and double quotes in attributes.
+ */
 function usr_old(string $field, array $fields): string
 {
     return htmlspecialchars($fields[$field] ?? '', ENT_QUOTES, 'UTF-8');
 }
 
+/**
+ * Render a validation error message for a given field.
+ */
 function usr_error(string $field, array $errors): string
 {
     return htmlspecialchars($errors[$field] ?? '', ENT_QUOTES, 'UTF-8');
@@ -158,20 +193,22 @@ function usr_error(string $field, array $errors): string
     <link rel="stylesheet" href="../css/footer.css">
 </head>
 <body class="usr-page">
+    <!-- === NAVBAR === -->
     <?php $basePath = '../'; include '../includes/navbar.php'; ?>
 
     <main>
         <div class="usr-layout">
+            <!-- === SIDEBAR === -->
             <?php $activePage = 'profile'; include '../includes/user-sidebar.php'; ?>
 
-            <!-- Canvas Area -->
+            <!-- === MAIN CONTENT === -->
             <div class="usr-canvas">
-                <!-- Page Header -->
                 <div class="usr-page-header">
                     <h1>Profile Information</h1>
                     <p>Update your personal details and how others see you.</p>
                 </div>
 
+                <!-- === FLASH MESSAGES === -->
                 <?php if ($success !== ''): ?>
                     <div class="usr-alert success" role="status">
                         <?php echo htmlspecialchars($success); ?>
@@ -182,9 +219,12 @@ function usr_error(string $field, array $errors): string
                     </div>
                 <?php endif; ?>
 
+                <!-- === PROFILE FORM === -->
+                <!-- enctype="multipart/form-data" required for file upload -->
                 <form class="usr-form" method="post" action="user-profile.php" enctype="multipart/form-data" novalidate>
                     <?php csrf_field(); ?>
-                    <!-- Photo Management -->
+
+                    <!-- === PROFILE PHOTO SECTION === -->
                     <div class="usr-section">
                         <div class="usr-photo-row">
                             <div class="usr-avatar">
@@ -198,9 +238,11 @@ function usr_error(string $field, array $errors): string
                                 <p class="usr-photo-label">Profile Photo</p>
                                 <p class="usr-photo-hint">Recommended size: 256x256px. Max 2MB.</p>
                                 <div class="usr-photo-actions">
+                                    <!-- Hidden file input triggered by styled label -->
                                     <label class="usr-btn usr-btn-primary" for="photo-upload">Change Photo</label>
                                     <input type="file" id="photo-upload" name="profile_photo" accept="image/*" class="sr-only">
                                     <?php if ($profilePhoto): ?>
+                                        <!-- Remove photo uses a special POST value; JS confirm dialog for safety -->
                                         <button type="submit" name="remove_photo" value="1" class="usr-btn usr-btn-outline"
                                                 onclick="return confirm('Remove your profile photo?')">Remove</button>
                                     <?php endif; ?>
@@ -213,7 +255,7 @@ function usr_error(string $field, array $errors): string
                         </div>
                     </div>
 
-                    <!-- Personal Details -->
+                    <!-- === PERSONAL DETAILS === -->
                     <div class="usr-section">
                         <h3 class="usr-section-title">Personal Details</h3>
                         <div class="usr-fields-grid">
@@ -232,6 +274,7 @@ function usr_error(string $field, array $errors): string
                                     Email Address
                                     <button type="button" class="usr-change-link">Change</button>
                                 </label>
+                                <!-- Email is display-only; cannot be changed from this form -->
                                 <input id="email" type="email"
                                        value="<?php echo htmlspecialchars($user['email'], ENT_QUOTES, 'UTF-8'); ?>"
                                        disabled>
@@ -263,7 +306,7 @@ function usr_error(string $field, array $errors): string
                         </div>
                     </div>
 
-                    <!-- Location -->
+                    <!-- === LOCATION === -->
                     <div class="usr-section">
                         <h3 class="usr-section-title">Location</h3>
                         <div class="usr-fields-grid">
@@ -293,7 +336,7 @@ function usr_error(string $field, array $errors): string
                         </div>
                     </div>
 
-                    <!-- Bio -->
+                    <!-- === BIO === -->
                     <div class="usr-section">
                         <h3 class="usr-section-title">Bio</h3>
                         <div class="usr-field">
@@ -310,7 +353,7 @@ function usr_error(string $field, array $errors): string
                         </div>
                     </div>
 
-                    <!-- Actions -->
+                    <!-- === SUBMIT === -->
                     <div class="usr-actions-bar">
                         <button type="submit" class="usr-btn usr-btn-primary usr-btn-submit">Save Changes</button>
                     </div>
@@ -319,11 +362,13 @@ function usr_error(string $field, array $errors): string
         </div>
     </main>
 
+    <!-- === FOOTER === -->
     <?php $basePath = '../'; include '../includes/footer.php'; ?>
 
     <script src="../js/script.js"></script>
     <script>
-    // Bio character counter
+    // === BIO CHARACTER COUNTER ===
+    // Live-updates the character count display as user types
     var bioTextarea = document.getElementById('bio');
     var bioCount = document.getElementById('bio-count');
     if (bioTextarea && bioCount) {
@@ -332,7 +377,8 @@ function usr_error(string $field, array $errors): string
         });
     }
 
-    // Photo file name preview
+    // === PHOTO FILE NAME PREVIEW ===
+    // Shows the selected file name below the upload button for user feedback
     var photoInput = document.getElementById('photo-upload');
     var photoName = document.getElementById('photo-preview-name');
     if (photoInput && photoName) {

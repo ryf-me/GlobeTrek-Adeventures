@@ -1,18 +1,23 @@
 <?php
 /**
- * Staff Dashboard
- *
- * Dedicated dashboard for staff members showing:
- * - Their assigned tasks (full access)
- * - Department items (view only, can claim unassigned)
- * - Quick availability toggle
- * - Department-specific KPIs
- * - Recent activity
+ * File: admin/staff-dashboard.php
+ * Purpose: Dedicated dashboard for staff members showing assigned tasks, department items,
+ *          quick availability toggle, department-specific KPIs, and recent activity.
+ * Dependencies: admin/includes/header.php, admin/includes/sidebar.php, admin/includes/footer.php, config/logger.php
+ * Used By: Staff-only (role must be 'staff')
+ * Parent Files: admin/includes/sidebar.php (navigated from sidebar menu)
+ * Child Files: admin/includes/header.php, admin/includes/sidebar.php, admin/includes/footer.php
+ * @package GlobeTrek\Admin
  */
+
 $pageTitle = 'Staff Dashboard';
+
+// === INITIALIZATION ===
 require_once __DIR__ . '/includes/header.php';
 require_once __DIR__ . '/../config/logger.php';
 
+// === ACCESS CONTROL ===
+// Only staff role users can access this dashboard
 if (($_SESSION['user_role'] ?? '') !== 'staff') {
     header('Location: index.php');
     exit;
@@ -20,11 +25,13 @@ if (($_SESSION['user_role'] ?? '') !== 'staff') {
 
 $userId = $_SESSION['user_id'];
 
-// Get staff profile
+// === LOAD STAFF PROFILE ===
+// Get the staff profile linked to the current user account
 $stmt = $db->prepare("SELECT sp.* FROM staff_profiles sp WHERE sp.user_id = :uid LIMIT 1");
 $stmt->execute([':uid' => $userId]);
 $staffProfile = $stmt->fetch();
 
+// If no staff profile exists, session is invalid — log out
 if (!$staffProfile) {
     session_destroy();
     header('Location: ../pages/login.php');
@@ -34,6 +41,7 @@ if (!$staffProfile) {
 $staffId = $staffProfile['id'];
 $department = $staffProfile['department'];
 
+// Department display labels and icons
 $departmentLabels = [
     'operations' => 'Operations',
     'customer_service' => 'Customer Service',
@@ -48,7 +56,8 @@ $departmentIcons = [
     'marketing' => 'campaign',
 ];
 
-// Handle availability toggle
+// === HANDLE AVAILABILITY TOGGLE ===
+// Staff can quickly toggle their availability status from the dashboard
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'toggle_availability') {
     if (validateCSRFToken($_POST['csrf_token'] ?? null)) {
         $stmt = $db->prepare("UPDATE staff_profiles SET is_available = NOT is_available WHERE id = :id");
@@ -59,18 +68,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'toggl
     }
 }
 
-// Handle claim task
+// === HANDLE CLAIM TASK ===
+// Staff can claim unassigned tasks from their department
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'claim_task') {
     if (validateCSRFToken($_POST['csrf_token'] ?? null)) {
         $entityType = $_POST['entity_type'] ?? '';
         $entityId = (int)($_POST['entity_id'] ?? 0);
 
+        // Validate entity type and ID
         if (in_array($entityType, ['booking', 'inquiry']) && $entityId > 0) {
-            // Check if already assigned to someone else
+            // Check if the task is already assigned to someone else
             $checkStmt = $db->prepare("SELECT id FROM staff_assignments WHERE entity_type = :type AND entity_id = :eid LIMIT 1");
             $checkStmt->execute([':type' => $entityType, ':eid' => $entityId]);
 
             if (!$checkStmt->fetch()) {
+                // Create assignment — staff member claims the task
                 $stmt = $db->prepare("INSERT INTO staff_assignments (staff_id, entity_type, entity_id, assigned_by) VALUES (:sid, :type, :eid, :assigned_by)");
                 $stmt->execute([':sid' => $staffId, ':type' => $entityType, ':eid' => $entityId, ':assigned_by' => $userId]);
                 logActivity('task_claimed', $entityType, $entityId, "Task claimed by staff");
@@ -81,12 +93,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'claim
     }
 }
 
-// Refresh staff profile for availability status
+// Refresh staff profile after any changes (e.g., availability toggle)
 $stmt = $db->prepare("SELECT sp.* FROM staff_profiles sp WHERE sp.id = :id LIMIT 1");
 $stmt->execute([':id' => $staffId]);
 $staffProfile = $stmt->fetch();
 
-// --- My Assigned Bookings ---
+// === FETCH ASSIGNED BOOKINGS ===
+// Get all bookings assigned to this staff member
 $stmt = $db->prepare(
     "SELECT b.*, p.title AS package_title, p.image AS package_image, sa.assigned_at
      FROM staff_assignments sa
@@ -98,7 +111,8 @@ $stmt = $db->prepare(
 $stmt->execute([':sid' => $staffId]);
 $myBookings = $stmt->fetchAll();
 
-// --- My Assigned Inquiries ---
+// === FETCH ASSIGNED INQUIRIES ===
+// Get all inquiries assigned to this staff member
 $stmt = $db->prepare(
     "SELECT i.*, u.full_name AS user_name, u.email AS user_email, sa.assigned_at
      FROM staff_assignments sa
@@ -110,7 +124,8 @@ $stmt = $db->prepare(
 $stmt->execute([':sid' => $staffId]);
 $myInquiries = $stmt->fetchAll();
 
-// --- Department Unassigned Bookings (for claiming) ---
+// === DEPARTMENT UNASSIGNED BOOKINGS ===
+// For operations/sales departments — show bookings that can be claimed
 $deptBookings = [];
 if (in_array($department, ['operations', 'sales'])) {
     $stmt = $db->query(
@@ -125,7 +140,8 @@ if (in_array($department, ['operations', 'sales'])) {
     $deptBookings = $stmt->fetchAll();
 }
 
-// --- Department Unassigned Inquiries (for claiming) ---
+// === DEPARTMENT UNASSIGNED INQUIRIES ===
+// For customer_service department — show inquiries that can be claimed
 $deptInquiries = [];
 if (in_array($department, ['customer_service'])) {
     $stmt = $db->query(
@@ -140,10 +156,12 @@ if (in_array($department, ['customer_service'])) {
     $deptInquiries = $stmt->fetchAll();
 }
 
-// --- Department KPIs ---
+// === DEPARTMENT-SPECIFIC KPIs ===
+// Each department sees different key performance indicators relevant to their role
 $deptKPIs = [];
 
 if ($department === 'operations') {
+    // Operations: booking pipeline and package activity
     $r = $db->query("SELECT COUNT(*) FROM bookings WHERE status = 'pending'");
     $deptKPIs[] = ['label' => 'Pending Bookings', 'value' => $r->fetchColumn(), 'icon' => 'schedule', 'color' => '#f4a261'];
     $r = $db->query("SELECT COUNT(*) FROM bookings WHERE status = 'confirmed'");
@@ -153,6 +171,7 @@ if ($department === 'operations') {
     $r = $db->query("SELECT COUNT(*) FROM packages WHERE is_active = 1");
     $deptKPIs[] = ['label' => 'Active Packages', 'value' => $r->fetchColumn(), 'icon' => 'luggage', 'color' => '#2a9d8f'];
 } elseif ($department === 'customer_service') {
+    // Customer Service: inquiry pipeline and message activity
     $r = $db->query("SELECT COUNT(*) FROM inquiries WHERE status = 'open'");
     $deptKPIs[] = ['label' => 'Open Inquiries', 'value' => $r->fetchColumn(), 'icon' => 'chat', 'color' => '#f4a261'];
     $r = $db->query("SELECT COUNT(*) FROM inquiries WHERE status = 'waiting_for_response'");
@@ -162,6 +181,7 @@ if ($department === 'operations') {
     $r = $db->query("SELECT COUNT(*) FROM contact_messages WHERE is_read = 0");
     $deptKPIs[] = ['label' => 'Unread Messages', 'value' => $r->fetchColumn(), 'icon' => 'mail', 'color' => '#2a9d8f'];
 } elseif ($department === 'sales') {
+    // Sales: revenue metrics and booking pipeline
     $r = $db->query("SELECT COALESCE(SUM(total_price), 0) FROM bookings WHERE status = 'confirmed' AND MONTH(created_at) = MONTH(CURDATE())");
     $deptKPIs[] = ['label' => 'Revenue This Month', 'value' => formatPrice($r->fetchColumn(), 0), 'icon' => 'payments', 'color' => '#264653'];
     $r = $db->query("SELECT COUNT(*) FROM bookings WHERE status = 'confirmed' AND MONTH(created_at) = MONTH(CURDATE())");
@@ -171,6 +191,7 @@ if ($department === 'operations') {
     $r = $db->query("SELECT COUNT(*) FROM payments WHERE status = 'completed' AND MONTH(created_at) = MONTH(CURDATE())");
     $deptKPIs[] = ['label' => 'Payments This Month', 'value' => $r->fetchColumn(), 'icon' => 'receipt', 'color' => '#e76f51'];
 } elseif ($department === 'marketing') {
+    // Marketing: content and subscriber metrics
     $r = $db->query("SELECT COUNT(*) FROM newsletter_subscriptions WHERE is_active = 1");
     $deptKPIs[] = ['label' => 'Newsletter Subscribers', 'value' => $r->fetchColumn(), 'icon' => 'campaign', 'color' => '#264653'];
     $r = $db->query("SELECT COUNT(*) FROM destinations WHERE is_active = 1");
@@ -181,7 +202,8 @@ if ($department === 'operations') {
     $deptKPIs[] = ['label' => 'Messages This Week', 'value' => $r->fetchColumn(), 'icon' => 'mail', 'color' => '#e76f51'];
 }
 
-// --- Recent Activity ---
+// === RECENT ACTIVITY ===
+// Get the last 10 activity log entries for this staff member
 $stmt = $db->prepare(
     "SELECT action, entity_type, details, created_at
      FROM activity_logs
@@ -192,7 +214,8 @@ $stmt = $db->prepare(
 $stmt->execute([':uid' => $userId]);
 $recentActivity = $stmt->fetchAll();
 
-// Count stats
+// === COMPUTE SUMMARY STATS ===
+// Count assigned tasks and pending/open items
 $myBookingCount = count($myBookings);
 $myInquiryCount = count($myInquiries);
 $pendingBookings = 0;
@@ -200,11 +223,13 @@ $openInquiries = 0;
 foreach ($myBookings as $b) { if ($b['status'] === 'pending') $pendingBookings++; }
 foreach ($myInquiries as $i) { if ($i['status'] !== 'resolved') $openInquiries++; }
 
+// === SIDEBAR ===
 include __DIR__ . '/includes/sidebar.php';
 ?>
 
 <div class="adm-sidebar-overlay" id="sidebarOverlay"></div>
 <main class="adm-main">
+    <!-- === TOP BAR === -->
     <div class="adm-topbar">
         <div class="adm-topbar-left">
             <button class="adm-menu-toggle" onclick="document.getElementById('adminSidebar').classList.toggle('open');document.getElementById('sidebarOverlay').classList.toggle('open');">
@@ -213,7 +238,8 @@ include __DIR__ . '/includes/sidebar.php';
             <h1 class="adm-topbar-title">My Dashboard</h1>
         </div>
         <div class="adm-topbar-right">
-            <!-- Availability Toggle -->
+            <!-- === AVAILABILITY TOGGLE === -->
+            <!-- Quick toggle button for staff to mark themselves available/unavailable -->
             <form method="post" style="display:inline;">
                 <?php csrf_field(); ?>
                 <input type="hidden" name="action" value="toggle_availability">
@@ -227,6 +253,7 @@ include __DIR__ . '/includes/sidebar.php';
     </div>
 
     <div class="adm-content">
+        <!-- === STATUS ALERTS === -->
         <?php if (isset($_GET['toggled'])): ?>
             <div class="adm-alert adm-alert-success"><span class="material-symbols-outlined">check_circle</span> Availability status updated.</div>
         <?php endif; ?>
@@ -234,7 +261,8 @@ include __DIR__ . '/includes/sidebar.php';
             <div class="adm-alert adm-alert-success"><span class="material-symbols-outlined">check_circle</span> Task claimed successfully!</div>
         <?php endif; ?>
 
-        <!-- Welcome Banner -->
+        <!-- === WELCOME BANNER === -->
+        <!-- Personalized greeting with summary stats -->
         <div style="background:linear-gradient(135deg,#264653,#1a3a4a);color:#ffffff;padding:1.5rem 2rem;border-radius:12px;margin-bottom:1.5rem;">
             <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;">
                 <div>
@@ -261,7 +289,8 @@ include __DIR__ . '/includes/sidebar.php';
             </div>
         </div>
 
-        <!-- Department KPIs -->
+        <!-- === DEPARTMENT KPIs === -->
+        <!-- Department-specific key performance indicators -->
         <?php if (!empty($deptKPIs)): ?>
             <div class="adm-stat-grid" style="margin-bottom:1.5rem;">
                 <?php foreach ($deptKPIs as $kpi): ?>
@@ -278,7 +307,7 @@ include __DIR__ . '/includes/sidebar.php';
             </div>
         <?php endif; ?>
 
-        <!-- My Assigned Bookings -->
+        <!-- === MY ASSIGNED BOOKINGS === -->
         <div class="adm-page-header">
             <h2>My Assigned Bookings (<?= $myBookingCount ?>)</h2>
         </div>
@@ -319,9 +348,11 @@ include __DIR__ . '/includes/sidebar.php';
                                 <td class="cell-muted"><?= date('M d, Y', strtotime($b['assigned_at'])) ?></td>
                                 <td>
                                     <div class="cell-actions">
+                                        <!-- View booking details -->
                                         <a href="booking-detail.php?ref=<?= urlencode($b['booking_reference']) ?>" class="adm-btn-icon" title="View Details">
                                             <span class="material-symbols-outlined">visibility</span>
                                         </a>
+                                        <!-- Confirm booking — disabled if already confirmed -->
                                         <form method="post" style="display:inline;" data-confirm="Update status to Confirmed?">
                                             <?php csrf_field(); ?>
                                             <input type="hidden" name="action" value="update_booking_status">
@@ -340,7 +371,7 @@ include __DIR__ . '/includes/sidebar.php';
             </div>
         <?php endif; ?>
 
-        <!-- My Assigned Inquiries -->
+        <!-- === MY ASSIGNED INQUIRIES === -->
         <div class="adm-page-header">
             <h2>My Assigned Inquiries (<?= $myInquiryCount ?>)</h2>
         </div>
@@ -365,6 +396,7 @@ include __DIR__ . '/includes/sidebar.php';
                     <tbody>
                         <?php foreach ($myInquiries as $i): ?>
                             <?php
+                                // Map inquiry status to CSS class
                                 $statusClass = 'open';
                                 if ($i['status'] === 'waiting_for_response') $statusClass = 'waiting';
                                 elseif ($i['status'] === 'under_review') $statusClass = 'review';
@@ -385,6 +417,7 @@ include __DIR__ . '/includes/sidebar.php';
                                 <td class="cell-muted"><?= date('M d, Y', strtotime($i['assigned_at'])) ?></td>
                                 <td>
                                     <div class="cell-actions">
+                                        <!-- View and reply to inquiry thread -->
                                         <a href="inquiries.php?thread=<?= $i['id'] ?>" class="adm-btn-icon" title="View & Reply">
                                             <span class="material-symbols-outlined">reply</span>
                                         </a>
@@ -397,13 +430,15 @@ include __DIR__ . '/includes/sidebar.php';
             </div>
         <?php endif; ?>
 
-        <!-- Department Items (Claimable) -->
+        <!-- === DEPARTMENT CLAIMABLE TASKS === -->
+        <!-- Show unassigned tasks from the staff member's department that they can claim -->
         <?php if (!empty($deptBookings) || !empty($deptInquiries)): ?>
             <div class="adm-page-header">
                 <h2>Department Tasks (Claimable)</h2>
                 <p style="color:var(--adm-secondary);margin:0;font-size:0.9rem;">Unassigned tasks from your department that you can claim.</p>
             </div>
 
+            <!-- Unassigned Bookings (for operations/sales departments) -->
             <?php if (!empty($deptBookings) && in_array($department, ['operations', 'sales'])): ?>
                 <h3 style="font-size:1rem;margin-bottom:0.75rem;">Unassigned Bookings</h3>
                 <div class="adm-table-wrap" style="margin-bottom:2rem;">
@@ -419,6 +454,7 @@ include __DIR__ . '/includes/sidebar.php';
                         </thead>
                         <tbody>
                             <?php
+                            // Filter to only unassigned bookings and limit to 5 displayed
                             $unassignedBookings = array_filter($deptBookings, fn($b) => $b['is_assigned'] == 0);
                             $shown = 0;
                             foreach ($unassignedBookings as $b):
@@ -435,6 +471,7 @@ include __DIR__ . '/includes/sidebar.php';
                                         </span>
                                     </td>
                                     <td style="text-align:right;">
+                                        <!-- Claim button — staff takes ownership of the booking -->
                                         <form method="post" style="display:inline;" data-confirm="Claim this booking?">
                                             <?php csrf_field(); ?>
                                             <input type="hidden" name="action" value="claim_task">
@@ -456,6 +493,7 @@ include __DIR__ . '/includes/sidebar.php';
                 </div>
             <?php endif; ?>
 
+            <!-- Unassigned Inquiries (for customer_service department) -->
             <?php if (!empty($deptInquiries) && $department === 'customer_service'): ?>
                 <h3 style="font-size:1rem;margin-bottom:0.75rem;">Unassigned Inquiries</h3>
                 <div class="adm-table-wrap" style="margin-bottom:2rem;">
@@ -471,6 +509,7 @@ include __DIR__ . '/includes/sidebar.php';
                         </thead>
                         <tbody>
                             <?php
+                            // Filter to only unassigned inquiries and limit to 5 displayed
                             $unassignedInquiries = array_filter($deptInquiries, fn($i) => $i['is_assigned'] == 0);
                             $shown = 0;
                             foreach ($unassignedInquiries as $i):
@@ -483,6 +522,7 @@ include __DIR__ . '/includes/sidebar.php';
                                     <td><?= htmlspecialchars($i['subject']) ?></td>
                                     <td>
                                         <?php
+                                            // Map inquiry status to CSS class
                                             $statusClass = 'open';
                                             if ($i['status'] === 'waiting_for_response') $statusClass = 'waiting';
                                             elseif ($i['status'] === 'under_review') $statusClass = 'review';
@@ -492,6 +532,7 @@ include __DIR__ . '/includes/sidebar.php';
                                         </span>
                                     </td>
                                     <td style="text-align:right;">
+                                        <!-- Claim button — staff takes ownership of the inquiry -->
                                         <form method="post" style="display:inline;" data-confirm="Claim this inquiry?">
                                             <?php csrf_field(); ?>
                                             <input type="hidden" name="action" value="claim_task">
@@ -514,7 +555,8 @@ include __DIR__ . '/includes/sidebar.php';
             <?php endif; ?>
         <?php endif; ?>
 
-        <!-- Recent Activity -->
+        <!-- === RECENT ACTIVITY === -->
+        <!-- Last 10 actions performed by this staff member -->
         <div class="adm-page-header">
             <h2>My Recent Activity</h2>
         </div>
@@ -537,6 +579,7 @@ include __DIR__ . '/includes/sidebar.php';
                     <tbody>
                         <?php foreach ($recentActivity as $activity): ?>
                             <tr>
+                                <!-- Format action name: convert underscores to spaces and capitalize -->
                                 <td class="cell-main"><?= htmlspecialchars(ucwords(str_replace('_', ' ', $activity['action']))) ?></td>
                                 <td>
                                     <span class="adm-status-badge adm-status-confirmed">

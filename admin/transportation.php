@@ -1,28 +1,47 @@
 <?php
+/**
+ * File: admin/transportation.php
+ * Purpose: Lists all transportation options with search and delete functionality.
+ * Dependencies: admin/includes/header.php (auth, DB, CSRF), admin/includes/sidebar.php, admin/includes/footer.php, config/helpers.php (csrf_field, formatPrice)
+ * Used By: Admin staff managing transportation options
+ * Parent Files: None (entry-point page)
+ * Child Files: admin/includes/header.php, admin/includes/sidebar.php, admin/includes/footer.php
+ * @package GlobeTrek\Admin
+ */
+
 $pageTitle = 'Manage Transportation';
 require_once __DIR__ . '/includes/header.php';
 
+// === DELETE HANDLER ===
+// Process transport deletion via POST to prevent accidental GET-based deletions.
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delete') {
+    // CSRF token validation — rejects the request if the token is missing or invalid.
     if (!validateCSRFToken($_POST['csrf_token'] ?? null)) {
         $error = 'Invalid security token. Please try again.';
     } else {
+        // Cast to int to prevent SQL injection via type juggling.
         $delId = (int)($_POST['transport_id'] ?? 0);
         if ($delId > 0) {
             $stmt = $db->prepare("DELETE FROM transportations WHERE id = :id");
             $stmt->execute([':id' => $delId]);
+            // PRG pattern: redirect after POST to avoid duplicate submissions on refresh.
             header('Location: transportation.php?deleted=1');
             exit;
         }
     }
 }
 
+// === SIDEBAR ===
 include __DIR__ . '/includes/sidebar.php';
 
+// === SEARCH / FILTER ===
+// Build dynamic WHERE clause for name, location, and vehicle type search.
 $search = trim($_GET['q'] ?? '');
 $where = '';
 $params = [];
 if ($search !== '') { $where = "WHERE name LIKE :q OR location LIKE :q2 OR vehicle_type LIKE :q3"; $params[':q'] = "%$search%"; $params[':q2'] = "%$search%"; $params[':q3'] = "%$search%"; }
 
+// === FETCH TRANSPORT OPTIONS ===
 $stmt = $db->prepare("SELECT * FROM transportations $where ORDER BY created_at DESC");
 $stmt->execute($params);
 $transports = $stmt->fetchAll();
@@ -30,6 +49,7 @@ $transports = $stmt->fetchAll();
 
 <div class="adm-sidebar-overlay" id="sidebarOverlay"></div>
 <main class="adm-main">
+    <!-- === TOP BAR === -->
     <div class="adm-topbar">
         <div class="adm-topbar-left">
             <button class="adm-menu-toggle" onclick="document.getElementById('adminSidebar').classList.toggle('open');document.getElementById('sidebarOverlay').classList.toggle('open');">
@@ -44,6 +64,7 @@ $transports = $stmt->fetchAll();
     </div>
 
     <div class="adm-content">
+        <!-- === FLASH MESSAGES === -->
         <?php if (isset($_GET['deleted'])): ?>
             <div class="adm-alert adm-alert-success"><span class="material-symbols-outlined">check_circle</span> Transport deleted successfully.</div>
         <?php endif; ?>
@@ -51,11 +72,13 @@ $transports = $stmt->fetchAll();
             <div class="adm-alert adm-alert-success"><span class="material-symbols-outlined">check_circle</span> Transport saved successfully.</div>
         <?php endif; ?>
 
+        <!-- === PAGE HEADER === -->
         <div class="adm-page-header">
             <h1>Transportation (<?= count($transports) ?>)</h1>
             <a href="transport-edit.php" class="adm-btn adm-btn-primary"><span class="material-symbols-outlined">add</span> Add Transport</a>
         </div>
 
+        <!-- === SEARCH BAR === -->
         <div class="adm-filter-bar">
             <form method="get" class="adm-search" style="display:flex;">
                 <span class="material-symbols-outlined">search</span>
@@ -63,6 +86,7 @@ $transports = $stmt->fetchAll();
             </form>
         </div>
 
+        <!-- === TRANSPORT TABLE / EMPTY STATE === -->
         <?php if (empty($transports)): ?>
             <div class="adm-empty">
                 <span class="material-symbols-outlined adm-empty-icon">directions_car</span>
@@ -94,19 +118,23 @@ $transports = $stmt->fetchAll();
                                 <td><?= htmlspecialchars($t['location']) ?></td>
                                 <td class="cell-mono"><?= formatPrice($t['price_per_day'], 2) ?></td>
                                 <td><?= number_format($t['rating'], 1) ?></td>
+                                <!-- Available status badge -->
                                 <td>
                                     <span class="adm-status-badge <?= $t['is_available'] ? 'adm-status-active' : 'adm-status-inactive' ?>">
                                         <?= $t['is_available'] ? 'Yes' : 'No' ?>
                                     </span>
                                 </td>
+                                <!-- Active status badge -->
                                 <td>
                                     <span class="adm-status-badge <?= $t['is_active'] ? 'adm-status-active' : 'adm-status-inactive' ?>">
                                         <?= $t['is_active'] ? 'Yes' : 'No' ?>
                                     </span>
                                 </td>
+                                <!-- === ACTION BUTTONS (Edit / Delete) === -->
                                 <td>
                                     <div class="cell-actions">
                                         <a href="transport-edit.php?id=<?= $t['id'] ?>" class="adm-btn-icon" title="Edit"><span class="material-symbols-outlined">edit</span></a>
+                                        <!-- Delete form with CSRF protection and JS confirmation -->
                                         <form method="post" style="display:inline;" data-confirm="Delete this transport?">
                                             <?php csrf_field(); ?>
                                             <input type="hidden" name="action" value="delete">

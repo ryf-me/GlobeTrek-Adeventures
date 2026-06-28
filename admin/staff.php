@@ -1,24 +1,34 @@
 <?php
 /**
- * Staff Members List
- *
- * Displays all staff profiles with filtering by department, availability,
- * and search. Only accessible by admins.
+ * File: admin/staff.php
+ * Purpose: Displays all staff profiles with filtering by department, availability, and search.
+ * Dependencies: admin/includes/header.php, admin/includes/sidebar.php, admin/includes/footer.php, config/logger.php
+ * Used By: Admin-only (role must be 'admin')
+ * Parent Files: admin/includes/sidebar.php (navigated from sidebar menu)
+ * Child Files: admin/includes/header.php, admin/includes/sidebar.php, admin/includes/footer.php
+ * @package GlobeTrek\Admin
  */
+
 $pageTitle = 'Staff Members';
+
+// === INITIALIZATION ===
 require_once __DIR__ . '/includes/header.php';
 require_once __DIR__ . '/../config/logger.php';
 
+// === ACCESS CONTROL ===
+// Only admin users can manage staff profiles
 if (($_SESSION['user_role'] ?? '') !== 'admin') {
     header('Location: index.php');
     exit;
 }
 
-// Handle POST actions
+// === CSRF VALIDATION ===
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !validateCSRFToken($_POST['csrf_token'] ?? null)) {
     $error = 'Invalid security token. Please try again.';
 }
 
+// === TOGGLE AVAILABILITY ===
+// Flips the is_available flag — controls whether staff can be assigned new tasks
 if (empty($error) && $_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'toggle_availability') {
     $staffId = (int)($_POST['staff_id'] ?? 0);
     if ($staffId > 0) {
@@ -30,11 +40,12 @@ if (empty($error) && $_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] 
     }
 }
 
-// Deactivate / Reactivate staff account
+// === TOGGLE ACCOUNT ACTIVE STATUS ===
+// Activates or deactivates the underlying user account — prevents login when deactivated
 if (empty($error) && $_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'toggle_active') {
     $staffId = (int)($_POST['staff_id'] ?? 0);
     if ($staffId > 0) {
-        // Get user_id
+        // Look up the user_id linked to this staff profile
         $stmt = $db->prepare("SELECT user_id FROM staff_profiles WHERE id = :id");
         $stmt->execute([':id' => $staffId]);
         $staff = $stmt->fetch();
@@ -48,15 +59,17 @@ if (empty($error) && $_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] 
     }
 }
 
+// === DELETE STAFF PROFILE ===
+// Removes staff profile and demotes the user back to 'user' role
 if (empty($error) && $_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delete') {
     $staffId = (int)($_POST['staff_id'] ?? 0);
     if ($staffId > 0) {
-        // Get user_id before deleting
+        // Get user_id before deleting the staff profile
         $stmt = $db->prepare("SELECT user_id FROM staff_profiles WHERE id = :id");
         $stmt->execute([':id' => $staffId]);
         $staff = $stmt->fetch();
         if ($staff) {
-            // Delete staff profile (cascades to permissions and assignments)
+            // Delete staff profile — cascades to permissions and assignments
             $stmt = $db->prepare("DELETE FROM staff_profiles WHERE id = :id");
             $stmt->execute([':id' => $staffId]);
             // Demote user back to 'user' role
@@ -69,27 +82,33 @@ if (empty($error) && $_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] 
     }
 }
 
+// === SIDEBAR ===
 include __DIR__ . '/includes/sidebar.php';
 
-// Filters
+// === FILTERS & SEARCH ===
+// Availability filter, department filter, and text search from URL query parameters
 $filter = $_GET['filter'] ?? 'all';
 $department = $_GET['department'] ?? 'all';
 $search = trim($_GET['q'] ?? '');
 
+// Build dynamic WHERE clause
 $where = [];
 $params = [];
 
+// Availability filter
 if ($filter === 'available') {
     $where[] = "sp.is_available = 1";
 } elseif ($filter === 'unavailable') {
     $where[] = "sp.is_available = 0";
 }
 
+// Department filter — whitelist valid department values
 if ($department !== 'all' && in_array($department, ['operations', 'customer_service', 'sales', 'marketing'])) {
     $where[] = "sp.department = :dept";
     $params[':dept'] = $department;
 }
 
+// Text search across name, email, and position
 if ($search !== '') {
     $where[] = "(u.full_name LIKE :q OR u.email LIKE :q2 OR sp.position LIKE :q3)";
     $params[':q'] = "%$search%";
@@ -97,9 +116,11 @@ if ($search !== '') {
     $params[':q3'] = "%$search%";
 }
 
+// Assemble WHERE clause
 $whereSQL = !empty($where) ? 'WHERE ' . implode(' AND ', $where) : '';
 
-// Query staff
+// === FETCH STAFF MEMBERS ===
+// Join staff_profiles with users table and include assignment count subquery
 $stmt = $db->prepare(
     "SELECT sp.*, u.full_name, u.email, u.profile_photo, u.is_active, u.created_at AS user_created_at,
             (SELECT COUNT(*) FROM staff_assignments sa WHERE sa.staff_id = sp.id) AS assignment_count
@@ -111,7 +132,8 @@ $stmt = $db->prepare(
 $stmt->execute($params);
 $staffMembers = $stmt->fetchAll();
 
-// Stats
+// === COMPUTE STATISTICS ===
+// Aggregate counts by availability and department from fetched results
 $stats = [];
 $stats['total'] = count($staffMembers);
 $stats['available'] = 0;
@@ -124,6 +146,7 @@ foreach ($staffMembers as $s) {
     $stats['by_department'][$s['department']] = ($stats['by_department'][$s['department']] ?? 0) + 1;
 }
 
+// Department display labels
 $departmentLabels = [
     'operations' => 'Operations',
     'customer_service' => 'Customer Service',
@@ -134,6 +157,7 @@ $departmentLabels = [
 
 <div class="adm-sidebar-overlay" id="sidebarOverlay"></div>
 <main class="adm-main">
+    <!-- === TOP BAR === -->
     <div class="adm-topbar">
         <div class="adm-topbar-left">
             <button class="adm-menu-toggle" onclick="document.getElementById('adminSidebar').classList.toggle('open');document.getElementById('sidebarOverlay').classList.toggle('open');">
@@ -152,6 +176,7 @@ $departmentLabels = [
     </div>
 
     <div class="adm-content">
+        <!-- === SUCCESS / STATUS ALERTS === -->
         <?php if (isset($_GET['deleted'])): ?>
             <div class="adm-alert adm-alert-success"><span class="material-symbols-outlined">check_circle</span> Staff member removed successfully.</div>
         <?php endif; ?>
@@ -165,7 +190,8 @@ $departmentLabels = [
             <div class="adm-alert adm-alert-error"><span class="material-symbols-outlined">error</span> <?= htmlspecialchars($error) ?></div>
         <?php endif; ?>
 
-        <!-- Stats -->
+        <!-- === STAT CARDS === -->
+        <!-- Summary statistics for staff availability and department distribution -->
         <div class="adm-stat-grid" style="margin-bottom:1.5rem;">
             <div class="adm-stat-card">
                 <div class="adm-stat-card-icon"><span class="material-symbols-outlined">badge</span></div>
@@ -199,16 +225,18 @@ $departmentLabels = [
             <?php endforeach; ?>
         </div>
 
-        <!-- Page Header -->
+        <!-- === PAGE HEADER === -->
         <div class="adm-page-header">
             <h1>Staff Members (<?= $stats['total'] ?>)</h1>
         </div>
 
-        <!-- Filter Bar -->
+        <!-- === AVAILABILITY FILTER BAR === -->
+        <!-- Search input and availability filter tabs — preserve search and department filters -->
         <div class="adm-filter-bar">
             <form method="get" class="adm-search" style="display:flex;">
                 <span class="material-symbols-outlined">search</span>
                 <input type="text" name="q" placeholder="Search by name, email, position..." value="<?= htmlspecialchars($search) ?>">
+                <!-- Preserve current department and availability filters in search form -->
                 <?php if ($department !== 'all'): ?>
                     <input type="hidden" name="department" value="<?= htmlspecialchars($department) ?>">
                 <?php endif; ?>
@@ -221,7 +249,8 @@ $departmentLabels = [
             <a href="?filter=unavailable<?= $department !== 'all' ? '&department=' . urlencode($department) : '' ?><?= $search ? '&q=' . urlencode($search) : '' ?>" class="adm-tab <?= $filter === 'unavailable' ? 'active' : '' ?>">Unavailable</a>
         </div>
 
-        <!-- Department Filter -->
+        <!-- === DEPARTMENT FILTER TABS === -->
+        <!-- Secondary filter row for department selection — preserves availability and search filters -->
         <div class="adm-tabs" style="margin-bottom:1rem;">
             <a href="?filter=<?= urlencode($filter) ?><?= $search ? '&q=' . urlencode($search) : '' ?>" class="adm-tab <?= $department === 'all' ? 'active' : '' ?>">All Departments</a>
             <?php foreach ($departmentLabels as $key => $label): ?>
@@ -229,6 +258,7 @@ $departmentLabels = [
             <?php endforeach; ?>
         </div>
 
+        <!-- === STAFF TABLE === -->
         <?php if (empty($staffMembers)): ?>
             <div class="adm-empty">
                 <span class="material-symbols-outlined adm-empty-icon">badge</span>
@@ -269,23 +299,28 @@ $departmentLabels = [
                                     </span>
                                 </td>
                                 <td><?= htmlspecialchars($s['position']) ?></td>
+                                <!-- Availability status badge -->
                                 <td>
                                     <span class="adm-status-badge adm-status-<?= $s['is_available'] ? 'active' : 'inactive' ?>">
                                         <?= $s['is_available'] ? 'Available' : 'Unavailable' ?>
                                     </span>
                                 </td>
+                                <!-- Account active/inactive status -->
                                 <td>
                                     <span class="adm-status-badge adm-status-<?= $s['is_active'] ? 'active' : 'cancelled' ?>">
                                         <?= $s['is_active'] ? 'Active' : 'Deactivated' ?>
                                     </span>
                                 </td>
+                                <!-- Current assignments vs max concurrent tasks -->
                                 <td class="cell-mono"><?= $s['assignment_count'] ?> / <?= $s['max_concurrent_tasks'] ?></td>
                                 <td class="cell-muted"><?= $s['hire_date'] ? date('M d, Y', strtotime($s['hire_date'])) : '—' ?></td>
                                 <td>
                                     <div class="cell-actions">
+                                        <!-- Edit link -->
                                         <a href="staff-edit.php?id=<?= $s['id'] ?>" class="adm-btn-icon" title="Edit">
                                             <span class="material-symbols-outlined">edit</span>
                                         </a>
+                                        <!-- Toggle availability — marks as available or unavailable for assignments -->
                                         <form method="post" style="display:inline;" data-confirm="<?= $s['is_available'] ? 'Mark as unavailable?' : 'Mark as available?' ?>">
                                             <?php csrf_field(); ?>
                                             <input type="hidden" name="action" value="toggle_availability">
@@ -294,6 +329,7 @@ $departmentLabels = [
                                                 <span class="material-symbols-outlined"><?= $s['is_available'] ? 'do_not_disturb' : 'check_circle' ?></span>
                                             </button>
                                         </form>
+                                        <!-- Toggle account active status — prevents login when deactivated -->
                                         <form method="post" style="display:inline;" data-confirm="<?= $s['is_active'] ? 'Deactivate this staff account? They will not be able to log in.' : 'Reactivate this staff account?' ?>">
                                             <?php csrf_field(); ?>
                                             <input type="hidden" name="action" value="toggle_active">
@@ -302,6 +338,7 @@ $departmentLabels = [
                                                 <span class="material-symbols-outlined"><?= $s['is_active'] ? 'person_off' : 'person' ?></span>
                                             </button>
                                         </form>
+                                        <!-- Delete staff profile — permanent action -->
                                         <form method="post" style="display:inline;" data-confirm="Delete this staff member permanently?">
                                             <?php csrf_field(); ?>
                                             <input type="hidden" name="action" value="delete">

@@ -1,11 +1,10 @@
-/* ============================================
-   Settings Page – User Dashboard
-   (Sidebar layout in css/user-sidebar.css)
-   ============================================ */
+/**
+ * File: css/settings.css
+ * Purpose: Styles for the Settings page — language/notification toggles, password change, privacy checkboxes, danger zone, and alerts
+ * Used By: settings/index.html
+ */
 
-/* --------------------------------------------
-   Page Header
-   -------------------------------------------- */
+/* === Page Header === */
 .usr-page-header {
     margin-bottom: 1.5rem;
 }
@@ -23,18 +22,14 @@
     font-size: 0.95rem;
 }
 
-/* --------------------------------------------
-   Sections Container
-   -------------------------------------------- */
+/* === Sections Container === */
 .settings-sections {
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
 }
 
-/* --------------------------------------------
-   Individual Section
-   -------------------------------------------- */
+/* === Individual Section === */
 .settings-section {
     border: 1px solid var(--inq-outline-variant, #c4c7c8);
     background: var(--inq-surface-container-lowest, #fff);
@@ -46,9 +41,7 @@
     border: 2px solid var(--inq-error, #ba1a1a);
 }
 
-/* --------------------------------------------
-   Section Header
-   -------------------------------------------- */
+/* === Section Header === */
 .settings-section-header {
     display: flex;
     align-items: center;
@@ -81,9 +74,7 @@
     color: var(--inq-error, #ba1a1a);
 }
 
-/* --------------------------------------------
-   Form Groups
-   -------------------------------------------- */
+/* === Form Groups === */
 .settings-form-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -126,9 +117,7 @@
     appearance: auto;
 }
 
-/* --------------------------------------------
-   Sub-headings
-   -------------------------------------------- */
+/* === Sub-headings === */
 .settings-subheading {
     font-size: 0.8rem;
     font-weight: 700;
@@ -138,18 +127,14 @@
     margin-bottom: 0.25rem;
 }
 
-/* --------------------------------------------
-   Password Fields Stack
-   -------------------------------------------- */
+/* === Password Fields Stack === */
 .settings-password-stack {
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
 }
 
-/* --------------------------------------------
-   Buttons
-   -------------------------------------------- */
+/* === Buttons === */
 .settings-btn {
     display: inline-flex;
     align-items: center;
@@ -193,9 +178,7 @@
     opacity: 0.9;
 }
 
-/* --------------------------------------------
-   Toggle Switches
-   -------------------------------------------- */
+/* === Toggle Switches === */
 .settings-toggle-row {
     display: flex;
     align-items: center;
@@ -273,9 +256,7 @@
     transform: translateX(20px);
 }
 
-/* --------------------------------------------
-   Privacy Section
-   -------------------------------------------- */
+/* === Privacy Section === */
 .settings-checkbox-row {
     display: flex;
     align-items: flex-start;
@@ -338,9 +319,7 @@
     font-size: 16px;
 }
 
-/* --------------------------------------------
-   Danger Zone
-   -------------------------------------------- */
+/* === Danger Zone === */
 .settings-danger-row {
     display: flex;
     flex-direction: row;
@@ -361,26 +340,7 @@
     margin-top: 0.15rem;
 }
 
-/* --------------------------------------------
-   Responsive
-   -------------------------------------------- */
-@media (max-width: 640px) {
-    .settings-form-row {
-        grid-template-columns: 1fr;
-    }
-
-    .settings-danger-row {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .settings-btn-danger {
-        width: 100%;
-        justify-content: center;
-    }
-}
-
-/* ---------- Alerts ---------- */
+/* === Alerts === */
 .settings-alert {
     display: flex;
     align-items: center;
@@ -408,7 +368,7 @@
     font-size: 1.2rem;
 }
 
-/* ---- Password Strength Meter ---- */
+/* === Password Strength Meter === */
 .password-strength-meter {
     display: flex;
     align-items: center;
@@ -432,4 +392,21 @@
     font-weight: 600;
     margin-left: auto;
     white-space: nowrap;
+}
+
+/* === Responsive Breakpoints === */
+@media (max-width: 640px) {
+    .settings-form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .settings-danger-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .settings-btn-danger {
+        width: 100%;
+        justify-content: center;
+    }
 }

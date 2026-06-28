@@ -1,20 +1,36 @@
 <?php
+/**
+ * File: pages/settings.php
+ * Purpose: User account settings — password change, notification preferences,
+ *          privacy settings, and account deletion.
+ * Dependencies: config/database.php, config/csrf.php, js/script.js
+ * Used By: User sidebar navigation (user-sidebar.php)
+ * Parent Files: None (standalone page rendered in browser)
+ * Child Files: Includes navbar.php, user-sidebar.php, footer.php
+ * @package GlobeTrek\Pages
+ */
+
 session_start();
 
+// === AUTH GUARD ===
 if (!isset($_SESSION['user_id'])) {
     header('Location: login.php');
     exit;
 }
 
+// === DATABASE & CONFIG ===
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../config/csrf.php';
 $db = getDB();
 $userId = $_SESSION['user_id'];
 
+// === FETCH USER DATA ===
 $stmt = $db->prepare("SELECT * FROM users WHERE id = :id");
 $stmt->execute([':id' => $userId]);
 $user = $stmt->fetch();
 
+// === PARSE NOTIFICATION PREFERENCES ===
+// Stored as JSON in notification_preferences column; decode with fallback defaults
 $notificationPrefs = json_decode($user['notification_preferences'] ?? '{}', true) ?: [
     'email_notifications' => true,
     'sms_updates' => false,
@@ -25,22 +41,27 @@ $notificationPrefs = json_decode($user['notification_preferences'] ?? '{}', true
 $successMsg = '';
 $errorMsg = '';
 
+// === HANDLE FORM SUBMISSIONS ===
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // CSRF validation
+    // CSRF token validation
     if (!validateCSRFToken($_POST['csrf_token'] ?? null)) {
         $errorMsg = 'Invalid security token. Please try again.';
     }
 
+    // Route to the appropriate handler based on the hidden "action" field
     $action = $_POST['action'] ?? '';
 
+    // === ACTION: CHANGE PASSWORD ===
     if ($action === 'update_password') {
         $currentPassword = $_POST['current_password'] ?? '';
         $newPassword = $_POST['new_password'] ?? '';
         $confirmPassword = $_POST['confirm_password'] ?? '';
 
+        // Multi-step validation with specific error messages
         if ($currentPassword === '' || $newPassword === '' || $confirmPassword === '') {
             $errorMsg = 'All password fields are required.';
         } elseif (!password_verify($currentPassword, $user['password'])) {
+            // Verify current password against stored hash
             $errorMsg = 'Current password is incorrect.';
         } elseif (strlen($newPassword) < 8) {
             $errorMsg = 'New password must be at least 8 characters.';
@@ -53,12 +74,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } elseif ($newPassword !== $confirmPassword) {
             $errorMsg = 'New passwords do not match.';
         } else {
+            // Hash new password using bcrypt (default algorithm)
             $hashed = password_hash($newPassword, PASSWORD_DEFAULT);
             $updStmt = $db->prepare("UPDATE users SET password = :pw WHERE id = :id");
             $updStmt->execute([':pw' => $hashed, ':id' => $userId]);
             $successMsg = 'Password updated successfully.';
         }
+
+    // === ACTION: UPDATE NOTIFICATION PREFERENCES ===
     } elseif ($action === 'update_notifications') {
+        // Checkbox values are only present in POST when checked
         $notifPrefs = [
             'email_notifications' => isset($_POST['email_notifications']),
             'sms_updates' => isset($_POST['sms_updates']),
@@ -68,19 +93,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $updStmt->execute([':prefs' => json_encode($notifPrefs), ':id' => $userId]);
         $notificationPrefs = $notifPrefs;
         $successMsg = 'Notification preferences saved.';
+
+    // === ACTION: UPDATE PRIVACY SETTINGS ===
     } elseif ($action === 'update_privacy') {
         $privacy = ['public_profile' => isset($_POST['public_profile'])];
+        // Merge privacy into existing notification preferences (shared JSON column)
         $notifPrefs['public_profile'] = $privacy['public_profile'];
         $updStmt = $db->prepare("UPDATE users SET notification_preferences = :prefs WHERE id = :id");
         $updStmt->execute([':prefs' => json_encode($notifPrefs), ':id' => $userId]);
         $notificationPrefs = $notifPrefs;
         $successMsg = 'Privacy settings saved.';
+
+    // === ACTION: DELETE ACCOUNT ===
+    // Destructive operation — requires password confirmation and cascading cleanup
     } elseif ($action === 'delete_account') {
         $deletePassword = $_POST['delete_password'] ?? '';
         if (!password_verify($deletePassword, $user['password'])) {
             $errorMsg = 'Incorrect password. Account not deleted.';
         } else {
+            // Cascade delete: remove user's related data in correct order to respect FK constraints
             $db->prepare("DELETE FROM wishlist WHERE user_id = :id")->execute([':id' => $userId]);
+            // Set user_id to NULL on bookings/inquiries to preserve historical records
             $db->prepare("UPDATE bookings SET user_id = NULL WHERE user_id = :id")->execute([':id' => $userId]);
             $db->prepare("UPDATE inquiries SET user_id = NULL WHERE user_id = :id")->execute([':id' => $userId]);
             $db->prepare("DELETE FROM inquiry_replies WHERE sender_id = :id")->execute([':id' => $userId]);
@@ -94,6 +127,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
+// Sidebar active page indicator
 $activePage = 'settings';
 ?>
 <!DOCTYPE html>
@@ -113,18 +147,22 @@ $activePage = 'settings';
     <link rel="stylesheet" href="../css/footer.css">
 </head>
 <body class="usr-page">
+    <!-- === NAVBAR === -->
     <?php $basePath = '../'; include '../includes/navbar.php'; ?>
 
     <main>
         <div class="usr-layout">
+            <!-- === SIDEBAR === -->
             <?php include '../includes/user-sidebar.php'; ?>
 
+            <!-- === MAIN CONTENT === -->
             <div class="usr-canvas">
                 <div class="usr-page-header">
                     <h1>Settings</h1>
                     <p>Manage your account settings and preferences.</p>
                 </div>
 
+                <!-- === FLASH MESSAGES === -->
                 <?php if ($successMsg): ?>
                     <div class="settings-alert settings-alert-success">
                         <span class="material-symbols-outlined">check_circle</span>
@@ -139,7 +177,8 @@ $activePage = 'settings';
                 <?php endif; ?>
 
                 <div class="settings-sections">
-                    <!-- Security -->
+
+                    <!-- === SECURITY: PASSWORD CHANGE === -->
                     <section class="settings-section">
                         <div class="settings-section-header">
                             <span class="material-symbols-outlined">security</span>
@@ -170,7 +209,7 @@ $activePage = 'settings';
                         </form>
                     </section>
 
-                    <!-- Notifications -->
+                    <!-- === NOTIFICATIONS === -->
                     <section class="settings-section">
                         <div class="settings-section-header">
                             <span class="material-symbols-outlined">notifications</span>
@@ -217,7 +256,7 @@ $activePage = 'settings';
                         </form>
                     </section>
 
-                    <!-- Account Privacy -->
+                    <!-- === ACCOUNT PRIVACY === -->
                     <section class="settings-section">
                         <div class="settings-section-header">
                             <span class="material-symbols-outlined">privacy_tip</span>
@@ -241,7 +280,8 @@ $activePage = 'settings';
                         </form>
                     </section>
 
-                    <!-- Danger Zone -->
+                    <!-- === DANGER ZONE: ACCOUNT DELETION === -->
+                    <!-- Requires password confirmation; uses JS confirm dialog as extra safeguard -->
                     <section class="settings-section danger">
                         <div class="settings-section-header">
                             <span class="material-symbols-outlined">warning</span>
@@ -268,6 +308,7 @@ $activePage = 'settings';
         </div>
     </main>
 
+    <!-- === FOOTER === -->
     <?php $basePath = '../'; include '../includes/footer.php'; ?>
 
     <script src="../js/script.js"></script>

@@ -1,6 +1,8 @@
-/* ============================================
-   About Page Styles
-   ============================================ */
+/**
+ * File: css/about.css
+ * Purpose: Styles for the About page — hero, Our Story section, values grid, team cards, mission/vision cards, timeline, and CTA banner
+ * Used By: about/index.html
+ */
 
 :root {
     --ab-primary: #264653;

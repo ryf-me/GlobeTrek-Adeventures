@@ -1,11 +1,31 @@
 <?php
+/**
+ * File: pages/packages.php
+ * Purpose: Tour packages listing page - displays a DataTable of all tour
+ *          packages with sidebar filters for destination, price range, and
+ *          duration. Uses server-side AJAX loading via ajax-packages.php.
+ *          Includes wishlist toggle functionality for logged-in users.
+ * Dependencies: config/database.php, config/currency.php, css/style.css,
+ *               css/navbar.css, css/packages.css, css/footer.css,
+ *               js/script.js, includes/navbar.php, includes/footer.php,
+ *               jQuery, DataTables library
+ * Used By: index.php (packages link), navbar.php (packages nav item)
+ * Parent Files: index.php
+ * Child Files: ajax-packages.php (AJAX data source), wishlist-toggle.php (AJAX endpoint)
+ * @package GlobeTrek\Pages
+ */
+
+// === CONFIGURATION & DEPENDENCIES ===
 session_start();
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../config/currency.php';
 $db = getDB();
 
+// Get current user ID for wishlist checks
 $userId = $_SESSION['user_id'] ?? null;
 
+// === FILTER OPTION LISTS ===
+// Destination categories for sidebar filter checkboxes
 $destinationsList = [
     'Southern & Western Beaches',
     'Cultural Triangle & Temples',
@@ -14,6 +34,7 @@ $destinationsList = [
     'Colombo & City Experiences'
 ];
 
+// Price range options using configured currency symbol
 $priceRanges = [
     CURRENCY_SYMBOL . '0 - ' . CURRENCY_SYMBOL . '9,999',
     CURRENCY_SYMBOL . '10,000 - ' . CURRENCY_SYMBOL . '29,999',
@@ -21,6 +42,7 @@ $priceRanges = [
     CURRENCY_SYMBOL . '50,000+'
 ];
 
+// Trip duration range options
 $tripDurations = [
     '1-3 Days',
     '4-7 Days',
@@ -40,6 +62,9 @@ $tripDurations = [
     <link rel="stylesheet" href="../css/footer.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+
+    <!-- === INLINE STYLES FOR DATATABLE & FILTERS === -->
+    <!-- These styles are page-specific and not shared with other pages -->
     <style>
         .dataTables_wrapper .dataTables_filter input {
             padding: 8px 12px;
@@ -86,6 +111,7 @@ $tripDurations = [
             color: #e76f51;
             text-decoration: underline;
         }
+        /* Wishlist button styles for table rows */
         .wishlist-active { color: #e76f51; }
         .wishlist-btn-table {
             background: none;
@@ -110,9 +136,11 @@ $tripDurations = [
             color: #ef4444;
             font-variation-settings: 'FILL' 1;
         }
+        /* Layout: sidebar + main content */
         .packages-layout { display: flex; gap: 2rem; }
         .filters-sidebar { flex: 0 0 260px; }
         .packages-main { flex: 1; min-width: 0; }
+        /* Filter group styles */
         .filter-group { margin-bottom: 1.2rem; }
         .filter-group h3 { font-size: 0.95rem; margin-bottom: 0.5rem; color: #264653; }
         .filter-group label { display: block; padding: 3px 0; font-size: 0.88rem; color: #444; cursor: pointer; }
@@ -131,6 +159,7 @@ $tripDurations = [
         .filter-btn:hover { background: #d4603f; }
         .reset-btn { background: #f1f5f9; color: #475569; margin-top: 8px; }
         .reset-btn:hover { background: #e2e8f0; }
+        /* Mobile responsive: stack sidebar below main */
         @media (max-width: 768px) {
             .packages-layout { flex-direction: column; }
             .filters-sidebar { flex: none; }
@@ -139,11 +168,14 @@ $tripDurations = [
 </head>
 <body class="packages-page">
 
+    <!-- === NAVIGATION BAR === -->
     <?php $basePath = '../'; include '../includes/navbar.php'; ?>
 
+    <!-- === PAGE CONTENT === -->
     <div class="page-container">
         <h1>Tour Packages</h1>
 
+        <!-- Custom trip banner CTA -->
         <a href="custom-trips.php" class="customize-trip-banner">
             <div class="customize-trip-text">
                 <h2>Can't find the perfect trip?</h2>
@@ -153,10 +185,11 @@ $tripDurations = [
         </a>
 
         <div class="packages-layout">
-            <!-- Sidebar Filters -->
+            <!-- === SIDEBAR FILTERS === -->
             <aside class="filters-sidebar">
                 <h2 style="margin-bottom:1rem;">Filters</h2>
 
+                <!-- Destination filter checkboxes -->
                 <div class="filter-group">
                     <h3>Destination</h3>
                     <?php foreach ($destinationsList as $dest): ?>
@@ -167,6 +200,7 @@ $tripDurations = [
                     <?php endforeach; ?>
                 </div>
 
+                <!-- Price range filter checkboxes -->
                 <div class="filter-group">
                     <h3>Price Range</h3>
                     <?php foreach ($priceRanges as $range): ?>
@@ -177,6 +211,7 @@ $tripDurations = [
                     <?php endforeach; ?>
                 </div>
 
+                <!-- Duration filter checkboxes -->
                 <div class="filter-group">
                     <h3>Trip Duration</h3>
                     <?php foreach ($tripDurations as $dur): ?>
@@ -187,11 +222,13 @@ $tripDurations = [
                     <?php endforeach; ?>
                 </div>
 
+                <!-- Filter action buttons -->
                 <button type="button" class="filter-btn" id="applyFilters">Apply Filters</button>
                 <button type="button" class="reset-btn" id="resetFilters">Reset</button>
             </aside>
 
-            <!-- Package DataTable -->
+            <!-- === PACKAGE DATATABLE === -->
+            <!-- DataTable loads data via AJAX from ajax-packages.php -->
             <main class="packages-main">
                 <table id="packagesTable" class="display" style="width:100%">
                     <thead>
@@ -209,21 +246,25 @@ $tripDurations = [
             </main>
         </div>
     </div>
+
+    <!-- === FOOTER === -->
     <?php $basePath = '../'; include '../includes/footer.php'; ?>
 
+<!-- === JAVASCRIPT === -->
 <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
 <script src="../js/script.js"></script>
 <script>
 
-// Initialize DataTable
+// === DATATABLE INITIALIZATION ===
+// Server-side processing: data is fetched from ajax-packages.php
 var table = $('#packagesTable').DataTable({
     processing: true,
     serverSide: true,
     ajax: {
         url: 'ajax-packages.php',
+        // Append checked filter values to each AJAX request
         data: function(d) {
-            // Append filter values to the request
             d.destination = [];
             d.price = [];
             d.duration = [];
@@ -232,7 +273,9 @@ var table = $('#packagesTable').DataTable({
             $('input[name="duration[]"]:checked').each(function() { d.duration.push(this.value); });
         }
     },
+    // === COLUMN DEFINITIONS ===
     columns: [
+        // Package title with thumbnail image
         {
             data: 'title',
             render: function(data, type, row) {
@@ -245,7 +288,9 @@ var table = $('#packagesTable').DataTable({
                 return data;
             }
         },
+        // Duration column (plain text)
         { data: 'duration' },
+        // Price column with formatted display and raw value for sorting
         {
             data: 'price',
             render: function(data, type, row) {
@@ -253,7 +298,9 @@ var table = $('#packagesTable').DataTable({
                 return row.price_raw;
             }
         },
+        // Destination category (plain text)
         { data: 'destination_category' },
+        // Wishlist toggle button (non-sortable, non-searchable)
         {
             data: 'wishlist',
             orderable: false,
@@ -264,6 +311,7 @@ var table = $('#packagesTable').DataTable({
                     '<span class="material-symbols-outlined">favorite</span></button>';
             }
         },
+        // Detail link (non-sortable, non-searchable)
         {
             data: 'detail_url',
             orderable: false,
@@ -273,6 +321,7 @@ var table = $('#packagesTable').DataTable({
             }
         }
     ],
+    // Default sort by price ascending
     order: [[2, 'asc']],
     pageLength: 10,
     lengthMenu: [10, 25, 50],
@@ -283,18 +332,21 @@ var table = $('#packagesTable').DataTable({
     }
 });
 
-// Apply filters button
+// === FILTER BUTTON HANDLERS ===
+
+// Apply filters: reload DataTable with current checkbox selections
 $('#applyFilters').on('click', function() {
     table.ajax.reload();
 });
 
-// Reset filters button
+// Reset filters: uncheck all and reload
 $('#resetFilters').on('click', function() {
     $('.pkg-filter').prop('checked', false);
     table.ajax.reload();
 });
 
-// Wishlist toggle
+// === WISHLIST TOGGLE ===
+// Sends AJAX request to toggle wishlist status for a package
 function toggleWishlist(btn) {
     var pkgId = btn.getAttribute('data-id');
     var formData = new FormData();
@@ -312,6 +364,7 @@ function toggleWishlist(btn) {
         } else if (data.status === 'removed') {
             btn.classList.remove('active');
         } else if (data.status === 'error') {
+            // User not logged in or other error
             alert(data.message || 'Please log in to use the wishlist.');
         }
     })

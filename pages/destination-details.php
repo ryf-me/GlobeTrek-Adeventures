@@ -1,14 +1,27 @@
 <?php
+/**
+ * File: pages/destination-details.php
+ * Purpose: Displays detailed information for a single destination, identified by slug query parameter. Shows hero image, featured badge, and full description.
+ * Dependencies: config/database.php, includes/navbar.php, includes/footer.php, css/destinations.css, js/script.js
+ * Used By: destinations.php (linked from destination cards)
+ * Parent Files: destinations.php
+ * Child Files: None
+ * @package GlobeTrek\Pages
+ */
 session_start();
 require_once __DIR__ . '/../config/database.php';
 $db = getDB();
 
+// === SLUG VALIDATION ===
+// Redirect to listings if slug is empty — prevents unnecessary DB query.
 $slug = trim($_GET['slug'] ?? '');
 if ($slug === '') {
     header('Location: destinations.php');
     exit;
 }
 
+// === FETCH DESTINATION BY SLUG ===
+// Only active destinations are accessible; inactive ones redirect to listings.
 $stmt = $db->prepare("SELECT * FROM destinations WHERE slug = :slug AND is_active = 1");
 $stmt->execute([':slug' => $slug]);
 $dest = $stmt->fetch();
@@ -35,6 +48,7 @@ $pageTitle = htmlspecialchars($dest['name']) . ' - Destinations';
 
     <?php $basePath = '../'; include '../includes/navbar.php'; ?>
 
+    <!-- === DESTINATION HERO === -->
     <div class="dest-detail-hero">
         <img src="<?= htmlspecialchars($basePath . $dest['image']) ?>" alt="<?= htmlspecialchars($dest['name']) ?>">
         <div class="dest-detail-hero-overlay">
@@ -49,6 +63,7 @@ $pageTitle = htmlspecialchars($dest['name']) . ' - Destinations';
         </div>
     </div>
 
+    <!-- === DESTINATION CONTENT === -->
     <div class="dest-detail-content">
         <a href="destinations.php" class="dest-detail-back">
             <span class="material-symbols-outlined">arrow_back</span>
@@ -56,6 +71,7 @@ $pageTitle = htmlspecialchars($dest['name']) . ' - Destinations';
         </a>
 
         <h2>About <?= htmlspecialchars($dest['name']) ?></h2>
+        <!-- nl2br converts newlines to <br> for preserving paragraph formatting -->
         <p><?= nl2br(htmlspecialchars($dest['description'] ?? 'No description available.')) ?></p>
     </div>
 

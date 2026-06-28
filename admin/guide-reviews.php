@@ -1,14 +1,24 @@
 <?php
 /**
- * Admin Guide Reviews Management
- *
- * Lists all guide reviews with filtering, approve/reject/delete actions.
- * Accessible by admin and staff with manage_testimonials permission.
+ * File: admin/guide-reviews.php
+ * Purpose: Lists and manages all guide reviews with filtering, approve/reject/delete actions.
+ * Dependencies: admin/includes/header.php, admin/includes/sidebar.php, admin/includes/footer.php, config/logger.php
+ * Used By: Admin/staff users with manage_testimonials permission
+ * Parent Files: admin/includes/sidebar.php (navigated from sidebar menu)
+ * Child Files: admin/includes/header.php, admin/includes/sidebar.php, admin/includes/footer.php
+ * @package GlobeTrek\Admin
  */
+
 $pageTitle = 'Manage Guide Reviews';
+
+// === INITIALIZATION ===
+// Load shared admin header (session, DB, CSRF, permissions)
 require_once __DIR__ . '/includes/header.php';
+// Load activity logging utility
 require_once __DIR__ . '/../config/logger.php';
 
+// === ACCESS CONTROL ===
+// Only staff/admins with manage_testimonials permission may access this page
 if (!hasPermission('manage_testimonials', $db)) {
     header('Location: index.php');
     exit;
@@ -16,13 +26,17 @@ if (!hasPermission('manage_testimonials', $db)) {
 
 $adminId = $_SESSION['user_id'];
 
+// === CSRF VALIDATION ===
+// Validate CSRF token on POST requests to prevent cross-site request forgery
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !validateCSRFToken($_POST['csrf_token'] ?? null)) {
     $error = 'Invalid security token. Please try again.';
 }
 
 $action = $_POST['action'] ?? '';
 
-// Handle approve
+// === SINGLE REVIEW ACTIONS ===
+
+// Handle approve — sets guide review status to 'approved'
 if (empty($error) && $action === 'approve' && ($id = (int)($_POST['review_id'] ?? 0)) > 0) {
     $stmt = $db->prepare("UPDATE guide_reviews SET status = 'approved' WHERE id = :id");
     $stmt->execute([':id' => $id]);
@@ -31,7 +45,7 @@ if (empty($error) && $action === 'approve' && ($id = (int)($_POST['review_id'] ?
     exit;
 }
 
-// Handle reject
+// Handle reject — sets guide review status to 'rejected'
 if (empty($error) && $action === 'reject' && ($id = (int)($_POST['review_id'] ?? 0)) > 0) {
     $stmt = $db->prepare("UPDATE guide_reviews SET status = 'rejected' WHERE id = :id");
     $stmt->execute([':id' => $id]);
@@ -40,7 +54,7 @@ if (empty($error) && $action === 'reject' && ($id = (int)($_POST['review_id'] ??
     exit;
 }
 
-// Handle delete
+// Handle delete — permanently removes a guide review from the database
 if (empty($error) && $action === 'delete' && ($id = (int)($_POST['review_id'] ?? 0)) > 0) {
     $stmt = $db->prepare("DELETE FROM guide_reviews WHERE id = :id");
     $stmt->execute([':id' => $id]);
@@ -49,10 +63,14 @@ if (empty($error) && $action === 'delete' && ($id = (int)($_POST['review_id'] ??
     exit;
 }
 
-// Handle bulk approve
+// === BULK ACTIONS ===
+
+// Handle bulk approve — approves multiple guide reviews at once
 if (empty($error) && $action === 'bulk_approve' && !empty($_POST['review_ids'])) {
+    // Sanitize all IDs to integers before using in query
     $ids = array_map('intval', $_POST['review_ids']);
     if (!empty($ids)) {
+        // Dynamically build placeholder list for IN clause
         $placeholders = implode(',', array_fill(0, count($ids), '?'));
         $stmt = $db->prepare("UPDATE guide_reviews SET status = 'approved' WHERE id IN ($placeholders)");
         $stmt->execute($ids);
@@ -62,7 +80,7 @@ if (empty($error) && $action === 'bulk_approve' && !empty($_POST['review_ids']))
     }
 }
 
-// Handle bulk reject
+// Handle bulk reject — rejects multiple guide reviews at once
 if (empty($error) && $action === 'bulk_reject' && !empty($_POST['review_ids'])) {
     $ids = array_map('intval', $_POST['review_ids']);
     if (!empty($ids)) {
@@ -75,18 +93,23 @@ if (empty($error) && $action === 'bulk_reject' && !empty($_POST['review_ids'])) 
     }
 }
 
+// === SIDEBAR ===
+// Include admin sidebar navigation
 include __DIR__ . '/includes/sidebar.php';
 
-// --- Stats ---
+// === STATISTICS ===
+// Fetch counts for each review status to display stat cards
 $countTotal   = $db->query("SELECT COUNT(*) FROM guide_reviews")->fetchColumn();
 $countPending = $db->query("SELECT COUNT(*) FROM guide_reviews WHERE status = 'pending'")->fetchColumn();
 $countApproved = $db->query("SELECT COUNT(*) FROM guide_reviews WHERE status = 'approved'")->fetchColumn();
 $countRejected = $db->query("SELECT COUNT(*) FROM guide_reviews WHERE status = 'rejected'")->fetchColumn();
 
-// --- Filters ---
+// === FILTERS & SEARCH ===
+// Read filter and search parameters from URL query string
 $filter = $_GET['filter'] ?? 'all';
 $search = trim($_GET['q'] ?? '');
 
+// Build dynamic WHERE clause based on selected filter
 $where = '';
 $params = [];
 
@@ -94,6 +117,7 @@ if ($filter === 'pending')   { $where = "WHERE gr.status = 'pending'"; }
 elseif ($filter === 'approved')  { $where = "WHERE gr.status = 'approved'"; }
 elseif ($filter === 'rejected')  { $where = "WHERE gr.status = 'rejected'"; }
 
+// Append search conditions — searches across reviewer name, title, content, and guide name
 if ($search !== '') {
     $where = ($where === '') ? 'WHERE' : $where . ' AND';
     $where .= " (gr.reviewer_name LIKE :q OR gr.title LIKE :q2 OR gr.content LIKE :q3 OR g.name LIKE :q4)";
@@ -103,6 +127,8 @@ if ($search !== '') {
     $params[':q4'] = "%$search%";
 }
 
+// === FETCH GUIDE REVIEWS ===
+// Join with guides and users tables to get related data
 $stmt = $db->prepare(
     "SELECT gr.*, g.name AS guide_name, g.specialty AS guide_specialty, u.email AS user_email
      FROM guide_reviews gr
@@ -116,6 +142,7 @@ $reviews = $stmt->fetchAll();
 ?>
 <div class="adm-sidebar-overlay" id="sidebarOverlay"></div>
 <main class="adm-main">
+    <!-- === TOP BAR === -->
     <div class="adm-topbar">
         <div class="adm-topbar-left">
             <button class="adm-menu-toggle" onclick="document.getElementById('adminSidebar').classList.toggle('open');document.getElementById('sidebarOverlay').classList.toggle('open');">
@@ -130,6 +157,8 @@ $reviews = $stmt->fetchAll();
     </div>
 
     <div class="adm-content">
+        <!-- === SUCCESS / STATUS ALERTS === -->
+        <!-- Display flash messages based on URL query parameters after actions -->
         <?php if (isset($_GET['approved'])): ?>
             <div class="adm-alert adm-alert-success"><span class="material-symbols-outlined">check_circle</span> Guide review(s) approved successfully.</div>
         <?php endif; ?>
@@ -140,7 +169,8 @@ $reviews = $stmt->fetchAll();
             <div class="adm-alert adm-alert-success"><span class="material-symbols-outlined">check_circle</span> Guide review deleted successfully.</div>
         <?php endif; ?>
 
-        <!-- Stat Cards -->
+        <!-- === STAT CARDS === -->
+        <!-- Summary statistics for total, pending, approved, and rejected guide reviews -->
         <div class="adm-stat-grid" style="margin-bottom:1.5rem;">
             <div class="adm-stat-card">
                 <span class="material-symbols-outlined" style="color:#264653;">reviews</span>
@@ -172,7 +202,8 @@ $reviews = $stmt->fetchAll();
             </div>
         </div>
 
-        <!-- Filter Bar -->
+        <!-- === FILTER BAR === -->
+        <!-- Search input and status filter tabs — preserve search term across filter changes -->
         <div class="adm-filter-bar">
             <form method="get" class="adm-search" style="display:flex;">
                 <span class="material-symbols-outlined">search</span>
@@ -184,6 +215,7 @@ $reviews = $stmt->fetchAll();
             <a href="?filter=rejected<?= $search ? '&q=' . urlencode($search) : '' ?>" class="adm-tab <?= $filter === 'rejected' ? 'active' : '' ?>">Rejected (<?= $countRejected ?>)</a>
         </div>
 
+        <!-- === GUIDE REVIEWS TABLE === -->
         <?php if (empty($reviews)): ?>
             <div class="adm-empty">
                 <span class="material-symbols-outlined adm-empty-icon">reviews</span>
@@ -193,7 +225,9 @@ $reviews = $stmt->fetchAll();
         <?php else: ?>
             <form method="post" id="bulkForm">
                 <?php csrf_field(); ?>
+                <!-- Hidden field dynamically set by JS to indicate bulk action type -->
                 <input type="hidden" name="action" id="bulkAction" value="">
+                <!-- Bulk action buttons -->
                 <div style="display:flex;gap:0.5rem;margin-bottom:0.75rem;">
                     <button type="button" class="adm-btn adm-btn-sm" style="background:#2a9d8f;color:#fff;" onclick="document.getElementById('bulkAction').value='bulk_approve';document.getElementById('bulkForm').submit();">Approve Selected</button>
                     <button type="button" class="adm-btn adm-btn-sm" style="background:#e76f51;color:#fff;" onclick="document.getElementById('bulkAction').value='bulk_reject';document.getElementById('bulkForm').submit();">Reject Selected</button>
@@ -218,12 +252,14 @@ $reviews = $stmt->fetchAll();
                         <tbody>
                             <?php foreach ($reviews as $r): ?>
                                 <?php
+                                // Map status to CSS class and display label
                                 $statusClass = 'active';
                                 $statusLabel = 'Approved';
                                 if ($r['status'] === 'pending') { $statusClass = 'inactive'; $statusLabel = 'Pending'; }
                                 elseif ($r['status'] === 'rejected') { $statusClass = 'cancelled'; $statusLabel = 'Rejected'; }
                                 ?>
                                 <tr>
+                                    <!-- Bulk selection checkbox -->
                                     <td><input type="checkbox" name="review_ids[]" value="<?= $r['id'] ?>" class="row-select"></td>
                                     <td class="cell-mono">#<?= $r['id'] ?></td>
                                     <td class="cell-main">
@@ -235,21 +271,25 @@ $reviews = $stmt->fetchAll();
                                             <br><span style="font-size:0.7rem;color:#aaa;"><?= htmlspecialchars($r['user_email']) ?></span>
                                         <?php endif; ?>
                                     </td>
+                                    <!-- Guide name and specialty display -->
                                     <td>
                                         <?= htmlspecialchars($r['guide_name'] ?? '—') ?>
                                         <?php if (!empty($r['guide_specialty'])): ?>
                                             <br><span style="font-size:0.75rem;color:#888;"><?= htmlspecialchars($r['guide_specialty']) ?></span>
                                         <?php endif; ?>
                                     </td>
+                                    <!-- Star rating display — filled stars for rating, gray stars for remainder -->
                                     <td>
                                         <span style="color:#f4a261;white-space:nowrap;">
                                             <?php for ($s = 0; $s < (int)$r['rating']; $s++): ?>&#9733;<?php endfor; ?>
                                             <?php for ($s = (int)$r['rating']; $s < 5; $s++): ?><span style="color:#ddd;">&#9733;</span><?php endfor; ?>
                                         </span>
                                     </td>
+                                    <!-- Truncate long titles to 50 chars -->
                                     <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
                                         <?= htmlspecialchars(mb_strimwidth($r['title'] ?? '', 0, 50, '...')) ?>
                                     </td>
+                                    <!-- Truncate long content to 80 chars with "View" link to open detail modal -->
                                     <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
                                         <?= htmlspecialchars(mb_strimwidth($r['content'], 0, 80, '...')) ?>
                                         <button type="button" class="adm-btn-link" onclick="openDetailModal(<?= $r['id'] ?>)" style="font-size:0.75rem;">View</button>
@@ -258,9 +298,12 @@ $reviews = $stmt->fetchAll();
                                         <span class="adm-status-badge adm-status-<?= $statusClass ?>"><?= $statusLabel ?></span>
                                     </td>
                                     <td class="cell-muted"><?= date('M d, Y', strtotime($r['created_at'])) ?></td>
+                                    <!-- === ROW ACTION BUTTONS === -->
+                                    <!-- Context-sensitive actions based on current status -->
                                     <td>
                                         <div class="cell-actions">
                                             <?php if ($r['status'] === 'pending'): ?>
+                                                <!-- Pending: show both Approve and Reject buttons -->
                                                 <form method="post" style="display:inline;">
                                                     <?php csrf_field(); ?>
                                                     <input type="hidden" name="action" value="approve">
@@ -274,6 +317,7 @@ $reviews = $stmt->fetchAll();
                                                     <button type="submit" class="adm-btn-icon" title="Reject"><span class="material-symbols-outlined" style="color:#e76f51;">cancel</span></button>
                                                 </form>
                                             <?php elseif ($r['status'] === 'approved'): ?>
+                                                <!-- Approved: only show Reject button -->
                                                 <form method="post" style="display:inline;">
                                                     <?php csrf_field(); ?>
                                                     <input type="hidden" name="action" value="reject">
@@ -281,6 +325,7 @@ $reviews = $stmt->fetchAll();
                                                     <button type="submit" class="adm-btn-icon" title="Reject"><span class="material-symbols-outlined" style="color:#e76f51;">cancel</span></button>
                                                 </form>
                                             <?php elseif ($r['status'] === 'rejected'): ?>
+                                                <!-- Rejected: only show Approve button -->
                                                 <form method="post" style="display:inline;">
                                                     <?php csrf_field(); ?>
                                                     <input type="hidden" name="action" value="approve">
@@ -288,7 +333,9 @@ $reviews = $stmt->fetchAll();
                                                     <button type="submit" class="adm-btn-icon" title="Approve"><span class="material-symbols-outlined" style="color:#2a9d8f;">check_circle</span></button>
                                                 </form>
                                             <?php endif; ?>
+                                            <!-- View details in modal -->
                                             <button type="button" class="adm-btn-icon" title="View Details" onclick="openDetailModal(<?= $r['id'] ?>)"><span class="material-symbols-outlined">visibility</span></button>
+                                            <!-- Delete with confirmation prompt -->
                                             <form method="post" style="display:inline;" data-confirm="Delete this guide review permanently?">
                                                 <?php csrf_field(); ?>
                                                 <input type="hidden" name="action" value="delete">
@@ -299,7 +346,7 @@ $reviews = $stmt->fetchAll();
                                     </td>
                                 </tr>
 
-                                <!-- Detail Modal Data (hidden JSON) -->
+                                <!-- Hidden JSON data for detail modal — used by JavaScript to populate modal without additional AJAX -->
                                 <div id="detail-data-<?= $r['id'] ?>" style="display:none;" data-json='<?= htmlspecialchars(json_encode([
                                     'id' => $r['id'],
                                     'reviewer_name' => $r['reviewer_name'],
@@ -323,7 +370,8 @@ $reviews = $stmt->fetchAll();
     </div>
 </main>
 
-<!-- Detail Modal -->
+<!-- === DETAIL MODAL === -->
+<!-- Modal overlay for viewing full guide review details -->
 <div class="adm-modal-overlay" id="detailModal">
     <div class="adm-modal" style="max-width:600px;">
         <div class="adm-modal-header">
@@ -333,16 +381,17 @@ $reviews = $stmt->fetchAll();
             </button>
         </div>
         <div class="adm-modal-body" id="detailModalBody">
-            <!-- Populated by JS -->
+            <!-- Populated dynamically by JavaScript -->
         </div>
         <div class="adm-modal-footer" id="detailModalFooter">
-            <!-- Populated by JS -->
+            <!-- Populated dynamically by JavaScript -->
         </div>
     </div>
 </div>
 
 <script>
-// Select all checkbox
+// === SELECT ALL CHECKBOX ===
+// Toggle all row checkboxes when "select all" is checked/unchecked
 document.addEventListener('DOMContentLoaded', function() {
     const selectAll = document.getElementById('selectAll');
     if (selectAll) {
@@ -352,7 +401,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// Detail modal data store
+// === DETAIL MODAL DATA STORE ===
+// JavaScript object mapping review IDs to their full data for modal display
 const reviewData = {};
 <?php foreach ($reviews as $r): ?>
 reviewData[<?= $r['id'] ?>] = <?= json_encode([
@@ -371,10 +421,13 @@ reviewData[<?= $r['id'] ?>] = <?= json_encode([
 ]) ?>;
 <?php endforeach; ?>
 
+// === OPEN DETAIL MODAL ===
+// Populates modal body with guide review details and renders context-sensitive action buttons
 function openDetailModal(id) {
     const d = reviewData[id];
     if (!d) return;
 
+    // Build star rating HTML
     const stars = Array(5).fill('').map((_, i) =>
         i < d.rating ? '<span style="color:#f4a261;">&#9733;</span>' : '<span style="color:#ddd;">&#9733;</span>'
     ).join('');
@@ -382,6 +435,7 @@ function openDetailModal(id) {
     const statusLabels = { pending: 'Pending', approved: 'Approved', rejected: 'Rejected' };
     const statusColors = { pending: '#f4a261', approved: '#2a9d8f', rejected: '#e76f51' };
 
+    // Render modal body content
     document.getElementById('detailModalBody').innerHTML = `
         <div style="display:flex;gap:1rem;margin-bottom:1.5rem;">
             ${d.reviewer_avatar ? `<img src="${htmlEncode(d.reviewer_avatar)}" alt="" style="width:56px;height:56px;border-radius:50%;object-fit:cover;border:2px solid #e9e9e9;">` : ''}
@@ -401,6 +455,7 @@ function openDetailModal(id) {
         <div style="background:#f8f8f8;border-radius:8px;padding:1rem;line-height:1.65;color:#444;margin-top:0.5rem;">"${htmlEncode(d.content)}"</div>
     `;
 
+    // Render modal footer with action buttons based on current status
     document.getElementById('detailModalFooter').innerHTML = `
         <div style="display:flex;gap:0.5rem;justify-content:flex-end;width:100%;">
             ${d.status === 'pending' ? `
@@ -438,20 +493,22 @@ function openDetailModal(id) {
     document.getElementById('detailModal').classList.add('open');
 }
 
+// Close the detail modal by removing the 'open' class
 function closeDetailModal() {
     document.getElementById('detailModal').classList.remove('open');
 }
 
+// XSS-safe HTML encoding for dynamic content in modals
 function htmlEncode(str) {
     if (!str) return '';
     return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
-// CSRF token for modal forms
+// CSRF token injected from PHP for use in dynamically created modal forms
 <?php $tok = getCSRFToken(); ?>
 const csrfToken = '<?= $tok ?>';
 
-// Close modal on overlay click
+// Close modal when clicking on the overlay background (not the modal content)
 document.addEventListener('DOMContentLoaded', function() {
     const modal = document.getElementById('detailModal');
     if (modal) {

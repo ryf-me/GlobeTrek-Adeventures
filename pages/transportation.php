@@ -1,8 +1,19 @@
 <?php
+/**
+ * File: pages/transportation.php
+ * Purpose: Displays a filterable, sortable grid of transportation options (tuk-tuks, cars, bikes, minivans) with sidebar filters for vehicle type, amenities, price range, and location.
+ * Dependencies: config/database.php, config/currency.php, includes/navbar.php, includes/footer.php, css/transportation.css, js/script.js
+ * Used By: index.php (linked from main navigation)
+ * Parent Files: index.php, navbar.php
+ * Child Files: None
+ * @package GlobeTrek\Pages
+ */
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../config/currency.php';
 $db = getDB();
 
+// === FILTER OPTIONS ===
+// Vehicle type whitelist and sort option labels.
 $vehicleTypes = ['Three-Wheeler', 'Car', 'Bike', 'Minivan'];
 
 $sortOptions = [
@@ -12,14 +23,17 @@ $sortOptions = [
     'rating'      => 'Rating'
 ];
 
+// === RETRIEVE FILTER/SORT/PAGE PARAMETERS ===
 $sort = isset($_GET['sort']) && array_key_exists($_GET['sort'], $sortOptions) ? $_GET['sort'] : 'recommended';
 $page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
 $perPage = 6;
 $offset = ($page - 1) * $perPage;
 
+// === BUILD DYNAMIC QUERY ===
 $where = ["t.is_active = 1"];
 $params = [];
 
+// Vehicle type filter: whitelist-validated array
 if (!empty($_GET['type']) && is_array($_GET['type'])) {
     $types = array_filter($_GET['type'], fn($v) => in_array($v, $vehicleTypes));
     if ($types) {
@@ -29,6 +43,7 @@ if (!empty($_GET['type']) && is_array($_GET['type'])) {
     }
 }
 
+// Boolean amenity filters
 if (!empty($_GET['has_ac'])) {
     $where[] = "t.has_ac = 1";
 }
@@ -39,11 +54,13 @@ if (!empty($_GET['has_insurance'])) {
     $where[] = "t.has_insurance = 1";
 }
 
+// Location text search (partial match)
 if (!empty($_GET['location'])) {
     $where[] = "t.location LIKE ?";
     $params[] = '%' . $_GET['location'] . '%';
 }
 
+// Price range filters: cast to float for type safety
 if (!empty($_GET['min_price'])) {
     $where[] = "t.price_per_day >= ?";
     $params[] = (float)$_GET['min_price'];
@@ -55,6 +72,7 @@ if (!empty($_GET['max_price'])) {
 
 $whereSQL = implode(' AND ', $where);
 
+// === SORT ORDER MAPPING ===
 $orderMap = [
     'recommended' => 't.is_featured DESC, t.id ASC',
     'price_asc'   => 't.price_per_day ASC',
@@ -63,6 +81,7 @@ $orderMap = [
 ];
 $orderSQL = $orderMap[$sort];
 
+// === COUNT TOTAL MATCHING RESULTS ===
 $countStmt = $db->prepare("SELECT COUNT(*) FROM transportations t WHERE $whereSQL");
 $countStmt->execute($params);
 $totalTransport = (int)$countStmt->fetchColumn();
@@ -70,11 +89,14 @@ $totalPages = max(1, ceil($totalTransport / $perPage));
 $page = min($page, $totalPages);
 $offset = ($page - 1) * $perPage;
 
+// === FETCH TRANSPORTATION OPTIONS ===
 $stmt = $db->prepare("SELECT t.* FROM transportations t WHERE $whereSQL ORDER BY $orderSQL LIMIT ? OFFSET ?");
 $allParams = array_merge($params, [$perPage, $offset]);
 $stmt->execute($allParams);
 $transportations = $stmt->fetchAll();
 
+// === HELPER: BUILD QUERY STRING ===
+// Preserves current filters when navigating pages or changing sort.
 function buildQueryString($overrides = []) {
     $params = array_merge($_GET, $overrides);
     $params = array_filter($params, fn($v) => $v !== '' && $v !== null);
@@ -97,12 +119,13 @@ function buildQueryString($overrides = []) {
     <?php $basePath = '../'; include '../includes/navbar.php'; ?>
 
     <div class="page-container">
+        <!-- === PAGE HEADER === -->
         <div class="page-header">
             <h1>Transportation</h1>
             <p>Find reliable local transport to explore Sri Lanka at your own pace. From tuk-tuks to SUVs, we've got you covered.</p>
         </div>
 
-        <!-- Search Bar -->
+        <!-- === LOCATION SEARCH BAR === -->
         <form class="search-bar" method="get" action="">
             <div class="search-input-group">
                 <div class="search-field" style="flex:2;">
@@ -113,7 +136,9 @@ function buildQueryString($overrides = []) {
             </div>
         </form>
 
+        <!-- === MAIN FILTER FORM === -->
         <form class="transportation-layout" method="get" action="">
+            <!-- Preserve location filter across form submissions -->
             <?php if (!empty($_GET['location'])): ?>
                 <input type="hidden" name="location" value="<?= htmlspecialchars($_GET['location']) ?>">
             <?php endif; ?>
@@ -160,7 +185,7 @@ function buildQueryString($overrides = []) {
                 <a href="transportation.php" class="reset-btn" style="text-decoration:none; text-align:center; display:block;">Reset</a>
             </aside>
 
-            <!-- Results -->
+            <!-- === RESULTS GRID === -->
             <main class="flex-grow">
                 <div class="results-toolbar">
                     <span class="results-count">Showing <?= $totalTransport ?> <?= $totalTransport === 1 ? 'vehicle' : 'vehicles' ?></span>
@@ -181,6 +206,7 @@ function buildQueryString($overrides = []) {
                                 <div class="card-body">
                                     <div class="card-top">
                                         <h3><?= htmlspecialchars($t['name']) ?></h3>
+                                        <!-- Vehicle type badge with dynamic CSS class based on type -->
                                         <span class="vehicle-badge <?= strtolower(str_replace('-', '', $t['vehicle_type'])) ?>"><?= htmlspecialchars($t['vehicle_type']) ?></span>
                                     </div>
                                     <div class="card-location">
@@ -190,6 +216,7 @@ function buildQueryString($overrides = []) {
                                     <div class="card-description">
                                         <?= htmlspecialchars($t['short_description'] ?? $t['description']) ?>
                                     </div>
+                                    <!-- Feature tags: conditionally shown based on boolean columns -->
                                     <div class="card-features">
                                         <?php if ($t['has_ac']): ?>
                                             <span class="feature-tag"><span class="check">&#10003;</span> AC</span>
@@ -218,7 +245,7 @@ function buildQueryString($overrides = []) {
                     <?php endif; ?>
                 </div>
 
-                <!-- Pagination -->
+                <!-- === PAGINATION === -->
                 <?php if ($totalPages > 1): ?>
                     <div class="pagination">
                         <?php if ($page > 1): ?>

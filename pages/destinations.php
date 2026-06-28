@@ -1,9 +1,19 @@
 <?php
+/**
+ * File: pages/destinations.php
+ * Purpose: Displays a searchable, filterable grid of all active destinations in Sri Lanka with pagination, sidebar map, and category browsing.
+ * Dependencies: config/database.php, includes/navbar.php, includes/footer.php, css/destinations.css, js/script.js, Leaflet.js (CDN)
+ * Used By: index.php (linked from main navigation)
+ * Parent Files: index.php, navbar.php
+ * Child Files: None (this is a leaf page)
+ * @package GlobeTrek\Pages
+ */
 session_start();
 require_once __DIR__ . '/../config/database.php';
 $db = getDB();
 
-// Filter parameters
+// === FILTER PARAMETERS ===
+// Sanitize and retrieve all filter/sort/pagination parameters from the query string.
 $search = isset($_GET['q']) ? trim($_GET['q']) : '';
 $selectedRegion = isset($_GET['region']) ? trim($_GET['region']) : '';
 $selectedCategory = isset($_GET['category']) ? trim($_GET['category']) : '';
@@ -12,7 +22,10 @@ $page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
 $perPage = 12;
 $offset = ($page - 1) * $perPage;
 
-// Build query
+// === BUILD DYNAMIC QUERY ===
+// Start with the base WHERE clause (only active destinations).
+// Append optional filters for search text, region, and category using parameterized queries
+// to prevent SQL injection.
 $where = "WHERE is_active = 1";
 $params = [];
 
@@ -33,7 +46,8 @@ if ($selectedCategory !== '') {
     $params[':category'] = $selectedCategory;
 }
 
-// Sort
+// === SORT ORDER ===
+// Default: featured first, then by review count. Allow alternate sort options.
 $orderBy = "ORDER BY is_featured DESC, review_count DESC";
 if ($sortBy === 'rating') {
     $orderBy = "ORDER BY rating DESC, review_count DESC";
@@ -43,13 +57,15 @@ if ($sortBy === 'rating') {
     $orderBy = "ORDER BY review_count DESC";
 }
 
-// Count total
+// === COUNT TOTAL RESULTS ===
+// Used for pagination calculation and displaying "Showing X of Y" count.
 $countStmt = $db->prepare("SELECT COUNT(*) FROM destinations $where");
 $countStmt->execute($params);
 $totalDestinations = (int)$countStmt->fetchColumn();
 $totalPages = max(1, ceil($totalDestinations / $perPage));
 
-// Fetch destinations
+// === FETCH DESTINATIONS ===
+// Use bindValue for LIMIT/OFFSET to enforce integer types (PDO requires this).
 $stmt = $db->prepare("SELECT * FROM destinations $where $orderBy LIMIT :limit OFFSET :offset");
 foreach ($params as $k => $v) {
     $stmt->bindValue($k, $v);
@@ -59,33 +75,37 @@ $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
 $stmt->execute();
 $destinations = $stmt->fetchAll();
 
-// Sidebar: category counts
+// === SIDEBAR: CATEGORY COUNTS ===
+// Fetch distinct categories with their counts for the sidebar filter.
 $catStmt = $db->prepare("SELECT category, COUNT(*) as cnt FROM destinations WHERE is_active = 1 AND category IS NOT NULL GROUP BY category ORDER BY cnt DESC");
 $catStmt->execute();
 $categories = $catStmt->fetchAll();
 
-// All regions for dropdown
-$regionStmt = $db->prepare("SELECT DISTINCT region FROM destinations WHERE is_active = 1 AND region IS NOT NULL ORDER BY region");
+// === SIDEBAR: ALL REGIONS ===
+// Populate the region dropdown filter.
+$regionStmt = $db->prepare("SELECT DISTINCT region FROM destinations WHERE is_active = 1 AND region IS NOT NULL AND region != '' ORDER BY region");
 $regionStmt->execute();
 $regions = $regionStmt->fetchAll(PDO::FETCH_COLUMN);
 
-// Total active count
+// === TOTAL ACTIVE COUNT ===
+// Displayed in the hero/stats section.
 $totalStmt = $db->query("SELECT COUNT(*) FROM destinations WHERE is_active = 1");
 $totalActive = (int)$totalStmt->fetchColumn();
 
-    // Wishlist for logged-in users
-    $userId = $_SESSION['user_id'] ?? null;
-    $userWishlist = [];
-    if ($userId) {
-        $wStmt = $db->prepare("SELECT destination_id FROM wishlist WHERE user_id = :uid AND destination_id IS NOT NULL");
-        $wStmt->execute([':uid' => $userId]);
-        $userWishlist = array_column($wStmt->fetchAll(), 'destination_id');
-    }
+// === WISHLIST FOR LOGGED-IN USERS ===
+// Fetch user's wishlist destination IDs to toggle heart icon on cards.
+$userId = $_SESSION['user_id'] ?? null;
+$userWishlist = [];
+if ($userId) {
+    $wStmt = $db->prepare("SELECT destination_id FROM wishlist WHERE user_id = :uid AND destination_id IS NOT NULL");
+    $wStmt->execute([':uid' => $userId]);
+    $userWishlist = array_column($wStmt->fetchAll(), 'destination_id');
+}
 
-// Helper to build query string preserving filters
+// === HELPER: BUILD QUERY STRING ===
+// Merges current GET params with overrides (e.g., page change) while stripping empty values.
 function buildQueryString($overrides = []) {
     $params = array_merge($_GET, $overrides);
-    // Remove empty values
     $params = array_filter($params, function($v) { return $v !== '' && $v !== null; });
     return http_build_query($params);
 }
@@ -100,13 +120,14 @@ function buildQueryString($overrides = []) {
     <link rel="stylesheet" href="../css/navbar.css">
     <link rel="stylesheet" href="../css/destinations.css">
     <link rel="stylesheet" href="../css/footer.css">
+    <!-- Leaflet CSS for the sidebar interactive map -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 </head>
 <body class="destinations-page">
 
     <?php $basePath = '../'; include '../includes/navbar.php'; ?>
 
-    <!-- Hero Section -->
+    <!-- === HERO SECTION === -->
     <section class="dest-hero">
         <img class="dest-hero-bg" src="https://images.pexels.com/photos/29813527/pexels-photo-29813527.jpeg" alt="Sri Lanka scenic view" />
         <div class="dest-hero-overlay"></div>
@@ -149,7 +170,7 @@ function buildQueryString($overrides = []) {
         </div>
     </section>
 
-    <!-- Breadcrumb -->
+    <!-- === BREADCRUMB === -->
     <div class="dest-breadcrumb-wrap">
         <div class="dest-breadcrumb">
             <a href="../index.php">Home</a>
@@ -158,7 +179,8 @@ function buildQueryString($overrides = []) {
         </div>
     </div>
 
-    <!-- Filter Bar -->
+    <!-- === FILTER BAR === -->
+    <!-- Form submits via GET so filters are bookmarkable/shareable. -->
     <div class="dest-filter-bar">
         <form method="get" action="destinations.php" class="dest-filter-form">
             <div class="dest-search-input">
@@ -200,10 +222,11 @@ function buildQueryString($overrides = []) {
         </div>
     </div>
 
-    <!-- Main Content -->
+    <!-- === MAIN CONTENT AREA === -->
     <div class="dest-content-wrap">
         <main class="dest-main">
             <?php if (empty($destinations)): ?>
+                <!-- Empty state when no results match filters -->
                 <div class="dest-empty">
                     <span class="material-symbols-outlined">location_off</span>
                     <h2>No destinations found</h2>
@@ -211,12 +234,14 @@ function buildQueryString($overrides = []) {
                     <a href="destinations.php" class="dest-clear-filters">Clear Filters</a>
                 </div>
             <?php else: ?>
+                <!-- Destination cards grid -->
                 <div class="dest-grid">
                     <?php foreach ($destinations as $dest): ?>
                         <a href="destination-details.php?slug=<?= htmlspecialchars($dest['slug']) ?>" class="dest-card">
                             <div class="dest-card-img-wrap">
                                 <img class="dest-card-img" src="<?= htmlspecialchars($basePath . $dest['image']) ?>" alt="<?= htmlspecialchars($dest['name']) ?>">
                                 <span class="dest-card-badge"><?= htmlspecialchars(strtoupper($dest['category'] ?? '')) ?></span>
+                                <!-- Wishlist toggle button: uses inline onclick to prevent link navigation -->
                                 <button class="dest-card-wishlist <?= in_array($dest['id'], $userWishlist) ? 'active' : '' ?>" data-id="<?= $dest['id'] ?>" title="Add to Wishlist" onclick="event.preventDefault(); event.stopPropagation(); toggleWishlist(this);">
                                     <span class="material-symbols-outlined">favorite</span>
                                 </button>
@@ -231,6 +256,7 @@ function buildQueryString($overrides = []) {
                                 <div class="dest-card-rating">
                                     <span class="dest-stars">
                                         <?php
+                                        // Render star rating: filled, half, or empty stars
                                         $rating = (float)($dest['rating'] ?? 0);
                                         for ($i = 1; $i <= 5; $i++):
                                             if ($i <= $rating): ?>
@@ -250,7 +276,7 @@ function buildQueryString($overrides = []) {
                     <?php endforeach; ?>
                 </div>
 
-                <!-- Pagination -->
+                <!-- === PAGINATION === -->
                 <?php if ($totalPages > 1): ?>
                     <div class="dest-pagination">
                         <?php if ($page > 1): ?>
@@ -259,6 +285,7 @@ function buildQueryString($overrides = []) {
                             </a>
                         <?php endif; ?>
                         <?php
+                        // Calculate visible page range (current page ± 2)
                         $start = max(1, $page - 2);
                         $end = min($totalPages, $page + 2);
                         if ($start > 1): ?>
@@ -286,15 +313,15 @@ function buildQueryString($overrides = []) {
             <?php endif; ?>
         </main>
 
-        <!-- Sidebar -->
+        <!-- === SIDEBAR === -->
         <aside class="dest-sidebar">
-            <!-- Explore on Map -->
+            <!-- Interactive Leaflet map showing all destinations -->
             <div class="dest-sidebar-card dest-map-card">
                 <h3><span class="material-symbols-outlined">explore</span> Explore on Map</h3>
                 <div id="dest-map" class="dest-map"></div>
             </div>
 
-            <!-- Browse by Category -->
+            <!-- Category filter links with counts -->
             <div class="dest-sidebar-card">
                 <h3><span class="material-symbols-outlined">category</span> Browse by Category</h3>
                 <div class="dest-category-list">
@@ -311,7 +338,7 @@ function buildQueryString($overrides = []) {
                 </div>
             </div>
 
-            <!-- Need Help Choosing? -->
+            <!-- CTA to contact page -->
             <div class="dest-sidebar-card dest-help-card">
                 <h3>Need Help Choosing?</h3>
                 <p>Our travel experts are here to help you find the perfect place.</p>
@@ -323,7 +350,7 @@ function buildQueryString($overrides = []) {
         </aside>
     </div>
 
-    <!-- Newsletter Section -->
+    <!-- === NEWSLETTER SECTION === -->
     <section class="dest-newsletter">
         <div class="dest-newsletter-inner">
             <div class="dest-newsletter-icon">
@@ -342,30 +369,39 @@ function buildQueryString($overrides = []) {
 
     <?php $basePath = '../'; include '../includes/footer.php'; ?>
 
+    <!-- Leaflet JS for interactive map -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="../js/script.js"></script>
     <script>
-    // Leaflet Map
+    // === LEAFLET MAP INITIALIZATION ===
+    // Creates a non-interactive (overview) map centered on Sri Lanka with destination markers.
     (function() {
         var map = L.map('dest-map', { zoomControl: false, scrollWheelZoom: false, dragging: false }).setView([7.8731, 80.7718], 8);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; OpenStreetMap'
         }).addTo(map);
 
+        // PHP-generated destination data: [lat, lng, name, slug]
         var destinations = [
             <?php
+            // Fetch all active destinations for map markers
             $mapStmt = $db->query("SELECT name, slug, region, category FROM destinations WHERE is_active = 1");
             $mapDests = $mapStmt->fetchAll();
+            // Province center coordinates for marker placement
             $coords = [
                 'Central Province' => [7.8731, 80.7718],
                 'Southern Province' => [6.0535, 80.2210],
                 'Uva Province' => [6.9847, 81.0564],
                 'North Central Province' => [8.3114, 80.4037],
                 'Eastern Province' => [7.7964, 81.5284],
+                'Northern Province' => [9.6615, 80.0255],
+                'North Western Province' => [7.4818, 80.3609],
+                'Sabaragamuwa Province' => [6.7056, 80.3847],
+                'Western Province' => [6.9271, 79.8612],
             ];
             foreach ($mapDests as $md):
+                // Use province center with slight random offset to avoid overlapping markers
                 $pos = $coords[$md['region']] ?? [7.8731, 80.7718];
-                // Add slight randomness
                 $lat = $pos[0] + (mt_rand(-30, 30) / 100);
                 $lng = $pos[1] + (mt_rand(-30, 30) / 100);
             ?>
@@ -373,6 +409,7 @@ function buildQueryString($overrides = []) {
             <?php endforeach; ?>
         ];
 
+        // Custom marker icon using Material Symbols
         var markerIcon = L.divIcon({
             className: 'dest-map-marker',
             html: '<span class="material-symbols-outlined">location_on</span>',
@@ -380,6 +417,7 @@ function buildQueryString($overrides = []) {
             iconAnchor: [12, 24]
         });
 
+        // Place markers and bind popups with links to destination details
         destinations.forEach(function(d) {
             L.marker([d[0], d[1]], { icon: markerIcon })
                 .addTo(map)
@@ -387,7 +425,8 @@ function buildQueryString($overrides = []) {
         });
     })();
 
-    // Newsletter form
+    // === NEWSLETTER FORM HANDLER ===
+    // AJAX submission with CSRF token; shows success/error feedback inline.
     document.getElementById('newsletter-form').addEventListener('submit', function(e) {
         e.preventDefault();
         var email = document.getElementById('newsletter-email').value;
@@ -422,7 +461,9 @@ function buildQueryString($overrides = []) {
         });
     });
 
-    // Wishlist toggle
+    // === WISHLIST TOGGLE ===
+    // Sends AJAX request to add/remove destination from user's wishlist.
+    // Toggles the 'active' CSS class on the heart icon for visual feedback.
     function toggleWishlist(btn) {
         var destId = btn.getAttribute('data-id');
         var formData = new FormData();
@@ -448,7 +489,8 @@ function buildQueryString($overrides = []) {
         });
     }
 
-    // Sort change
+    // === SORT CHANGE HANDLER ===
+    // Redirects with updated sort param, preserving other filters, resets to page 1.
     document.querySelector('.dest-sort select').addEventListener('change', function() {
         var form = document.querySelector('.dest-filter-form');
         var params = new URLSearchParams(new FormData(form));

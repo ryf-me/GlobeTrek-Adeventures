@@ -1,25 +1,36 @@
 <?php
 /**
- * Staff Create/Edit Form
- *
- * Creates a new user account + staff profile, or edits an existing staff profile.
- * Only accessible by admins.
+ * File: admin/staff-edit.php
+ * Purpose: Create a new staff member (user account + staff profile) or edit an existing one.
+ * Dependencies: admin/includes/header.php, admin/includes/sidebar.php, admin/includes/footer.php, config/logger.php
+ * Used By: Admin-only; accessed from staff.php
+ * Parent Files: admin/staff.php (linked from staff list)
+ * Child Files: admin/includes/header.php, admin/includes/sidebar.php, admin/includes/footer.php
+ * @package GlobeTrek\Admin
  */
+
 $pageTitle = 'Edit Staff';
+
+// === INITIALIZATION ===
 require_once __DIR__ . '/includes/header.php';
 require_once __DIR__ . '/../config/logger.php';
 
+// === ACCESS CONTROL ===
+// Only admin users can create/edit staff members
 if (($_SESSION['user_role'] ?? '') !== 'admin') {
     header('Location: index.php');
     exit;
 }
 
+// === LOAD EXISTING STAFF ===
+// Determine if we're editing an existing staff member or creating a new one
 $staffId = (int)($_GET['id'] ?? 0);
 $isEdit = $staffId > 0;
 $staff = null;
 $user = null;
 $staffPermissions = [];
 
+// Department options for dropdown
 $departmentOptions = [
     'operations' => 'Operations',
     'customer_service' => 'Customer Service',
@@ -27,6 +38,8 @@ $departmentOptions = [
     'marketing' => 'Marketing',
 ];
 
+// === PERMISSION DEFINITIONS ===
+// All available permissions in the system
 $allPermissions = [
     'manage_bookings'       => 'Manage Bookings',
     'manage_inquiries'      => 'Manage Inquiries',
@@ -44,6 +57,7 @@ $allPermissions = [
     'view_customers'        => 'View Customer Data',
 ];
 
+// Default permissions by department — these are auto-granted and cannot be removed
 $departmentPermissions = [
     'operations'       => ['manage_bookings', 'manage_packages', 'manage_accommodations', 'manage_transportation', 'manage_guides', 'manage_destinations'],
     'customer_service' => ['manage_inquiries', 'manage_contacts', 'manage_custom_trips', 'view_customers', 'manage_testimonials'],
@@ -51,7 +65,7 @@ $departmentPermissions = [
     'marketing'        => ['manage_newsletters', 'manage_destinations', 'manage_testimonials', 'view_reports'],
 ];
 
-// Load existing staff
+// Load existing staff data if editing
 if ($isEdit) {
     $stmt = $db->prepare(
         "SELECT sp.*, u.full_name, u.email, u.phone, u.profile_photo
@@ -69,13 +83,14 @@ if ($isEdit) {
 
     $user = $staff;
 
-    // Load extra permissions
+    // Load extra permissions (beyond department defaults)
     $stmt = $db->prepare("SELECT permission FROM staff_permissions WHERE staff_id = :sid");
     $stmt->execute([':sid' => $staffId]);
     $staffPermissions = array_column($stmt->fetchAll(), 'permission');
 }
 
-// Form fields
+// === FORM FIELD DEFAULTS ===
+// Pre-populate fields from existing data or use empty defaults for new staff
 $fields = [
     'full_name'  => $user['full_name'] ?? '',
     'email'      => $user['email'] ?? '',
@@ -91,12 +106,14 @@ $fields = [
 $errors = [];
 $success = false;
 
+// === FORM SUBMISSION ===
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!validateCSRFToken($_POST['csrf_token'] ?? null)) {
         $errors[] = 'Invalid security token. Please try again.';
     }
 
     if (empty($errors)) {
+        // Sanitize and trim form inputs
         $fields['full_name']  = trim($_POST['full_name'] ?? '');
         $fields['email']      = filter_var(trim($_POST['email'] ?? ''), FILTER_SANITIZE_EMAIL);
         $fields['phone']      = trim($_POST['phone'] ?? '');
@@ -108,13 +125,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $fields['notes']      = trim($_POST['notes'] ?? '');
         $fields['is_available'] = isset($_POST['is_available']) ? 1 : 0;
 
-        // Validation
+        // === VALIDATION ===
         if ($fields['full_name'] === '') {
             $errors[] = 'Full name is required.';
         }
         if ($fields['email'] === '' || !filter_var($fields['email'], FILTER_VALIDATE_EMAIL)) {
             $errors[] = 'A valid email address is required.';
         }
+        // Password is required only for new staff members
         if (!$isEdit && $fields['password'] === '') {
             $errors[] = 'Password is required for new staff members.';
         }
@@ -128,7 +146,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $errors[] = 'Position is required.';
         }
 
-        // Check email uniqueness
+        // Check email uniqueness — exclude current user from duplicate check
         if (empty($errors)) {
             $checkStmt = $db->prepare("SELECT id FROM users WHERE email = :email AND id != :uid LIMIT 1");
             $checkStmt->execute([':email' => $fields['email'], ':uid' => $user['id'] ?? 0]);
@@ -139,10 +157,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if (empty($errors)) {
             try {
+                // === DATABASE TRANSACTION ===
+                // Wrap all writes in a transaction to ensure atomicity
                 $db->beginTransaction();
 
                 if ($isEdit) {
-                    // Update existing user
+                    // === UPDATE EXISTING USER ===
+                    // Build dynamic UPDATE query — only include password if provided
                     $updateFields = "full_name = :name, email = :email, phone = :phone";
                     $params = [':name' => $fields['full_name'], ':email' => $fields['email'], ':phone' => $fields['phone'], ':uid' => $staff['user_id']];
 
@@ -154,7 +175,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $stmt = $db->prepare("UPDATE users SET $updateFields WHERE id = :uid");
                     $stmt->execute($params);
 
-                    // Update staff profile
+                    // Update staff profile details
                     $stmt = $db->prepare(
                         "UPDATE staff_profiles SET
                             department = :dept, position = :pos, hire_date = :hire,
@@ -173,7 +194,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     logActivity('staff_updated', 'staff', $staffId, 'Staff profile updated: ' . $fields['full_name']);
                 } else {
-                    // Create new user
+                    // === CREATE NEW USER ===
+                    // Create user account with role set to 'staff'
                     $hashedPassword = password_hash($fields['password'], PASSWORD_DEFAULT);
                     $stmt = $db->prepare(
                         "INSERT INTO users (full_name, email, phone, password, role)
@@ -187,7 +209,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     ]);
                     $newUserId = $db->lastInsertId();
 
-                    // Create staff profile
+                    // Create staff profile linked to the new user account
                     $stmt = $db->prepare(
                         "INSERT INTO staff_profiles (user_id, department, position, hire_date, is_available, max_concurrent_tasks, notes)
                          VALUES (:uid, :dept, :pos, :hire, :avail, :max_tasks, :notes)"
@@ -206,15 +228,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     logActivity('staff_created', 'staff', $staffId, 'New staff member created: ' . $fields['full_name']);
                 }
 
-                // Update extra permissions
+                // === UPDATE EXTRA PERMISSIONS ===
+                // Delete all existing extra permissions, then re-insert only those selected
                 $stmt = $db->prepare("DELETE FROM staff_permissions WHERE staff_id = :sid");
                 $stmt->execute([':sid' => $staffId]);
 
                 $selectedPerms = $_POST['permissions'] ?? [];
-                // Filter out department default permissions (those are automatic)
+                // Filter out department default permissions — those are auto-granted
                 $deptDefaults = $departmentPermissions[$fields['department']] ?? [];
                 $extraPerms = array_diff($selectedPerms, $deptDefaults);
 
+                // Insert only valid extra permissions
                 if (!empty($extraPerms)) {
                     $insertStmt = $db->prepare("INSERT INTO staff_permissions (staff_id, permission) VALUES (:sid, :perm)");
                     foreach ($extraPerms as $perm) {
@@ -227,7 +251,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $db->commit();
                 $success = true;
 
-                // Refresh data
+                // Refresh data after save
                 $stmt = $db->prepare(
                     "SELECT sp.*, u.full_name, u.email, u.phone, u.profile_photo
                      FROM staff_profiles sp
@@ -244,6 +268,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $staffPermissions = array_column($stmt->fetchAll(), 'permission');
 
             } catch (Exception $e) {
+                // Rollback on any error to maintain data consistency
                 $db->rollBack();
                 $errors[] = 'An error occurred: ' . $e->getMessage();
             }
@@ -251,12 +276,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Get current department defaults for permission display
+// Get current department defaults for permission display in the form
 $currentDeptDefaults = $departmentPermissions[$fields['department']] ?? [];
 ?>
 
 <div class="adm-sidebar-overlay" id="sidebarOverlay"></div>
 <main class="adm-main">
+    <!-- === TOP BAR === -->
     <div class="adm-topbar">
         <div class="adm-topbar-left">
             <button class="adm-menu-toggle" onclick="document.getElementById('adminSidebar').classList.toggle('open');document.getElementById('sidebarOverlay').classList.toggle('open');">
@@ -272,6 +298,7 @@ $currentDeptDefaults = $departmentPermissions[$fields['department']] ?? [];
     </div>
 
     <div class="adm-content">
+        <!-- === SUCCESS / ERROR DISPLAY === -->
         <?php if ($success): ?>
             <div class="adm-alert adm-alert-success"><span class="material-symbols-outlined">check_circle</span> Staff member <?= $isEdit ? 'updated' : 'created' ?> successfully.</div>
         <?php endif; ?>
@@ -282,7 +309,8 @@ $currentDeptDefaults = $departmentPermissions[$fields['department']] ?? [];
         <form method="post" novalidate>
             <?php csrf_field(); ?>
 
-            <!-- Account Information -->
+            <!-- === ACCOUNT INFORMATION SECTION === -->
+            <!-- User account details — creates or updates the user account -->
             <div class="adm-form-card">
                 <h2>Account Information</h2>
                 <p class="adm-form-field-hint" style="margin-bottom:1rem;"><?= $isEdit ? 'Update the user account details.' : 'Create a new user account for this staff member. They will be able to log in with these credentials.' ?></p>
@@ -306,12 +334,14 @@ $currentDeptDefaults = $departmentPermissions[$fields['department']] ?? [];
                 </div>
             </div>
 
-            <!-- Staff Profile -->
+            <!-- === STAFF PROFILE SECTION === -->
+            <!-- Department, position, hire date, task limits, and availability -->
             <div class="adm-form-card">
                 <h2>Staff Profile</h2>
                 <div class="adm-form-grid">
                     <div class="adm-form-field">
                         <label for="department">Department *</label>
+                        <!-- onchange triggers permission display update via JavaScript -->
                         <select id="department" name="department" required onchange="updatePermissionDisplay()">
                             <option value="">Select Department</option>
                             <?php foreach ($departmentOptions as $key => $label): ?>
@@ -344,21 +374,24 @@ $currentDeptDefaults = $departmentPermissions[$fields['department']] ?? [];
                 </div>
             </div>
 
-            <!-- Permissions -->
+            <!-- === PERMISSIONS SECTION === -->
+            <!-- Department default permissions (auto-granted) + additional selectable permissions -->
             <div class="adm-form-card">
                 <h2>Permissions</h2>
                 <p class="adm-form-field-hint" style="margin-bottom:1rem;">Department permissions are granted automatically. Select additional permissions below.</p>
 
+                <!-- Department default permissions — displayed as disabled badges -->
                 <div id="dept-perms-display" style="margin-bottom:1.5rem;">
                     <h3 style="font-size:0.9rem;color:var(--adm-on-surface-variant);margin-bottom:0.75rem;">
                         <span class="material-symbols-outlined" style="font-size:1rem;vertical-align:middle;">check_circle</span>
                         Department Default Permissions
                     </h3>
                     <div id="dept-perms-list" style="display:flex;flex-wrap:wrap;gap:0.5rem;">
-                        <!-- Filled by JS -->
+                        <!-- Populated dynamically by JavaScript on department change -->
                     </div>
                 </div>
 
+                <!-- Extra permissions — checkboxes for permissions beyond department defaults -->
                 <div>
                     <h3 style="font-size:0.9rem;color:var(--adm-on-surface-variant);margin-bottom:0.75rem;">
                         <span class="material-symbols-outlined" style="font-size:1rem;vertical-align:middle;">add_circle</span>
@@ -367,10 +400,13 @@ $currentDeptDefaults = $departmentPermissions[$fields['department']] ?? [];
                     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:0.5rem;">
                         <?php foreach ($allPermissions as $permKey => $permLabel): ?>
                             <?php
+                            // Determine if this permission is a department default (auto-granted)
                             $isDeptDefault = in_array($permKey, $currentDeptDefaults);
+                            // Checked if it's a department default OR was previously saved as extra
                             $isChecked = $isDeptDefault || in_array($permKey, $staffPermissions);
                             ?>
                             <label class="adm-form-check" style="padding:0.5rem;border:1px solid var(--adm-outline-variant);border-radius:6px;<?= $isDeptDefault ? 'background:var(--adm-success-bg);opacity:0.7;' : '' ?>">
+                                <!-- Department defaults are checked and disabled — cannot be removed -->
                                 <input type="checkbox" name="permissions[]" value="<?= $permKey ?>" <?= $isChecked ? 'checked' : '' ?> <?= $isDeptDefault ? 'disabled' : '' ?>>
                                 <span><?= $permLabel ?></span>
                                 <?php if ($isDeptDefault): ?>
@@ -382,7 +418,7 @@ $currentDeptDefaults = $departmentPermissions[$fields['department']] ?? [];
                 </div>
             </div>
 
-            <!-- Actions -->
+            <!-- === FORM ACTIONS === -->
             <div class="adm-form-card">
                 <div class="adm-form-actions">
                     <a href="staff.php" class="adm-btn adm-btn-secondary">Cancel</a>
@@ -394,15 +430,21 @@ $currentDeptDefaults = $departmentPermissions[$fields['department']] ?? [];
 </main>
 
 <script>
+// === PERMISSION MANAGEMENT ===
+// Maps departments to their default permissions
 var deptPerms = <?= json_encode($departmentPermissions) ?>;
+// Maps permission keys to human-readable labels
 var allPerms = <?= json_encode($allPermissions) ?>;
 
+// Update permission display when department dropdown changes
+// Shows department defaults as badges and toggles checkbox states
 function updatePermissionDisplay() {
     var dept = document.getElementById('department').value;
     var perms = deptPerms[dept] || [];
     var list = document.getElementById('dept-perms-list');
     list.innerHTML = '';
 
+    // Render department default permission badges
     perms.forEach(function(p) {
         var badge = document.createElement('span');
         badge.className = 'adm-status-badge adm-status-confirmed';
@@ -410,7 +452,7 @@ function updatePermissionDisplay() {
         list.appendChild(badge);
     });
 
-    // Update checkbox states
+    // Update checkbox states — department defaults are checked and disabled
     var checkboxes = document.querySelectorAll('input[name="permissions[]"]');
     checkboxes.forEach(function(cb) {
         var isDefault = perms.indexOf(cb.value) !== -1;
@@ -428,7 +470,7 @@ function updatePermissionDisplay() {
     });
 }
 
-// Initialize on page load
+// Initialize permission display on page load
 updatePermissionDisplay();
 </script>
 

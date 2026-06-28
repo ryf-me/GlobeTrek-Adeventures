@@ -1,5 +1,10 @@
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700;9..144,800&family=Winky+Sans:ital,wght@0,400..800;1,400..800&display=swap');
+/**
+ * File: css/payment.css
+ * Purpose: Styles for the Payment page — progress bar, payment form with tabs, card input, sidebar summary, and success state
+ * Used By: payment/index.html
+ */
 
+/* === Design Tokens === */
 .payment-page {
     --paper: #f5f7fa;
     --paper-soft: #ffffff;
@@ -17,6 +22,7 @@
     font-family: 'Winky Sans', 'Segoe UI', sans-serif;
 }
 
+/* === Navbar Override === */
 .payment-page .navbar {
     background: rgba(255, 255, 255, 0.86);
     border-bottom-color: rgba(20, 25, 21, 0.12);
@@ -36,12 +42,14 @@
     letter-spacing: 0;
 }
 
+/* === Page Shell === */
 .payment-shell {
     width: min(1180px, calc(100% - 40px));
     margin: 0 auto;
     padding: 2rem 0 4.8rem;
 }
 
+/* === Breadcrumbs === */
 .breadcrumbs {
     display: flex;
     align-items: center;
@@ -61,7 +69,7 @@
     color: var(--green);
 }
 
-/* Progress Bar */
+/* === Progress Bar === */
 .progress-bar {
     display: flex;
     align-items: center;
@@ -138,7 +146,7 @@
     background: var(--green);
 }
 
-/* Main Grid */
+/* === Main Grid === */
 .payment-grid {
     display: grid;
     grid-template-columns: minmax(0, 1fr) 380px;
@@ -146,7 +154,7 @@
     align-items: start;
 }
 
-/* Form Card */
+/* === Form Card === */
 .form-card {
     border: 1px solid rgba(20, 25, 21, 0.16);
     border-radius: 8px;
@@ -161,6 +169,7 @@
     line-height: 1.06;
 }
 
+/* === Form Alerts === */
 .form-alert {
     margin-bottom: 1rem;
     padding: 0.9rem 1rem;
@@ -181,12 +190,13 @@
     color: var(--danger);
 }
 
+/* === Payment Form === */
 .payment-form {
     display: grid;
     gap: 1.5rem;
 }
 
-/* Payment Method Tabs */
+/* === Payment Method Tabs === */
 .payment-tabs {
     display: flex;
     gap: 0;
@@ -227,7 +237,7 @@
     flex-shrink: 0;
 }
 
-/* Form Sections */
+/* === Form Sections === */
 .form-section {
     display: grid;
     gap: 1rem;
@@ -327,7 +337,7 @@
     line-height: 1.35;
 }
 
-/* Card Input with Icon */
+/* === Card Input with Icon === */
 .input-with-icon {
     position: relative;
 }
@@ -347,7 +357,7 @@
     pointer-events: none;
 }
 
-/* Payment Actions */
+/* === Payment Actions === */
 .payment-actions {
     display: flex;
     justify-content: space-between;
@@ -418,7 +428,7 @@
     height: 18px;
 }
 
-/* Sidebar */
+/* === Payment Sidebar === */
 .booking-sidebar {
     display: grid;
     gap: 1.2rem;
@@ -440,7 +450,7 @@
     line-height: 1.1;
 }
 
-/* Package Summary */
+/* === Package Summary === */
 .package-summary {
     display: flex;
     gap: 1rem;
@@ -506,7 +516,7 @@
     font-size: 0.95rem;
 }
 
-/* Price Details */
+/* === Price Details === */
 .price-breakdown {
     display: grid;
     gap: 0.65rem;
@@ -571,7 +581,7 @@
     flex-shrink: 0;
 }
 
-/* Success State */
+/* === Payment Success State === */
 .payment-success {
     text-align: center;
     padding: 2rem 1rem;
@@ -650,7 +660,12 @@
     color: var(--green);
 }
 
-/* Responsive */
+/* === Footer Override === */
+.payment-page .site-footer {
+    margin-top: 0;
+}
+
+/* === Responsive Breakpoints === */
 @media (max-width: 980px) {
     .payment-grid {
         grid-template-columns: 1fr;
@@ -718,8 +733,4 @@
         width: 100%;
         justify-content: center;
     }
-}
-
-.payment-page .site-footer {
-    margin-top: 0;
 }

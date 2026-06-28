@@ -1,16 +1,19 @@
 <?php
 /**
- * Admin Dashboard
- *
- * Displays key performance indicators (users, bookings, revenue, etc.),
- * Chart.js visualizations (revenue trends, booking status, user growth),
- * and recent activity tables for bookings and inquiries.
- * Staff members are redirected to staff-dashboard.php.
+ * File: admin/index.php
+ * Purpose: Main admin dashboard — displays KPIs, Chart.js visualizations, and recent activity tables.
+ * Dependencies: admin/includes/header.php, admin/includes/sidebar.php, admin/includes/footer.php, config/database.php
+ * Used By: Admin users navigating to the dashboard
+ * Parent Files: none (entry point)
+ * Child Files: admin/includes/header.php, admin/includes/sidebar.php, admin/includes/footer.php
+ * @package GlobeTrek\Admin
  */
+
 $pageTitle = 'Dashboard';
 require_once __DIR__ . '/includes/header.php';
 
-// Redirect staff to their own dashboard
+// === ROLE-BASED REDIRECT ===
+// Staff members are redirected to their dedicated dashboard — they don't see the full admin dashboard.
 if (($_SESSION['user_role'] ?? '') === 'staff') {
     header('Location: staff-dashboard.php');
     exit;
@@ -18,48 +21,64 @@ if (($_SESSION['user_role'] ?? '') === 'staff') {
 
 include __DIR__ . '/includes/sidebar.php';
 
-// --- KPIs ---
+// === KPI QUERIES ===
+// Each query fetches a single aggregate count/value for the stat cards displayed at the top of the dashboard.
 $stats = [];
+
+// Total registered users
 $res = $db->query("SELECT COUNT(*) AS cnt FROM users");
 $stats['users'] = (int)$res->fetch()['cnt'];
 
+// Active packages only
 $res = $db->query("SELECT COUNT(*) AS cnt FROM packages WHERE is_active = 1");
 $stats['packages'] = (int)$res->fetch()['cnt'];
 
+// Total bookings (all statuses)
 $res = $db->query("SELECT COUNT(*) AS cnt FROM bookings");
 $stats['bookings'] = (int)$res->fetch()['cnt'];
 
+// Sum of total_price from confirmed bookings — represents realized revenue
 $res = $db->query("SELECT COALESCE(SUM(total_price), 0) AS total FROM bookings WHERE status = 'confirmed'");
 $stats['revenue'] = (float)$res->fetch()['total'];
 
+// Open inquiries awaiting action (open, waiting_for_response, under_review)
 $res = $db->query("SELECT COUNT(*) AS cnt FROM inquiries WHERE status IN ('open','waiting_for_response','under_review')");
 $stats['open_inquiries'] = (int)$res->fetch()['cnt'];
 
+// Pending custom trip requests not yet fulfilled
 $res = $db->query("SELECT COUNT(*) AS cnt FROM custom_trip_requests WHERE status = 'pending'");
 $stats['pending_trips'] = (int)$res->fetch()['cnt'];
 
+// Unread contact form messages
 $res = $db->query("SELECT COUNT(*) AS cnt FROM contact_messages WHERE is_read = 0");
 $stats['unread_contacts'] = (int)$res->fetch()['cnt'];
 
+// Active newsletter subscribers
 $res = $db->query("SELECT COUNT(*) AS cnt FROM newsletter_subscriptions WHERE is_active = 1");
 $stats['subscribers'] = (int)$res->fetch()['cnt'];
 
+// === STAFF KPIs ===
+// Total staff members in the system
 $res = $db->query("SELECT COUNT(*) AS cnt FROM staff_profiles");
 $stats['total_staff'] = (int)$res->fetch()['cnt'];
 
+// Currently available staff
 $res = $db->query("SELECT COUNT(*) AS cnt FROM staff_profiles WHERE is_available = 1");
 $stats['available_staff'] = (int)$res->fetch()['cnt'];
 
+// Total active assignments (bookings + inquiries assigned to staff)
 $res = $db->query("SELECT COUNT(*) AS cnt FROM staff_assignments");
 $stats['total_assignments'] = (int)$res->fetch()['cnt'];
 
+// Breakdown: booking assignments vs inquiry assignments
 $res = $db->query("SELECT COUNT(*) AS cnt FROM staff_assignments WHERE entity_type = 'booking'");
 $stats['booking_assignments'] = (int)$res->fetch()['cnt'];
 
 $res = $db->query("SELECT COUNT(*) AS cnt FROM staff_assignments WHERE entity_type = 'inquiry'");
 $stats['inquiry_assignments'] = (int)$res->fetch()['cnt'];
 
-// --- Recent Bookings ---
+// === RECENT BOOKINGS ===
+// Fetch the 5 most recent bookings with user and package details for the activity table.
 $recentBookings = $db->query(
     "SELECT b.*, u.full_name AS user_name, p.title AS package_title
      FROM bookings b
@@ -68,7 +87,8 @@ $recentBookings = $db->query(
      ORDER BY b.created_at DESC LIMIT 5"
 )->fetchAll();
 
-// --- Recent Inquiries ---
+// === RECENT INQUIRIES ===
+// Fetch the 5 most recent inquiries with associated user name.
 $recentInquiries = $db->query(
     "SELECT i.*, u.full_name AS user_name
      FROM inquiries i
@@ -76,7 +96,9 @@ $recentInquiries = $db->query(
      ORDER BY i.created_at DESC LIMIT 5"
 )->fetchAll();
 
-// --- Revenue by month (last 6 months) ---
+// === REVENUE BY MONTH (LAST 6 MONTHS) ===
+// Aggregates confirmed booking revenue per month for the bar chart.
+// Results are reversed to show chronological order (oldest first).
 $revenueData = $db->query(
     "SELECT DATE_FORMAT(created_at, '%Y-%m') AS month, SUM(total_price) AS revenue, COUNT(*) AS cnt
      FROM bookings WHERE status = 'confirmed'
@@ -84,14 +106,18 @@ $revenueData = $db->query(
 )->fetchAll();
 $revenueData = array_reverse($revenueData);
 
-// --- Bookings by status ---
+// === BOOKINGS BY STATUS ===
+// Counts bookings per status for the doughnut chart.
+// Converts to an associative map: [status => count].
 $bookingStatus = $db->query(
     "SELECT status, COUNT(*) AS cnt FROM bookings GROUP BY status"
 )->fetchAll();
 $bookingStatusMap = [];
 foreach ($bookingStatus as $row) { $bookingStatusMap[$row['status']] = (int)$row['cnt']; }
 
-// --- Users registered over time (last 6 months) ---
+// === USER REGISTRATIONS OVER TIME (LAST 6 MONTHS) ===
+// Aggregates new user registrations per month for the line chart.
+// Reversed to chronological order for the chart axis.
 $userGrowth = $db->query(
     "SELECT DATE_FORMAT(created_at, '%Y-%m') AS month, COUNT(*) AS cnt
      FROM users GROUP BY month ORDER BY month DESC LIMIT 6"
@@ -99,16 +125,20 @@ $userGrowth = $db->query(
 $userGrowth = array_reverse($userGrowth);
 ?>
 
+<!-- === SIDEBAR OVERLAY (mobile) === -->
 <div class="adm-sidebar-overlay" id="sidebarOverlay"></div>
 <main class="adm-main">
+    <!-- === TOP BAR === -->
     <div class="adm-topbar">
         <div class="adm-topbar-left">
+            <!-- Mobile menu toggle — toggles sidebar and overlay classes -->
             <button class="adm-menu-toggle" onclick="document.getElementById('adminSidebar').classList.toggle('open');document.getElementById('sidebarOverlay').classList.toggle('open');">
                 <span class="material-symbols-outlined">menu</span>
             </button>
             <h1 class="adm-topbar-title">Dashboard</h1>
         </div>
         <div class="adm-topbar-right">
+            <!-- Opens the public site in a new tab -->
             <a href="../index.php" class="adm-topbar-link" target="_blank">
                 <span class="material-symbols-outlined">open_in_new</span>
                 <span>View Site</span>
@@ -121,6 +151,8 @@ $userGrowth = array_reverse($userGrowth);
     </div>
 
     <div class="adm-content">
+        <!-- === STAT CARDS (KPI GRID) === -->
+        <!-- Each card shows a key metric with an icon, formatted number, and label. -->
         <div class="adm-stat-grid">
             <div class="adm-stat-card">
                 <div class="adm-stat-card-icon"><span class="material-symbols-outlined">group</span></div>
@@ -215,7 +247,8 @@ $userGrowth = array_reverse($userGrowth);
             </div>
         </div>
 
-        <!-- Charts -->
+        <!-- === CHARTS SECTION === -->
+        <!-- Chart.js canvases for revenue trends, booking status distribution, and user growth. -->
         <div class="adm-chart-grid">
             <div class="adm-chart-card">
                 <h3>Revenue (Last 6 Months)</h3>
@@ -231,7 +264,7 @@ $userGrowth = array_reverse($userGrowth);
             </div>
         </div>
 
-        <!-- Recent Bookings -->
+        <!-- === RECENT BOOKINGS TABLE === -->
         <div class="adm-page-header">
             <h2>Recent Bookings</h2>
             <a href="bookings.php" class="adm-btn adm-btn-secondary">View All</a>
@@ -261,6 +294,7 @@ $userGrowth = array_reverse($userGrowth);
                                 <td><?= htmlspecialchars($b['package_title'] ?? 'N/A') ?></td>
                                 <td class="cell-mono"><?= formatPrice($b['total_price'], 2) ?></td>
                                 <td>
+                                    <!-- Status badge with dynamic CSS class based on booking status -->
                                     <span class="adm-status-badge adm-status-<?= $b['status'] ?>">
                                         <span class="adm-badge-dot"></span>
                                         <?= ucfirst(htmlspecialchars($b['status'])) ?>
@@ -274,7 +308,7 @@ $userGrowth = array_reverse($userGrowth);
             </div>
         <?php endif; ?>
 
-        <!-- Recent Inquiries -->
+        <!-- === RECENT INQUIRIES TABLE === -->
         <div class="adm-page-header">
             <h2>Recent Inquiries</h2>
             <a href="inquiries.php" class="adm-btn adm-btn-secondary">View All</a>
@@ -303,6 +337,7 @@ $userGrowth = array_reverse($userGrowth);
                                 <td><?= htmlspecialchars($inq['subject']) ?></td>
                                 <td>
                                     <?php
+                                        // Map inquiry status to CSS class and human-readable label
                                         $sClass = 'open'; $sLabel = 'Open';
                                         if ($inq['status'] === 'waiting_for_response') { $sClass = 'waiting'; $sLabel = 'Waiting'; }
                                         elseif ($inq['status'] === 'under_review') { $sClass = 'review'; $sLabel = 'Under Review'; }
@@ -318,12 +353,14 @@ $userGrowth = array_reverse($userGrowth);
             </div>
         <?php endif; ?>
 
-        <!-- Staff Overview -->
+        <!-- === STAFF OVERVIEW TABLE === -->
+        <!-- Shows up to 8 staff members with their department, position, availability, and active task count. -->
         <div class="adm-page-header">
             <h2>Staff Overview</h2>
             <a href="staff.php" class="adm-btn adm-btn-secondary">Manage Staff</a>
         </div>
         <?php
+        // Fetch staff with their user info and count of active assignments (subquery)
         $staffOverview = $db->query(
             "SELECT sp.*, u.full_name, u.email,
                     (SELECT COUNT(*) FROM staff_assignments sa WHERE sa.staff_id = sp.id) AS assignment_count
@@ -333,6 +370,7 @@ $userGrowth = array_reverse($userGrowth);
              LIMIT 8"
         )->fetchAll();
 
+        // Department key-to-label mapping for display
         $deptLabels = [
             'operations' => 'Operations',
             'customer_service' => 'Customer Service',
@@ -367,6 +405,7 @@ $userGrowth = array_reverse($userGrowth);
                                 </td>
                                 <td><?= htmlspecialchars($s['position']) ?></td>
                                 <td>
+                                    <!-- Availability badge: active (green) or inactive (grey) -->
                                     <span class="adm-status-badge adm-status-<?= $s['is_available'] ? 'active' : 'inactive' ?>">
                                         <?= $s['is_available'] ? 'Available' : 'Unavailable' ?>
                                     </span>
@@ -378,9 +417,14 @@ $userGrowth = array_reverse($userGrowth);
                 </table>
             </div>
         <?php endif; ?>
+
+<!-- === CHART.JS SCRIPTS === -->
+<!-- Loads Chart.js from CDN and initializes three charts using data passed from PHP via json_encode. -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // --- Revenue Bar Chart ---
+    // Data injected via PHP json_encode for month labels and revenue values
     var revenueLabels = <?= json_encode(array_column($revenueData, 'month')) ?>;
     var revenueValues = <?= json_encode(array_map('floatval', array_column($revenueData, 'revenue'))) ?>;
     var revenueCtx = document.getElementById('revenueChart');
@@ -402,12 +446,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 maintainAspectRatio: false,
                 plugins: { legend: { display: false } },
                 scales: {
+                    // Y-axis starts at zero; tick labels prefixed with currency symbol
                     y: { beginAtZero: true, ticks: { callback: function(v) { return '<?= CURRENCY_SYMBOL ?> ' + v.toLocaleString(); } } }
                 }
             }
         });
     }
 
+    // --- Bookings Doughnut Chart ---
+    // Shows distribution of bookings by status
     var bookingLabels = <?= json_encode(array_keys($bookingStatusMap)) ?>;
     var bookingValues = <?= json_encode(array_values($bookingStatusMap)) ?>;
     var bookingsCtx = document.getElementById('bookingsChart');
@@ -415,6 +462,7 @@ document.addEventListener('DOMContentLoaded', function() {
         new Chart(bookingsCtx, {
             type: 'doughnut',
             data: {
+                // Capitalize status labels for display
                 labels: bookingLabels.map(function(l) { return l.charAt(0).toUpperCase() + l.slice(1); }),
                 datasets: [{
                     data: bookingValues,
@@ -430,6 +478,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // --- User Growth Line Chart ---
+    // Shows new user registrations per month over the last 6 months
     var userLabels = <?= json_encode(array_column($userGrowth, 'month')) ?>;
     var userValues = <?= json_encode(array_map('intval', array_column($userGrowth, 'cnt'))) ?>;
     var usersCtx = document.getElementById('usersChart');

@@ -1,6 +1,8 @@
-/* ============================================
-   Contact Page Styles
-   ============================================ */
+/**
+ * File: css/contact.css
+ * Purpose: Styles for the Contact page — hero, contact form, sidebar with info/social/map, FAQ accordion, features bar, and success state
+ * Used By: contact/index.html
+ */
 
 :root {
     --c-primary: #264653;

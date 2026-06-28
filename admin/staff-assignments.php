@@ -1,36 +1,47 @@
 <?php
 /**
- * Staff Assignments
- *
- * View and manage staff assignments to bookings and inquiries.
- * Only accessible by admins.
+ * File: admin/staff-assignments.php
+ * Purpose: View and manage staff assignments to bookings and inquiries — assign, unassign, and filter.
+ * Dependencies: admin/includes/header.php, admin/includes/sidebar.php, admin/includes/footer.php, config/logger.php
+ * Used By: Admin-only (role must be 'admin')
+ * Parent Files: admin/includes/sidebar.php (navigated from sidebar menu)
+ * Child Files: admin/includes/header.php, admin/includes/sidebar.php, admin/includes/footer.php
+ * @package GlobeTrek\Admin
  */
+
 $pageTitle = 'Staff Assignments';
+
+// === INITIALIZATION ===
 require_once __DIR__ . '/includes/header.php';
 require_once __DIR__ . '/../config/logger.php';
 
+// === ACCESS CONTROL ===
+// Only admin users can manage staff assignments
 if (($_SESSION['user_role'] ?? '') !== 'admin') {
     header('Location: index.php');
     exit;
 }
 
-// Handle POST actions
+// === CSRF VALIDATION ===
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !validateCSRFToken($_POST['csrf_token'] ?? null)) {
     $error = 'Invalid security token. Please try again.';
 }
 
-// Assign staff
+// === ASSIGN STAFF ===
+// Create a new assignment linking a staff member to a booking or inquiry
 if (empty($error) && $_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'assign') {
     $staffId = (int)($_POST['staff_id'] ?? 0);
     $entityType = $_POST['entity_type'] ?? '';
     $entityId = (int)($_POST['entity_id'] ?? 0);
 
+    // Validate inputs: staff ID must be positive, entity type must be whitelisted, entity ID must be positive
     if ($staffId > 0 && in_array($entityType, ['booking', 'inquiry']) && $entityId > 0) {
-        // Check if already assigned
+        // Check if this staff member is already assigned to this entity (prevent duplicates)
         $checkStmt = $db->prepare("SELECT id FROM staff_assignments WHERE staff_id = :sid AND entity_type = :type AND entity_id = :eid LIMIT 1");
         $checkStmt->execute([':sid' => $staffId, ':type' => $entityType, ':eid' => $entityId]);
 
         if (!$checkStmt->fetch()) {
+            // Create the assignment
             $stmt = $db->prepare(
                 "INSERT INTO staff_assignments (staff_id, entity_type, entity_id, assigned_by)
                  VALUES (:sid, :type, :eid, :assigned_by)"
@@ -50,7 +61,8 @@ if (empty($error) && $_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] 
     }
 }
 
-// Unassign staff
+// === UNASSIGN STAFF ===
+// Remove an existing assignment by assignment ID
 if (empty($error) && $_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'unassign') {
     $assignmentId = (int)($_POST['assignment_id'] ?? 0);
     if ($assignmentId > 0) {
@@ -62,27 +74,33 @@ if (empty($error) && $_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] 
     }
 }
 
+// === SIDEBAR ===
 include __DIR__ . '/includes/sidebar.php';
 
-// Filters
+// === FILTERS & SEARCH ===
+// Entity type filter, staff ID filter, and text search from URL query parameters
 $filter = $_GET['filter'] ?? 'all';
 $staffFilter = (int)($_GET['staff_id'] ?? 0);
 $search = trim($_GET['q'] ?? '');
 
+// Build dynamic WHERE clause
 $where = [];
 $params = [];
 
+// Entity type filter (booking or inquiry)
 if ($filter === 'booking') {
     $where[] = "sa.entity_type = 'booking'";
 } elseif ($filter === 'inquiry') {
     $where[] = "sa.entity_type = 'inquiry'";
 }
 
+// Staff ID filter — show assignments for a specific staff member
 if ($staffFilter > 0) {
     $where[] = "sa.staff_id = :staff_id";
     $params[':staff_id'] = $staffFilter;
 }
 
+// Text search across staff name, booking reference, and inquiry ID code
 if ($search !== '') {
     $where[] = "(u.full_name LIKE :q OR b.booking_reference LIKE :q2 OR i.inquiry_id_code LIKE :q3)";
     $params[':q'] = "%$search%";
@@ -90,9 +108,11 @@ if ($search !== '') {
     $params[':q3'] = "%$search%";
 }
 
+// Assemble WHERE clause
 $whereSQL = !empty($where) ? 'WHERE ' . implode(' AND ', $where) : '';
 
-// Query assignments
+// === FETCH ASSIGNMENTS ===
+// Complex query joining staff, bookings, inquiries, and the admin who made the assignment
 $stmt = $db->prepare(
     "SELECT sa.*,
             u.full_name AS staff_name, u.email AS staff_email,
@@ -112,7 +132,8 @@ $stmt = $db->prepare(
 $stmt->execute($params);
 $assignments = $stmt->fetchAll();
 
-// Get all staff for filter/assign dropdown
+// === FETCH ALL STAFF ===
+// Used for the staff filter tabs and the assign modal dropdown
 $allStaff = $db->query(
     "SELECT sp.id, u.full_name, sp.department, sp.position, sp.is_available
      FROM staff_profiles sp
@@ -120,7 +141,8 @@ $allStaff = $db->query(
      ORDER BY u.full_name ASC"
 )->fetchAll();
 
-// Get unassigned bookings (for assign form)
+// === FETCH UNASSIGNED BOOKINGS ===
+// Populates the entity dropdown in the assign modal (limited to 50 most recent)
 $unassignedBookings = $db->query(
     "SELECT b.id, b.booking_reference, b.first_name, b.last_name, p.title AS package_title
      FROM bookings b
@@ -130,7 +152,8 @@ $unassignedBookings = $db->query(
      LIMIT 50"
 )->fetchAll();
 
-// Get unassigned inquiries (for assign form)
+// === FETCH UNASSIGNED INQUIRIES ===
+// Populates the entity dropdown in the assign modal (limited to 50 most recent)
 $unassignedInquiries = $db->query(
     "SELECT i.id, i.inquiry_id_code, i.subject, u.full_name AS user_name
      FROM inquiries i
@@ -140,6 +163,7 @@ $unassignedInquiries = $db->query(
      LIMIT 50"
 )->fetchAll();
 
+// Department display labels
 $departmentLabels = [
     'operations' => 'Operations',
     'customer_service' => 'Customer Service',
@@ -147,7 +171,8 @@ $departmentLabels = [
     'marketing' => 'Marketing',
 ];
 
-// Stats
+// === COMPUTE STATISTICS ===
+// Count total assignments and breakdown by entity type
 $stats = ['total' => count($assignments), 'bookings' => 0, 'inquiries' => 0];
 foreach ($assignments as $a) {
     if ($a['entity_type'] === 'booking') $stats['bookings']++;
@@ -157,6 +182,7 @@ foreach ($assignments as $a) {
 
 <div class="adm-sidebar-overlay" id="sidebarOverlay"></div>
 <main class="adm-main">
+    <!-- === TOP BAR === -->
     <div class="adm-topbar">
         <div class="adm-topbar-left">
             <button class="adm-menu-toggle" onclick="document.getElementById('adminSidebar').classList.toggle('open');document.getElementById('sidebarOverlay').classList.toggle('open');">
@@ -165,6 +191,7 @@ foreach ($assignments as $a) {
             <h1 class="adm-topbar-title">Staff Assignments</h1>
         </div>
         <div class="adm-topbar-right">
+            <!-- Open the assign modal -->
             <button class="adm-btn adm-btn-primary" onclick="document.getElementById('assignModal').classList.add('open')">
                 <span class="material-symbols-outlined">add</span>
                 <span>New Assignment</span>
@@ -175,6 +202,7 @@ foreach ($assignments as $a) {
     </div>
 
     <div class="adm-content">
+        <!-- === SUCCESS / STATUS ALERTS === -->
         <?php if (isset($_GET['assigned'])): ?>
             <div class="adm-alert adm-alert-success"><span class="material-symbols-outlined">check_circle</span> Staff member assigned successfully.</div>
         <?php endif; ?>
@@ -185,7 +213,7 @@ foreach ($assignments as $a) {
             <div class="adm-alert adm-alert-error"><span class="material-symbols-outlined">error</span> <?= htmlspecialchars($error) ?></div>
         <?php endif; ?>
 
-        <!-- Stats -->
+        <!-- === STAT CARDS === -->
         <div class="adm-stat-grid" style="margin-bottom:1.5rem;">
             <div class="adm-stat-card">
                 <div class="adm-stat-card-icon"><span class="material-symbols-outlined">assignment_ind</span></div>
@@ -210,7 +238,8 @@ foreach ($assignments as $a) {
             </div>
         </div>
 
-        <!-- Filter Bar -->
+        <!-- === FILTER BAR === -->
+        <!-- Entity type filter tabs and search — preserve filters across navigation -->
         <div class="adm-filter-bar">
             <form method="get" class="adm-search" style="display:flex;">
                 <span class="material-symbols-outlined">search</span>
@@ -227,7 +256,8 @@ foreach ($assignments as $a) {
             <a href="?filter=inquiry<?= $staffFilter > 0 ? '&staff_id=' . $staffFilter : '' ?><?= $search ? '&q=' . urlencode($search) : '' ?>" class="adm-tab <?= $filter === 'inquiry' ? 'active' : '' ?>">Inquiries</a>
         </div>
 
-        <!-- Staff Filter -->
+        <!-- === STAFF FILTER TABS === -->
+        <!-- Filter by specific staff member — preserves entity type and search filters -->
         <div class="adm-tabs" style="margin-bottom:1rem;">
             <a href="?filter=<?= urlencode($filter) ?><?= $search ? '&q=' . urlencode($search) : '' ?>" class="adm-tab <?= $staffFilter === 0 ? 'active' : '' ?>">All Staff</a>
             <?php foreach ($allStaff as $s): ?>
@@ -235,6 +265,7 @@ foreach ($assignments as $a) {
             <?php endforeach; ?>
         </div>
 
+        <!-- === ASSIGNMENTS TABLE === -->
         <?php if (empty($assignments)): ?>
             <div class="adm-empty">
                 <span class="material-symbols-outlined adm-empty-icon">assignment_ind</span>
@@ -267,6 +298,7 @@ foreach ($assignments as $a) {
                                         <?= $departmentLabels[$a['department']] ?? $a['department'] ?>
                                     </span>
                                 </td>
+                                <!-- Entity type badge — booking or inquiry -->
                                 <td>
                                     <?php if ($a['entity_type'] === 'booking'): ?>
                                         <span class="adm-status-badge adm-status-pending">Booking</span>
@@ -274,6 +306,7 @@ foreach ($assignments as $a) {
                                         <span class="adm-status-badge adm-status-review">Inquiry</span>
                                     <?php endif; ?>
                                 </td>
+                                <!-- Entity details — reference/customer or ID/subject -->
                                 <td>
                                     <?php if ($a['entity_type'] === 'booking'): ?>
                                         <div class="cell-main"><?= htmlspecialchars($a['booking_reference']) ?></div>
@@ -284,9 +317,11 @@ foreach ($assignments as $a) {
                                     <?php endif; ?>
                                 </td>
                                 <td class="cell-muted"><?= date('M d, Y g:i A', strtotime($a['assigned_at'])) ?></td>
+                                <!-- Admin who created the assignment -->
                                 <td class="cell-muted"><?= htmlspecialchars($a['assigned_by_name'] ?? 'System') ?></td>
                                 <td>
                                     <div class="cell-actions">
+                                        <!-- View entity details link -->
                                         <?php if ($a['entity_type'] === 'booking'): ?>
                                             <a href="bookings.php?ref=<?= urlencode($a['booking_reference'] ?? '') ?>" class="adm-btn-icon" title="View Booking">
                                                 <span class="material-symbols-outlined">open_in_new</span>
@@ -296,6 +331,7 @@ foreach ($assignments as $a) {
                                                 <span class="material-symbols-outlined">open_in_new</span>
                                             </a>
                                         <?php endif; ?>
+                                        <!-- Remove assignment — unlinks staff from entity -->
                                         <form method="post" style="display:inline;" data-confirm="Remove this assignment?">
                                             <?php csrf_field(); ?>
                                             <input type="hidden" name="action" value="unassign">
@@ -315,7 +351,8 @@ foreach ($assignments as $a) {
     </div>
 </main>
 
-<!-- Assign Modal -->
+<!-- === ASSIGN MODAL === -->
+<!-- Modal form for creating new staff assignments -->
 <div class="adm-modal-overlay" id="assignModal">
     <div class="adm-modal">
         <div class="adm-modal-header">
@@ -328,6 +365,7 @@ foreach ($assignments as $a) {
             <?php csrf_field(); ?>
             <input type="hidden" name="action" value="assign">
             <div class="adm-modal-body">
+                <!-- Staff member selector — unavailable staff are disabled -->
                 <div class="adm-form-field" style="margin-bottom:1rem;">
                     <label for="assign-staff">Staff Member *</label>
                     <select id="assign-staff" name="staff_id" required>
@@ -340,6 +378,7 @@ foreach ($assignments as $a) {
                         <?php endforeach; ?>
                     </select>
                 </div>
+                <!-- Entity type selector — triggers JavaScript to update entity dropdown -->
                 <div class="adm-form-field" style="margin-bottom:1rem;">
                     <label for="assign-type">Entity Type *</label>
                     <select id="assign-type" name="entity_type" required onchange="updateEntityDropdown()">
@@ -348,6 +387,7 @@ foreach ($assignments as $a) {
                         <option value="inquiry">Inquiry</option>
                     </select>
                 </div>
+                <!-- Entity selector — dynamically populated by JavaScript based on entity type -->
                 <div class="adm-form-field" style="margin-bottom:1rem;">
                     <label for="assign-entity">Select Item *</label>
                     <select id="assign-entity" name="entity_id" required>
@@ -364,9 +404,13 @@ foreach ($assignments as $a) {
 </div>
 
 <script>
+// === ENTITY DROPDOWN POPULATION ===
+// Data arrays injected from PHP for bookings and inquiries
 var bookings = <?= json_encode($unassignedBookings) ?>;
 var inquiries = <?= json_encode($unassignedInquiries) ?>;
 
+// Update entity dropdown options when entity type changes
+// Populates the dropdown with either bookings or inquiries from the injected data
 function updateEntityDropdown() {
     var type = document.getElementById('assign-type').value;
     var entitySelect = document.getElementById('assign-entity');

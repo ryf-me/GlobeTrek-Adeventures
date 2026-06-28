@@ -1,11 +1,21 @@
 <?php if (session_status() === PHP_SESSION_NONE) session_start(); ?>
 <?php
-require_once __DIR__ . '/../config/database.php';
-$db = getDB();
+/**
+ * File: pages/guide-details.php
+ * Purpose: Displays a single guide's full profile including bio, stats, rating, and approved user reviews. Allows logged-in users to write reviews via modal.
+ * Dependencies: config/database.php, includes/navbar.php, includes/footer.php, includes/review-modal.php, css/guide-details.css, css/inquiries.css, css/review-modal.css, js/review-modal.js
+ * Used By: guides.php (linked from guide cards)
+ * Parent Files: guides.php
+ * Child Files: includes/review-modal.php (included for review form)
+ * @package GlobeTrek\Pages
+ */
 
+// === GUIDE ID EXTRACTION ===
+// Cast to int to ensure only numeric IDs are used in queries.
 $guideId = isset($_GET['id']) ? (int) $_GET['id'] : 0;
 
-// Fetch guide
+// === FETCH GUIDE ===
+// Only active guides are accessible; show error page if not found.
 $stmt = $db->prepare("SELECT * FROM guides WHERE id = :id AND is_active = 1");
 $stmt->execute([':id' => $guideId]);
 $guide = $stmt->fetch();
@@ -15,7 +25,9 @@ if (!$guide) {
     exit;
 }
 
-// Fetch approved guide reviews
+// === FETCH APPROVED REVIEWS ===
+// Only approved reviews are shown publicly. Limited to 20 most recent.
+// Joins with users table to get reviewer display name and avatar.
 $reviewStmt = $db->prepare(
     "SELECT gr.*, u.full_name AS user_full_name, u.profile_photo AS user_avatar
      FROM guide_reviews gr
@@ -28,7 +40,8 @@ $reviewStmt->execute([':gid' => $guideId]);
 $guideReviews = $reviewStmt->fetchAll();
 $reviewCount = count($guideReviews);
 
-// Calculate average rating
+// === CALCULATE AVERAGE RATING ===
+// Aggregate query for display in the hero stats section.
 $avgStmt = $db->prepare(
     "SELECT AVG(rating) AS avg_rating, COUNT(*) AS total FROM guide_reviews WHERE guide_id = :gid AND status = 'approved'"
 );
@@ -55,6 +68,7 @@ $totalReviews = (int)$stats['total'];
     <?php $basePath = '../'; include '../includes/navbar.php'; ?>
 
     <main class="guide-details-shell">
+        <!-- === BREADCRUMBS === -->
         <nav class="breadcrumbs" aria-label="Breadcrumb">
             <a href="../index.php#home">Home</a>
             <span aria-hidden="true">/</span>
@@ -63,7 +77,7 @@ $totalReviews = (int)$stats['total'];
             <span><?= htmlspecialchars($guide['name']) ?></span>
         </nav>
 
-        <!-- Guide Hero -->
+        <!-- === GUIDE HERO SECTION === -->
         <section class="guide-hero">
             <div class="guide-hero-media">
                 <img src="<?= htmlspecialchars($basePath . $guide['image']) ?>" alt="<?= htmlspecialchars($guide['name']) ?>">
@@ -77,6 +91,7 @@ $totalReviews = (int)$stats['total'];
                 <p class="guide-specialty-label"><?= htmlspecialchars($guide['specialty']) ?></p>
                 <p class="guide-bio"><?= htmlspecialchars($guide['description']) ?></p>
 
+                <!-- Rating and review count stats -->
                 <div class="guide-stats-row">
                     <div class="guide-stat">
                         <span class="guide-stat-num"><?= $avgRating > 0 ? number_format($avgRating, 1) : '—' ?></span>
@@ -93,6 +108,7 @@ $totalReviews = (int)$stats['total'];
                     </div>
                 </div>
 
+                <!-- Review CTA: button for logged-in users, link for guests -->
                 <?php if (isset($_SESSION['user_id'])): ?>
                     <button onclick="openReviewModalGuide(<?= $guideId ?>)" class="guide-review-btn">
                         <span class="material-symbols-outlined">rate_review</span>
@@ -107,19 +123,21 @@ $totalReviews = (int)$stats['total'];
             </div>
         </section>
 
-        <!-- Reviews Section -->
+        <!-- === REVIEWS SECTION === -->
         <section class="guide-reviews-section">
             <div class="guide-reviews-header">
                 <h2>Reviews About <?= htmlspecialchars($guide['name']) ?></h2>
                 <span class="guide-review-count"><?= $totalReviews ?> review<?= $totalReviews !== 1 ? 's' : '' ?></span>
             </div>
 
+            <!-- Success message after review submission -->
             <?php if (isset($_GET['review_submitted'])): ?>
                 <div class="mb-alert mb-alert-success">
                     <span class="material-symbols-outlined">check_circle</span>
                     Review submitted successfully! It will be visible after admin approval.
                 </div>
             <?php endif; ?>
+            <!-- Error message display -->
             <?php if (isset($_GET['error'])): ?>
                 <div class="mb-alert mb-alert-error">
                     <span class="material-symbols-outlined">error</span>
@@ -128,11 +146,13 @@ $totalReviews = (int)$stats['total'];
             <?php endif; ?>
 
             <?php if (empty($guideReviews)): ?>
+                <!-- Empty state when no reviews exist -->
                 <div class="guide-reviews-empty">
                     <span class="material-symbols-outlined">rate_review</span>
                     <p>No reviews yet for this guide. Be the first to share your experience!</p>
                 </div>
             <?php else: ?>
+                <!-- Reviews list -->
                 <div class="guide-reviews-list">
                     <?php foreach ($guideReviews as $review): ?>
                         <div class="guide-review-card">
@@ -171,29 +191,28 @@ $totalReviews = (int)$stats['total'];
         </section>
     </main>
 
+    <!-- Review modal component (included for logged-in users to submit reviews) -->
     <?php include __DIR__ . '/../includes/review-modal.php'; ?>
     <?php $basePath = '../'; include '../includes/footer.php'; ?>
 
     <script src="../js/script.js"></script>
     <script src="../js/review-modal.js"></script>
     <script>
-    // Open review modal pre-configured for guide review
+    // === GUIDE REVIEW MODAL HANDLER ===
+    // Pre-configures the shared review modal for guide-specific reviews.
+    // Sets the review type, guide ID, and hidden select field before opening.
     function openReviewModalGuide(guideId) {
-        // Set the review type to 'guide'
         var typeSelect = document.getElementById('rv-review-type');
         if (typeSelect) {
             typeSelect.value = 'guide';
             onReviewTypeChange();
         }
-        // Set the guide ID
         var guideInput = document.getElementById('rv-guide-id');
         if (guideInput) guideInput.value = guideId;
-        // Set the hidden guide_id_select for form submission
         var guideSelect = document.getElementById('rv-guide-select');
         if (guideSelect) {
             guideSelect.value = guideId;
         }
-        // Open the modal
         openReviewModal(0);
     }
     </script>

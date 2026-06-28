@@ -1,11 +1,10 @@
-/* ============================================
-   My Bookings Page – User Dashboard
-   (Sidebar layout in css/user-sidebar.css)
-   ============================================ */
+/**
+ * File: css/my-bookings.css
+ * Purpose: Styles for the My Bookings dashboard — tabs, booking cards with images, status badges, meta info, card actions, and empty state
+ * Used By: my-bookings/index.html
+ */
 
-/* --------------------------------------------
-   Page Header
-   -------------------------------------------- */
+/* === Page Header === */
 .usr-page-header {
     margin-bottom: 1.5rem;
 }
@@ -23,9 +22,7 @@
     font-size: 0.95rem;
 }
 
-/* --------------------------------------------
-   Tabs
-   -------------------------------------------- */
+/* === Tabs === */
 .mb-tabs {
     display: flex;
     border-bottom: 1px solid var(--inq-outline-variant, #c4c7c8);
@@ -77,9 +74,7 @@
     color: var(--inq-on-primary, #fff);
 }
 
-/* --------------------------------------------
-   Booking Cards
-   -------------------------------------------- */
+/* === Booking Cards List === */
 .mb-list {
     display: flex;
     flex-direction: column;
@@ -100,15 +95,12 @@
     border-color: var(--inq-outline, #747878);
 }
 
-/* Muted card for completed/cancelled */
 .mb-card.muted {
     opacity: 0.75;
     background: var(--inq-surface-container-low, #f3f3f4);
 }
 
-/* --------------------------------------------
-   Card Image
-   -------------------------------------------- */
+/* === Card Image === */
 .mb-card-img {
     width: 256px;
     min-height: 180px;
@@ -133,7 +125,6 @@
     font-size: 40px;
 }
 
-/* Placeholder when no image */
 .mb-card-img .mb-placeholder {
     position: relative;
     width: 100%;
@@ -166,9 +157,7 @@
     width: 142%;
 }
 
-/* --------------------------------------------
-   Card Body
-   -------------------------------------------- */
+/* === Card Body === */
 .mb-card-body {
     flex: 1;
     min-width: 0;
@@ -178,7 +167,6 @@
     justify-content: space-between;
 }
 
-/* Top row: booking ref + title + status badge */
 .mb-card-top {
     display: flex;
     justify-content: space-between;
@@ -203,9 +191,7 @@
     color: var(--inq-on-surface-variant, #5e5e5e);
 }
 
-/* --------------------------------------------
-   Status Badges
-   -------------------------------------------- */
+/* === Status Badges === */
 .mb-badge {
     display: inline-flex;
     align-items: center;
@@ -245,9 +231,7 @@
     color: var(--inq-error, #ba1a1a);
 }
 
-/* --------------------------------------------
-   Card Meta (date, price)
-   -------------------------------------------- */
+/* === Card Meta === */
 .mb-card-meta {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -272,9 +256,7 @@
     font-weight: 700;
 }
 
-/* --------------------------------------------
-   Card Actions
-   -------------------------------------------- */
+/* === Card Actions === */
 .mb-card-actions {
     display: flex;
     flex-wrap: wrap;
@@ -351,9 +333,7 @@
     color: var(--inq-error, #ba1a1a);
 }
 
-/* --------------------------------------------
-   Empty State
-   -------------------------------------------- */
+/* === Empty State === */
 .mb-empty {
     text-align: center;
     padding: clamp(3rem, 6vw, 5rem) 2rem;
@@ -383,24 +363,35 @@
     font-size: 0.9rem;
 }
 
-/* --------------------------------------------
-   Alert Banners
-   -------------------------------------------- */
+/* === Alert Banners === */
 .mb-alert {
-    padding: 0.85rem clamp(1.25rem, 4vw, 3rem);
-    font-size: 0.88rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
     font-weight: 500;
 }
 
-.mb-alert.success {
-    background: var(--inq-success-bg, #dfe9df);
-    border-bottom: 1px solid var(--inq-success-border, rgba(18, 61, 53, 0.28));
-    color: var(--inq-success-text, #264653);
+.mb-alert-success {
+    background: #dfe9df;
+    color: #264653;
+    border: 1px solid rgba(38, 70, 83, 0.28);
 }
 
-/* --------------------------------------------
-   Responsive
-   -------------------------------------------- */
+.mb-alert-error {
+    background: #fde8e8;
+    color: #7f1d1d;
+    border: 1px solid rgba(127, 29, 29, 0.2);
+}
+
+.mb-alert .material-symbols-outlined {
+    font-size: 1.2rem;
+}
+
+/* === Responsive Breakpoints === */
 @media (max-width: 900px) {
     .mb-card {
         flex-direction: column;
@@ -437,32 +428,4 @@
         margin-left: 0;
         justify-content: center;
     }
-}
-
-/* ---------- Alerts ---------- */
-.mb-alert {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.75rem 1rem;
-    border-radius: 8px;
-    margin-bottom: 1.5rem;
-    font-size: 0.9rem;
-    font-weight: 500;
-}
-
-.mb-alert-success {
-    background: #dfe9df;
-    color: #264653;
-    border: 1px solid rgba(38, 70, 83, 0.28);
-}
-
-.mb-alert-error {
-    background: #fde8e8;
-    color: #7f1d1d;
-    border: 1px solid rgba(127, 29, 29, 0.2);
-}
-
-.mb-alert .material-symbols-outlined {
-    font-size: 1.2rem;
 }

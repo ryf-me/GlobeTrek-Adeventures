@@ -1,17 +1,32 @@
 <?php
+/**
+ * File: pages/my-bookings.php
+ * Purpose: Displays the authenticated user's bookings, split into upcoming and past tabs,
+ *          with status badges, date ranges, prices, and contextual action buttons.
+ * Dependencies: config/database.php, config/currency.php, js/script.js
+ * Used By: User sidebar navigation (user-sidebar.php)
+ * Parent Files: None (standalone page rendered in browser)
+ * Child Files: Includes navbar.php, user-sidebar.php, footer.php
+ * @package GlobeTrek\Pages
+ */
+
 session_start();
 
+// === AUTH GUARD ===
+// Redirect unauthenticated users to login page
 if (!isset($_SESSION['user_id'])) {
     header('Location: login.php');
     exit;
 }
 
+// === DATABASE & CONFIG ===
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../config/currency.php';
 $db = getDB();
 $userId = $_SESSION['user_id'];
 
-// Fetch user's bookings with package details
+// === FETCH ALL BOOKINGS ===
+// Join bookings with packages to get title, image, price, and duration info
 $stmt = $db->prepare(
     "SELECT b.*, p.title, p.image, p.price, p.duration_days, p.duration_nights
      FROM bookings b
@@ -22,7 +37,11 @@ $stmt = $db->prepare(
 $stmt->execute([':user_id' => $userId]);
 $allBookings = $stmt->fetchAll();
 
-// Split into upcoming and past
+// === SPLIT BOOKINGS INTO UPCOMING AND PAST ===
+// A booking is considered "past" if:
+//   1. Its status is 'cancelled', OR
+//   2. Its travel_date + duration_days has already passed, OR
+//   3. (handled below) Confirmed bookings with no travel date are treated as upcoming
 $upcoming = [];
 $past = [];
 $today = date('Y-m-d');
@@ -31,14 +50,16 @@ foreach ($allBookings as $booking) {
     $isPast = false;
 
     if ($booking['status'] === 'cancelled') {
+        // Cancelled bookings always go to past
         $isPast = true;
     } elseif ($booking['travel_date'] && $booking['duration_days']) {
+        // Calculate end date: travel_date + duration_days
         $endDate = date('Y-m-d', strtotime($booking['travel_date'] . ' + ' . $booking['duration_days'] . ' days'));
         if ($endDate < $today) {
             $isPast = true;
         }
     } elseif ($booking['travel_date'] === null && $booking['status'] === 'confirmed') {
-        // No travel date set yet — treat as upcoming
+        // No travel date set yet — treat as upcoming so user can still manage it
         $isPast = false;
     }
 
@@ -49,15 +70,33 @@ foreach ($allBookings as $booking) {
     }
 }
 
-// Tab filter
+// === TAB FILTER ===
+// Determine which tab is active from query parameter; default to 'upcoming'
 $tab = $_GET['tab'] ?? 'upcoming';
 if (!in_array($tab, ['upcoming', 'past'])) {
     $tab = 'upcoming';
 }
 $activeBookings = $tab === 'upcoming' ? $upcoming : $past;
 
+// Sidebar active page indicator
 $activePage = 'bookings';
 
+// === HELPER FUNCTIONS ===
+
+/**
+ * Determine the display badge class and label for a booking status.
+ *
+ * Logic:
+ * - Cancelled → always "cancelled"
+ * - Pending → always "pending"
+ * - Confirmed → check if travel_date + duration has passed → "completed" vs "confirmed"
+ * - Default fallback → ucfirst of raw status
+ *
+ * @param string $status      Booking status from DB
+ * @param ?string $travelDate Travel date (Y-m-d) or null
+ * @param ?int $durationDays  Number of days for the trip
+ * @return array{0: string, 1: string} [badge CSS class, human-readable label]
+ */
 function mb_status_badge(string $status, ?string $travelDate, ?int $durationDays): array
 {
     $today = date('Y-m-d');
@@ -71,6 +110,7 @@ function mb_status_badge(string $status, ?string $travelDate, ?int $durationDays
     }
 
     if ($status === 'confirmed') {
+        // For confirmed bookings, check if the trip has already ended
         if ($travelDate && $durationDays) {
             $endDate = date('Y-m-d', strtotime($travelDate . ' + ' . $durationDays . ' days'));
             if ($endDate < $today) {
@@ -80,9 +120,17 @@ function mb_status_badge(string $status, ?string $travelDate, ?int $durationDays
         return ['confirmed', 'Confirmed'];
     }
 
+    // Fallback for any other status values
     return ['pending', ucfirst($status)];
 }
 
+/**
+ * Format a travel date range as a human-readable string.
+ *
+ * @param ?string $travelDate Start date (Y-m-d) or null
+ * @param ?int    $days       Duration in days
+ * @return string Formatted range like "01 Jan 2025 - 05 Jan 2025" or "Dates to be confirmed"
+ */
 function mb_format_date_range(?string $travelDate, ?int $days): string
 {
     if (!$travelDate) {
@@ -96,6 +144,12 @@ function mb_format_date_range(?string $travelDate, ?int $days): string
     return $start;
 }
 
+/**
+ * Format price using the global formatPrice() from currency.php.
+ *
+ * @param float $price Raw price value
+ * @return string Formatted price string
+ */
 function mb_format_price(float $price): string
 {
     return formatPrice($price, 2);
@@ -118,13 +172,17 @@ function mb_format_price(float $price): string
     <link rel="stylesheet" href="../css/footer.css">
 </head>
 <body class="usr-page">
+    <!-- === NAVBAR === -->
     <?php $basePath = '../'; include '../includes/navbar.php'; ?>
 
     <main>
         <div class="usr-layout">
+            <!-- === SIDEBAR === -->
             <?php $activePage = 'bookings'; include '../includes/user-sidebar.php'; ?>
 
+            <!-- === MAIN CONTENT === -->
             <div class="usr-canvas">
+                <!-- Flash messages from redirect after cancellation or error -->
                 <?php if (isset($_GET['cancelled'])): ?>
                     <div class="mb-alert mb-alert-success">
                         <span class="material-symbols-outlined">check_circle</span>
@@ -143,7 +201,7 @@ function mb_format_price(float $price): string
                     <p>View and manage your current and past travel arrangements.</p>
                 </div>
 
-                <!-- Tabs -->
+                <!-- === TAB NAVIGATION === -->
                 <div class="mb-tabs">
                     <a href="?tab=upcoming" class="mb-tab-btn <?= $tab === 'upcoming' ? 'active' : '' ?>">
                         Upcoming Trips
@@ -155,8 +213,9 @@ function mb_format_price(float $price): string
                     </a>
                 </div>
 
-                <!-- Bookings List -->
+                <!-- === BOOKINGS LIST === -->
                 <?php if (empty($activeBookings)): ?>
+                    <!-- Empty state when no bookings exist for the selected tab -->
                     <div class="mb-empty">
                         <span class="material-symbols-outlined">flight_takeoff</span>
                         <h2>No <?= $tab === 'upcoming' ? 'upcoming' : 'past' ?> trips</h2>
@@ -171,17 +230,20 @@ function mb_format_price(float $price): string
                     <div class="mb-list">
                         <?php foreach ($activeBookings as $booking): ?>
                             <?php
+                                // Compute badge class, label, and display state for this booking
                                 [$badgeClass, $badgeLabel] = mb_status_badge(
                                     $booking['status'],
                                     $booking['travel_date'],
                                     $booking['duration_days']
                                 );
+                                // Muted styling for completed or cancelled bookings
                                 $isMuted = ($badgeClass === 'completed' || $badgeClass === 'cancelled');
                                 $dateRange = mb_format_date_range($booking['travel_date'], $booking['duration_days']);
+                                // Build image path — prefix with '../' for relative asset paths
                                 $imgPath = $booking['image'] ? '../' . htmlspecialchars($booking['image']) : '';
                             ?>
                             <div class="mb-card <?= $isMuted ? 'muted' : '' ?>">
-                                <!-- Image -->
+                                <!-- === BOOKING IMAGE === -->
                                 <div class="mb-card-img">
                                     <?php if ($imgPath): ?>
                                         <img src="<?= $imgPath ?>" alt="<?= htmlspecialchars($booking['title']) ?>">
@@ -192,7 +254,7 @@ function mb_format_price(float $price): string
                                     <?php endif; ?>
                                 </div>
 
-                                <!-- Body -->
+                                <!-- === BOOKING BODY === -->
                                 <div class="mb-card-body">
                                     <div>
                                         <div class="mb-card-top">
@@ -203,6 +265,7 @@ function mb_format_price(float $price): string
                                             <span class="mb-badge mb-badge-<?= $badgeClass ?>"><?= $badgeLabel ?></span>
                                         </div>
 
+                                        <!-- Meta info: date range and total price -->
                                         <div class="mb-card-meta">
                                             <div class="mb-meta-item">
                                                 <span class="material-symbols-outlined">calendar_today</span>
@@ -215,9 +278,11 @@ function mb_format_price(float $price): string
                                         </div>
                                     </div>
 
-                                    <!-- Actions -->
+                                    <!-- === ACTION BUTTONS === -->
+                                    <!-- Actions vary based on booking status to provide contextual options -->
                                     <div class="mb-card-actions">
                                         <?php if ($badgeClass === 'confirmed'): ?>
+                                            <!-- Confirmed: can view details, modify booking, download invoice -->
                                             <a href="booking-detail.php?ref=<?= urlencode($booking['booking_reference']) ?>" class="mb-btn mb-btn-primary">View Details</a>
                                             <a href="payment.php?ref=<?= urlencode($booking['booking_reference']) ?>" class="mb-btn mb-btn-outline">Modify Booking</a>
                                             <button class="mb-btn-text" onclick="alert('Invoice download coming soon')">
@@ -225,16 +290,20 @@ function mb_format_price(float $price): string
                                                 Invoice
                                             </button>
                                         <?php elseif ($badgeClass === 'pending'): ?>
+                                            <!-- Pending: can view details, complete payment, or cancel -->
                                             <a href="booking-detail.php?ref=<?= urlencode($booking['booking_reference']) ?>" class="mb-btn mb-btn-primary">View Details</a>
                                             <a href="payment.php?ref=<?= urlencode($booking['booking_reference']) ?>" class="mb-btn mb-btn-outline">Complete Payment</a>
+                                            <!-- JS confirm dialog before redirecting to cancel endpoint -->
                                             <button class="mb-btn-text danger" onclick="if(confirm('Are you sure you want to cancel this booking?')) window.location.href='cancel-booking.php?ref=<?= urlencode($booking['booking_reference']) ?>'">
                                                 <span class="material-symbols-outlined">cancel</span>
                                                 Cancel
                                             </button>
                                         <?php elseif ($badgeClass === 'completed'): ?>
+                                            <!-- Completed: can review or rebook -->
                                             <a href="booking-detail.php?ref=<?= urlencode($booking['booking_reference']) ?>" class="mb-btn mb-btn-outline">Review Experience</a>
                                             <a href="packages.php?rebook=<?= urlencode($booking['package_id']) ?>" class="mb-btn mb-btn-outline">Rebook Package</a>
                                         <?php elseif ($badgeClass === 'cancelled'): ?>
+                                            <!-- Cancelled: read-only detail view -->
                                             <a href="booking-detail.php?ref=<?= urlencode($booking['booking_reference']) ?>" class="mb-btn mb-btn-outline">View Details</a>
                                         <?php endif; ?>
                                     </div>
@@ -247,6 +316,7 @@ function mb_format_price(float $price): string
         </div>
     </main>
 
+    <!-- === FOOTER === -->
     <?php $basePath = '../'; include '../includes/footer.php'; ?>
 
     <script src="../js/script.js"></script>

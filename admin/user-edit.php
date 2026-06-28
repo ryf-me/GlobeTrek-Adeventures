@@ -1,29 +1,48 @@
 <?php
+/**
+ * File: admin/user-edit.php
+ * Purpose: Edit an existing user account — updates profile info, role, and optionally password.
+ * Dependencies: admin/includes/header.php, admin/includes/sidebar.php, admin/includes/footer.php
+ * Used By: Admin-only; accessed from users.php
+ * Parent Files: admin/users.php (linked from user list)
+ * Child Files: admin/includes/header.php, admin/includes/sidebar.php, admin/includes/footer.php
+ * @package GlobeTrek\Admin
+ */
+
 $pageTitle = 'Edit User';
+
+// === INITIALIZATION ===
 require_once __DIR__ . '/includes/header.php';
 
+// === ACCESS CONTROL ===
+// Only admin users can edit other user accounts
 if (($_SESSION['user_role'] ?? '') !== 'admin') {
     header('Location: index.php');
     exit;
 }
 
+// === LOAD EXISTING USER ===
 $userId = (int)($_GET['id'] ?? 0);
 if ($userId <= 0) { header('Location: users.php'); exit; }
 
 $stmt = $db->prepare("SELECT * FROM users WHERE id = :id");
 $stmt->execute([':id' => $userId]);
 $user = $stmt->fetch();
+// Redirect if user not found
 if (!$user) { header('Location: users.php'); exit; }
 
+// === SIDEBAR ===
 include __DIR__ . '/includes/sidebar.php';
 
 $errors = [];
 $success = false;
 
+// === FORM SUBMISSION ===
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!validateCSRFToken($_POST['csrf_token'] ?? null)) {
         $errors[] = 'Invalid security token. Please try again.';
     } else {
+    // Sanitize and trim form inputs
     $fullName = trim($_POST['full_name'] ?? '');
     $email = trim($_POST['email'] ?? '');
     $phone = trim($_POST['phone'] ?? '');
@@ -34,14 +53,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $role = $_POST['role'] ?? $user['role'];
     $newPassword = trim($_POST['new_password'] ?? '');
 
+    // Validate role — only allow valid role values to prevent privilege escalation
     if ($role !== $user['role'] && !in_array($role, ['user', 'staff', 'admin'])) {
         $role = $user['role'];
     }
 
+    // === VALIDATION ===
     if ($fullName === '') $errors[] = 'Full name is required.';
     if ($email === '') $errors[] = 'Email is required.';
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) $errors[] = 'Invalid email address.';
 
+    // Check email uniqueness — exclude current user from duplicate check
     if ($email !== $user['email']) {
         $check = $db->prepare("SELECT id FROM users WHERE email = :email AND id != :id");
         $check->execute([':email' => $email, ':id' => $userId]);
@@ -49,13 +71,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (empty($errors)) {
+        // Build UPDATE query — base fields always updated
         $sql = "UPDATE users SET full_name = :full_name, email = :email, phone = :phone, gender = :gender, country = :country, city = :city, bio = :bio, role = :role WHERE id = :id";
         $params = [':full_name'=>$fullName, ':email'=>$email, ':phone'=>$phone, ':gender'=>$gender, ':country'=>$country, ':city'=>$city, ':bio'=>$bio, ':role'=>$role, ':id'=>$userId];
 
+        // Optionally update password if provided
         if ($newPassword !== '') {
             if (strlen($newPassword) < 6) {
                 $errors[] = 'Password must be at least 6 characters.';
             } else {
+                // Add password to UPDATE query and hash it
                 $sql = "UPDATE users SET full_name = :full_name, email = :email, phone = :phone, gender = :gender, country = :country, city = :city, bio = :bio, role = :role, password = :password WHERE id = :id";
                 $params[':password'] = password_hash($newPassword, PASSWORD_DEFAULT);
             }
@@ -65,11 +90,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt = $db->prepare($sql);
             $stmt->execute($params);
             $success = true;
-            // Refresh data
+            // Refresh user data after update
             $stmt = $db->prepare("SELECT * FROM users WHERE id = :id");
             $stmt->execute([':id' => $userId]);
             $user = $stmt->fetch();
-            // Sync session if admin edited their own profile
+            // Sync session data if admin edited their own profile
             if (isset($_SESSION['user_id']) && (int)$_SESSION['user_id'] === $userId) {
                 $_SESSION['user_name'] = $user['full_name'];
                 $_SESSION['user_email'] = $user['email'];
@@ -83,6 +108,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <div class="adm-sidebar-overlay" id="sidebarOverlay"></div>
 <main class="adm-main">
+    <!-- === TOP BAR === -->
     <div class="adm-topbar">
         <div class="adm-topbar-left">
             <button class="adm-menu-toggle" onclick="document.getElementById('adminSidebar').classList.toggle('open');document.getElementById('sidebarOverlay').classList.toggle('open');">
@@ -96,6 +122,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 
     <div class="adm-content">
+        <!-- === SUCCESS / ERROR DISPLAY === -->
         <?php if ($success): ?>
             <div class="adm-alert adm-alert-success"><span class="material-symbols-outlined">check_circle</span> User updated successfully.</div>
         <?php endif; ?>
@@ -103,6 +130,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="adm-alert adm-alert-error"><span class="material-symbols-outlined">error</span> <?= htmlspecialchars($err) ?></div>
         <?php endforeach; ?>
 
+        <!-- === USER EDIT FORM === -->
         <div class="adm-form-card">
             <h2>User Details</h2>
             <form method="post" novalidate>

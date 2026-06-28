@@ -1,10 +1,10 @@
-/* ============================================
-   My Reviews Page – User Dashboard
-   ============================================ */
+/**
+ * File: css/my-reviews.css
+ * Purpose: Styles for the My Reviews dashboard — review cards, star ratings, edit/delete actions, rating selector, and character counter
+ * Used By: my-reviews/index.html
+ */
 
-/* --------------------------------------------
-   Review Card List
-   -------------------------------------------- */
+/* === Review Card List === */
 .mr-list {
     display: flex;
     flex-direction: column;
@@ -23,9 +23,7 @@
     border-color: #747878;
 }
 
-/* --------------------------------------------
-   Card Header
-   -------------------------------------------- */
+/* === Card Header === */
 .mr-card-header {
     display: flex;
     justify-content: space-between;
@@ -64,9 +62,7 @@
     color: #888;
 }
 
-/* --------------------------------------------
-   Status Badge
-   -------------------------------------------- */
+/* === Status Badge === */
 .mr-badge {
     display: inline-flex;
     align-items: center;
@@ -80,9 +76,7 @@
     flex-shrink: 0;
 }
 
-/* --------------------------------------------
-   Stars
-   -------------------------------------------- */
+/* === Star Ratings === */
 .mr-card-stars {
     display: flex;
     gap: 0.15rem;
@@ -99,9 +93,7 @@
     font-size: 1rem;
 }
 
-/* --------------------------------------------
-   Title & Content
-   -------------------------------------------- */
+/* === Title & Content === */
 .mr-card-title {
     font-size: 1.05rem;
     font-weight: 600;
@@ -116,9 +108,7 @@
     font-style: italic;
 }
 
-/* --------------------------------------------
-   Card Actions
-   -------------------------------------------- */
+/* === Card Actions === */
 .mr-card-actions {
     display: flex;
     flex-wrap: wrap;
@@ -179,9 +169,7 @@
     font-size: 16px;
 }
 
-/* --------------------------------------------
-   Edit Window Hint
-   -------------------------------------------- */
+/* === Edit Window Hint === */
 .mr-edit-hint {
     display: inline-flex;
     align-items: center;
@@ -198,9 +186,7 @@
     color: #ba1a1a;
 }
 
-/* --------------------------------------------
-   Rating Selector (Edit Modal)
-   -------------------------------------------- */
+/* === Rating Selector (Edit Modal) === */
 .rating-selector {
     display: flex;
     gap: 0.3rem;
@@ -223,9 +209,7 @@
     transform: scale(0.9);
 }
 
-/* --------------------------------------------
-   Character Counter
-   -------------------------------------------- */
+/* === Character Counter === */
 .rv-char-count {
     font-size: 0.78rem;
     color: #888;
@@ -233,9 +217,7 @@
     text-align: right;
 }
 
-/* --------------------------------------------
-   Responsive
-   -------------------------------------------- */
+/* === Responsive Breakpoints === */
 @media (max-width: 640px) {
     .mr-card-header {
         flex-direction: column;

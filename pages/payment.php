@@ -1,14 +1,17 @@
 <?php
 /**
- * Payment Page (Step 4 — Final)
- *
- * Processes simulated credit card and PayPal payments. Validates card
- * details, generates transaction ID, updates booking to 'confirmed',
- * and creates a payment record. Includes CSRF protection.
- * Requires user to be logged in.
+ * File: pages/payment.php
+ * Purpose: Payment Step 4 — Processes simulated credit card and PayPal payments. Validates card details, generates transaction ID, updates booking status to 'confirmed', creates payment record, sends confirmation emails. Includes CSRF protection.
+ * Dependencies: config/database.php, config/csrf.php, config/currency.php, includes/notifications.php, includes/navbar.php, includes/footer.php, css/payment.css, js/script.js
+ * Used By: booking.php (redirected after booking creation), booking-detail.php (for pending bookings)
+ * Parent Files: booking.php, booking-detail.php
+ * Child Files: None
+ * @package GlobeTrek\Pages
  */
 session_start();
 
+// === AUTH CHECK ===
+// Redirect unauthenticated users to login, preserving the payment URL for redirect-back.
 if (!isset($_SESSION['user_id'])) {
     $_SESSION['redirect_after_login'] = 'payment.php' . (isset($_SERVER['QUERY_STRING']) && $_SERVER['QUERY_STRING'] ? '?' . $_SERVER['QUERY_STRING'] : '');
     header('Location: login.php');
@@ -20,6 +23,8 @@ require_once __DIR__ . '/../config/csrf.php';
 require_once __DIR__ . '/../config/currency.php';
 $db = getDB();
 
+// === BOOKING REFERENCE RETRIEVAL ===
+// Accept ref from query string or session (set by booking.php).
 $bookingRef = isset($_GET['ref']) ? trim($_GET['ref']) : ($_SESSION['payment_booking_ref'] ?? '');
 
 if ($bookingRef === '') {
@@ -27,6 +32,9 @@ if ($bookingRef === '') {
     exit;
 }
 
+// === FETCH BOOKING WITH PACKAGE DATA ===
+// JOIN with packages to get title, price, image, and duration in one query.
+// The user_id condition ensures users can only pay for their own bookings.
 $stmt = $db->prepare(
     "SELECT b.*, p.title, p.price, p.image, p.duration_days, p.duration_nights
      FROM bookings b
@@ -41,12 +49,15 @@ if (!$booking) {
     exit;
 }
 
+// === PRICE CALCULATION ===
+// Base price (per person x guests) + 10% tax + 2.5% service fee.
 $guestCount = $booking['num_travellers'];
 $basePrice = $booking['price'] * $guestCount;
 $taxes = round($basePrice * 0.10);
 $serviceFees = round($basePrice * 0.025);
 $total = $basePrice + $taxes + $serviceFees;
 
+// === FORM FIELDS & STATE ===
 $fields = [
     'cardholderName' => '',
     'cardNumber' => '',
@@ -64,18 +75,23 @@ $errors = [];
 $submitted = false;
 $paymentSuccess = false;
 
+// === FORM HANDLING ===
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // CSRF validation
+    // CSRF token validation — prevents cross-site request forgery
     if (!validateCSRFToken($_POST['csrf_token'] ?? null)) {
         $errors['general'] = 'Invalid security token. Please try again.';
     }
 
+    // Populate fields from POST data (trimmed)
     foreach ($fields as $key => $value) {
         $fields[$key] = trim($_POST[$key] ?? '');
     }
 
+    // Whitelist payment method to prevent injection
     $fields['paymentMethod'] = in_array($fields['paymentMethod'], ['credit_card', 'paypal']) ? $fields['paymentMethod'] : 'credit_card';
 
+    // === CREDIT CARD VALIDATION ===
+    // Only validated when credit card method is selected.
     if ($fields['paymentMethod'] === 'credit_card') {
         if ($fields['cardholderName'] === '') {
             $errors['cardholderName'] = 'Please enter the cardholder name.';
@@ -90,6 +106,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } elseif (!preg_match('/^(0[1-9]|1[0-2])\/\d{2}$/', $fields['expiryDate'])) {
             $errors['expiryDate'] = 'Please enter a valid date (MM/YY).';
         } else {
+            // Check if the card has expired by comparing against current date
             $parts = explode('/', $fields['expiryDate']);
             $month = (int) $parts[0];
             $year = (int) ('20' . $parts[1]);
@@ -106,6 +123,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
+    // === BILLING ADDRESS VALIDATION ===
     if ($fields['addressLine1'] === '') {
         $errors['addressLine1'] = 'Please enter your address.';
     }
@@ -125,6 +143,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $submitted = empty($errors);
 
     if ($submitted) {
+        // === DETERMINE CARD BRAND ===
+        // Identify card brand from first digit: 4=Visa, 5=Mastercard, 3=Amex
         $cardLastFour = '';
         $cardBrand = '';
         if ($fields['paymentMethod'] === 'credit_card') {
@@ -137,8 +157,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             else $cardBrand = 'Card';
         }
 
+        // === GENERATE TRANSACTION ID ===
+        // Cryptographically random 16-character hex string with TXN- prefix.
         $transactionId = 'TXN-' . strtoupper(bin2hex(random_bytes(8)));
 
+        // === UPDATE BOOKING STATUS ===
+        // Mark booking as confirmed and store payment method/card last four.
         $updateStmt = $db->prepare(
             "UPDATE bookings
              SET status = 'confirmed',
@@ -153,9 +177,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ':user_id' => $_SESSION['user_id'],
         ]);
 
+        // === BUILD BILLING ADDRESS ===
+        // Concatenate address fields and clean up double commas from empty line 2.
         $billingAddress = trim($fields['addressLine1'] . ', ' . $fields['addressLine2'] . ', ' . $fields['city'] . ', ' . $fields['state'] . ' ' . $fields['zip'] . ', ' . $fields['country']);
         $billingAddress = preg_replace('/,\s*,/', ',', $billingAddress);
 
+        // === INSERT PAYMENT RECORD ===
         $payStmt = $db->prepare(
             "INSERT INTO payments (booking_id, user_id, amount, payment_method, card_last_four, card_brand, transaction_id, status, billing_address)
              VALUES (:booking_id, :user_id, :amount, :method, :card_four, :card_brand, :txn_id, 'completed', :billing)"
@@ -172,11 +199,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ]);
 
         $paymentSuccess = true;
+        // Clear the session booking reference since payment is complete
         unset($_SESSION['payment_booking_ref']);
 
-        // Send notification emails
+        // === SEND NOTIFICATION EMAILS ===
+        // Include the notifications helper and send booking confirmation + payment receipt.
         require_once __DIR__ . '/../includes/notifications.php';
-        // Build package array from JOINed booking data
+        // Build package array from JOINed booking data for the notification functions
         $package = [
             'title'           => $booking['title'] ?? '',
             'price'           => $booking['price'] ?? 0,
@@ -198,11 +227,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
+// === HELPER: RETAIN FORM VALUES ===
+// Returns escaped value for repopulating form fields after validation failure.
 function old_value(string $field, array $fields): string
 {
     return htmlspecialchars($fields[$field] ?? '', ENT_QUOTES, 'UTF-8');
 }
 
+// === HELPER: DISPLAY FIELD ERRORS ===
 function field_error(string $field, array $errors): string
 {
     return htmlspecialchars($errors[$field] ?? '', ENT_QUOTES, 'UTF-8');
@@ -223,6 +255,7 @@ function field_error(string $field, array $errors): string
     <?php $basePath = '../'; include '../includes/navbar.php'; ?>
 
     <main class="payment-shell">
+        <!-- === BREADCRUMBS === -->
         <nav class="breadcrumbs" aria-label="Breadcrumb">
             <a href="../index.php#home">Home</a>
             <span aria-hidden="true">/</span>
@@ -233,6 +266,8 @@ function field_error(string $field, array $errors): string
             <span>Payment</span>
         </nav>
 
+        <!-- === PROGRESS BAR === -->
+        <!-- All steps completed except current (step 4) -->
         <div class="progress-bar" aria-label="Booking progress">
             <div class="progress-step completed">
                 <div class="step-circle">
@@ -270,6 +305,7 @@ function field_error(string $field, array $errors): string
         <div class="payment-grid">
             <div class="form-card">
                 <?php if ($paymentSuccess): ?>
+                    <!-- === PAYMENT SUCCESS VIEW === -->
                     <div class="payment-success">
                         <div class="success-icon">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -285,6 +321,7 @@ function field_error(string $field, array $errors): string
                         </div>
                     </div>
                 <?php else: ?>
+                    <!-- === PAYMENT FORM VIEW === -->
                     <h2>Payment Method</h2>
 
                     <?php if (!empty($errors)): ?>
@@ -295,6 +332,8 @@ function field_error(string $field, array $errors): string
 
                     <form id="payment-form" class="payment-form" method="post" action="payment.php?ref=<?= htmlspecialchars($booking['booking_reference']) ?>" novalidate>
                         <?php csrf_field(); ?>
+
+                        <!-- === PAYMENT METHOD TABS === -->
                         <div class="payment-tabs" role="tablist">
                             <button type="button" class="payment-tab <?= $fields['paymentMethod'] === 'credit_card' ? 'active' : '' ?>" role="tab" data-method="credit_card" aria-selected="<?= $fields['paymentMethod'] === 'credit_card' ? 'true' : 'false' ?>">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -315,6 +354,7 @@ function field_error(string $field, array $errors): string
                             <input type="hidden" name="paymentMethod" id="paymentMethod" value="<?= old_value('paymentMethod', $fields) ?>">
                         </div>
 
+                        <!-- === CREDIT CARD FIELDS === -->
                         <div id="card-fields" <?= $fields['paymentMethod'] === 'paypal' ? 'style="display:none"' : '' ?>>
                             <div class="form-section">
                                 <div class="form-field full-width">
@@ -358,12 +398,14 @@ function field_error(string $field, array $errors): string
                             </div>
                         </div>
 
+                        <!-- === PAYPAL FIELDS === -->
                         <div id="paypal-fields" <?= $fields['paymentMethod'] === 'credit_card' ? 'style="display:none"' : '' ?>>
                             <div class="form-alert success" style="background: rgba(231, 111, 81, 0.06); border-color: rgba(231, 111, 81, 0.18); color: var(--ink);">
                                 You will be redirected to PayPal to complete your payment after clicking "Complete Payment".
                             </div>
                         </div>
 
+                        <!-- === BILLING ADDRESS SECTION === -->
                         <div class="form-section">
                             <h3 class="form-section-title">Billing Address</h3>
 
@@ -424,6 +466,7 @@ function field_error(string $field, array $errors): string
                         </div>
                     </form>
 
+                    <!-- === PAYMENT ACTIONS === -->
                     <div class="payment-actions">
                         <a href="booking.php?id=<?= $booking['package_id'] ?>" class="btn-back">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -443,6 +486,7 @@ function field_error(string $field, array $errors): string
                 <?php endif; ?>
             </div>
 
+            <!-- === BOOKING SUMMARY SIDEBAR === -->
             <aside class="booking-sidebar" aria-label="Booking summary">
                 <div class="sidebar-card">
                     <h3>Booking Summary</h3>
@@ -495,6 +539,7 @@ function field_error(string $field, array $errors): string
                         <span class="total-label">Total</span>
                         <span class="total-value"><?= formatPrice($total, 2) ?></span>
                     </div>
+                    <!-- Security badge for user trust -->
                     <div class="secure-badge">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
@@ -511,7 +556,10 @@ function field_error(string $field, array $errors): string
 
     <script src="../js/script.js"></script>
     <script>
+    // === PAYMENT FORM CLIENT-SIDE LOGIC ===
     (function() {
+        // --- Payment method tab switching ---
+        // Toggles visibility of card vs PayPal fields and updates hidden input.
         const tabs = document.querySelectorAll('.payment-tab');
         const methodInput = document.getElementById('paymentMethod');
         const cardFields = document.getElementById('card-fields');
@@ -539,6 +587,8 @@ function field_error(string $field, array $errors): string
             });
         });
 
+        // --- Card number auto-formatting ---
+        // Strips non-digits and inserts spaces every 4 digits (e.g., "4242 4242 4242 4242").
         var cardNumberInput = document.getElementById('cardNumber');
         if (cardNumberInput) {
             cardNumberInput.addEventListener('input', function(e) {
@@ -552,6 +602,8 @@ function field_error(string $field, array $errors): string
             });
         }
 
+        // --- Expiry date auto-formatting ---
+        // Inserts "/" after 2 digits to enforce MM/YY format.
         var expiryInput = document.getElementById('expiryDate');
         if (expiryInput) {
             expiryInput.addEventListener('input', function(e) {
@@ -563,6 +615,8 @@ function field_error(string $field, array $errors): string
             });
         }
 
+        // --- CVV input restriction ---
+        // Limits to max 4 numeric digits only.
         var cvvInput = document.getElementById('cvv');
         if (cvvInput) {
             cvvInput.addEventListener('input', function(e) {

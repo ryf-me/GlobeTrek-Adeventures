@@ -1,9 +1,10 @@
-/* ============================================
-   User Profile Page – Styles
-   (Sidebar layout in css/user-sidebar.css)
-   ============================================ */
+/**
+ * File: css/user-profile.css
+ * Purpose: Styles for the User Profile edit page — avatar management, form fields, sections, and action bar
+ * Used By: user-profile/index.html
+ */
 
-/* Visually hide element but keep accessible to screen readers */
+/* === Accessibility: Screen Reader Only === */
 .sr-only {
     position: absolute;
     width: 1px;
@@ -16,6 +17,7 @@
     border-width: 0;
 }
 
+/* === Page Shell === */
 .usr-page {
     background: var(--inq-surface, #f5f7fa);
     color: var(--inq-on-surface, #264653);
@@ -37,9 +39,7 @@
     letter-spacing: 0;
 }
 
-/* --------------------------------------------
-   Page Header
-   -------------------------------------------- */
+/* === Page Header === */
 .usr-page-header {
     border-bottom: 1px solid var(--inq-outline-variant, #c4c7c8);
     padding-bottom: 0.75rem;
@@ -59,9 +59,7 @@
     line-height: 1.5;
 }
 
-/* --------------------------------------------
-   Form Sections
-   -------------------------------------------- */
+/* === Form Sections === */
 .usr-form {
     display: flex;
     flex-direction: column;
@@ -83,9 +81,7 @@
     line-height: 1.25;
 }
 
-/* --------------------------------------------
-   Photo Management
-   -------------------------------------------- */
+/* === Photo Management === */
 .usr-photo-row {
     display: flex;
     align-items: center;
@@ -141,9 +137,7 @@
     margin-top: 0.25rem;
 }
 
-/* --------------------------------------------
-   Buttons
-   -------------------------------------------- */
+/* === Buttons === */
 .usr-btn {
     display: inline-flex;
     align-items: center;
@@ -185,9 +179,7 @@
     align-self: flex-end;
 }
 
-/* --------------------------------------------
-   Form Fields
-   -------------------------------------------- */
+/* === Form Fields === */
 .usr-fields-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -288,9 +280,7 @@
     margin-top: 0.15rem;
 }
 
-/* --------------------------------------------
-   Actions Bar
-   -------------------------------------------- */
+/* === Actions Bar === */
 .usr-actions-bar {
     display: flex;
     justify-content: flex-end;
@@ -298,9 +288,7 @@
     border-top: 1px solid var(--inq-outline-variant, #c4c7c8);
 }
 
-/* --------------------------------------------
-   Alerts
-   -------------------------------------------- */
+/* === Alerts === */
 .usr-alert {
     padding: 0.85rem 1rem;
     border: 1px solid;
@@ -320,9 +308,7 @@
     color: #ba1a1a;
 }
 
-/* --------------------------------------------
-   Responsive
-   -------------------------------------------- */
+/* === Responsive Breakpoints === */
 @media (max-width: 900px) {
     .usr-fields-grid {
         grid-template-columns: 1fr;

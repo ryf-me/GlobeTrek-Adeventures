@@ -1,6 +1,18 @@
+/**
+ * File: pages/userprofiledropdown.php
+ * Purpose: Demo/documentation page for the user profile dropdown component used in navigation bar
+ * Dependencies: css/style.css, css/navbar.css, css/footer.css, includes/navbar.php, includes/footer.php, js/script.js
+ * Used By: Development/documentation purposes, not directly linked in production
+ * Parent Files: None (standalone page)
+ * Child Files: None
+ * @package GlobeTrek\Pages
+ */
+
 <?php
 session_start();
 
+// === AUTHENTICATION CHECK ===
+// Only logged-in users can access this demo page
 if (!isset($_SESSION['user_id'])) {
     header('Location: login.php');
     exit;
@@ -14,20 +26,26 @@ $basePath = '../';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>User Profile Dropdown - GlobeTrek</title>
+    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Winky+Sans:ital,wght@0,400..800;1,400..800&display=swap" rel="stylesheet">
+    <!-- Material Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <!-- Stylesheets -->
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="../css/navbar.css">
     <link rel="stylesheet" href="../css/footer.css">
+    
+    <!-- === COMPONENT STYLES === -->
     <style>
+        /* Material icon base styles */
         .material-symbols-outlined {
             font-size: 20px;
             vertical-align: middle;
         }
 
-        /* User Profile Dropdown Trigger */
+        /* === USER PROFILE TRIGGER (Navbar Avatar) === */
         .user-profile-trigger {
             position: relative;
             display: flex;
@@ -45,6 +63,7 @@ $basePath = '../';
             background: rgba(0, 0, 0, 0.05);
         }
 
+        /* User avatar circle */
         .user-avatar {
             width: 36px;
             height: 36px;
@@ -67,6 +86,7 @@ $basePath = '../';
             object-fit: cover;
         }
 
+        /* User name label next to avatar */
         .user-name-label {
             color: #1a1c1c;
             font-size: 0.9rem;
@@ -78,17 +98,19 @@ $basePath = '../';
             white-space: nowrap;
         }
 
+        /* Dropdown chevron icon */
         .trigger-chevron {
             font-size: 18px;
             color: #747878;
             transition: transform 0.25s ease;
         }
 
+        /* Rotate chevron when dropdown is open */
         .user-profile-trigger[aria-expanded="true"] .trigger-chevron {
             transform: rotate(180deg);
         }
 
-        /* Dropdown Panel */
+        /* === DROPDOWN PANEL === */
         .profile-dropdown {
             position: absolute;
             top: calc(100% + 6px);
@@ -98,18 +120,21 @@ $basePath = '../';
             border: 1px solid #c4c7c7;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
             z-index: 200;
+            /* Hidden by default with animation */
             opacity: 0;
             visibility: hidden;
             transform: translateY(-8px);
             transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s ease;
         }
 
+        /* Open state for dropdown */
         .profile-dropdown.open {
             opacity: 1;
             visibility: visible;
             transform: translateY(0);
         }
 
+        /* User info section in dropdown */
         .dropdown-user-info {
             padding: 1rem 1rem 0.85rem;
             display: flex;
@@ -118,6 +143,7 @@ $basePath = '../';
             border-bottom: 1px solid #e2e2e2;
         }
 
+        /* Larger avatar in dropdown */
         .dropdown-user-avatar {
             width: 44px;
             height: 44px;
@@ -139,10 +165,12 @@ $basePath = '../';
             object-fit: cover;
         }
 
+        /* User details container */
         .dropdown-user-details {
             min-width: 0;
         }
 
+        /* User name in dropdown */
         .dropdown-user-name {
             margin: 0;
             font-size: 0.95rem;
@@ -154,6 +182,7 @@ $basePath = '../';
             white-space: nowrap;
         }
 
+        /* User email in dropdown */
         .dropdown-user-email {
             margin: 0;
             font-size: 0.8rem;
@@ -164,10 +193,12 @@ $basePath = '../';
             white-space: nowrap;
         }
 
+        /* Navigation links container */
         .dropdown-nav {
             padding: 0.35rem 0;
         }
 
+        /* Individual navigation item */
         .dropdown-nav-item {
             display: flex;
             align-items: center;
@@ -195,12 +226,14 @@ $basePath = '../';
             color: #5e5e5e;
         }
 
+        /* Divider line between sections */
         .dropdown-divider {
             height: 1px;
             background: #e2e2e2;
             margin: 0.25rem 0;
         }
 
+        /* Logout button styling */
         .dropdown-logout {
             display: flex;
             align-items: center;
@@ -227,7 +260,7 @@ $basePath = '../';
             font-size: 20px;
         }
 
-        /* Demo Content */
+        /* === DEMO CONTENT STYLES === */
         .demo-section {
             max-width: 800px;
             margin: 0 auto;
@@ -249,6 +282,7 @@ $basePath = '../';
             margin-bottom: 2.5rem;
         }
 
+        /* Instructions box */
         .demo-instruction {
             background: #f5f7fa;
             border: 1px solid #c4c7c7;
@@ -279,6 +313,7 @@ $basePath = '../';
             font-family: monospace;
         }
 
+        /* Feature cards grid */
         .demo-features {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -312,11 +347,14 @@ $basePath = '../';
             display: block;
         }
 
+        /* === RESPONSIVE STYLES === */
         @media (max-width: 768px) {
+            /* Hide user name on mobile, show only avatar */
             .user-name-label {
                 display: none;
             }
 
+            /* Adjust dropdown width for mobile */
             .profile-dropdown {
                 width: 260px;
                 right: -0.5rem;
@@ -329,6 +367,7 @@ $basePath = '../';
     </style>
 </head>
 <body>
+    <!-- Navigation Bar -->
     <?php include '../includes/navbar.php'; ?>
 
     <!-- Demo Content -->
@@ -337,6 +376,7 @@ $basePath = '../';
             <h1>User Profile Dropdown</h1>
             <p class="subtitle">A dropdown menu component for the navigation bar. Click the user avatar in the top-right corner to toggle it.</p>
 
+            <!-- Usage Instructions -->
             <div class="demo-instruction">
                 <h2>How to use</h2>
                 <ol>
@@ -346,6 +386,7 @@ $basePath = '../';
                 </ol>
             </div>
 
+            <!-- Feature Cards -->
             <div class="demo-features">
                 <div class="demo-feature-card">
                     <span class="material-symbols-outlined">touch_app</span>
@@ -371,8 +412,10 @@ $basePath = '../';
         </section>
     </main>
 
+    <!-- Footer -->
     <?php include '../includes/footer.php'; ?>
 
+    <!-- JavaScript -->
     <script src="../js/script.js"></script>
 </body>
 </html>

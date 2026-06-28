@@ -1,5 +1,15 @@
+/**
+ * File: css/style.css
+ * Purpose: Main homepage styles — hero section, popular destinations,
+ *          featured packages, activities, stats, expert guides, and
+ *          trusted partners marquee. Also includes global CSS variables
+ *          and base reset for the public-facing site.
+ * Used By: index.html
+ */
+
 @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Winky+Sans:ital,wght@0,400..800;1,400..800&display=swap');
 
+/* === CSS VARIABLES === */
 :root {
     --site-bg: #f5f7fa;
     --primary: #264653;
@@ -7,7 +17,7 @@
     --dark: #1a2332;
 }
 
-/* Basic reset */
+/* === BASE RESET === */
 * {
     margin: 0;
     padding: 0;
@@ -89,6 +99,7 @@ body {
     margin-bottom: 1.75rem;
 }
 
+/* --- Hero Call-to-Action Buttons --- */
 .hero-ctas {
     display: flex;
     gap: 1rem;
@@ -137,7 +148,7 @@ body {
     font-size: 20px;
 }
 
-/* Hero Stats Overlay */
+/* --- Hero Stats Overlay --- */
 .hero-stats-overlay {
     display: flex;
     flex-direction: column;
@@ -214,7 +225,7 @@ body {
     font-size: 0.8rem;
 }
 
-/* Hero Search Bar */
+/* --- Hero Search Bar --- */
 .hero-search {
     position: relative;
     z-index: 1;
@@ -302,7 +313,7 @@ body {
     font-size: 20px;
 }
 
-/* Travelers Popup */
+/* --- Travelers Popup --- */
 .search-field-travelers {
     position: relative;
 }
@@ -373,7 +384,7 @@ body {
     text-align: center;
 }
 
-/* Flatpickr overrides */
+/* --- Flatpickr Date Picker Overrides --- */
 .flatpickr-calendar {
     border-radius: 10px;
     box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
@@ -410,7 +421,7 @@ span.flatpickr-weekday {
     color: var(--primary);
 }
 
-/* Trust Badges */
+/* --- Hero Trust Badges --- */
 .trust-badges {
     position: relative;
     z-index: 1;
@@ -1046,6 +1057,7 @@ span.flatpickr-weekday {
     color: #888;
 }
 
+/* --- Guides Carousel Arrows --- */
 .guides-arrow {
     position: absolute;
     top: 50%;
@@ -1130,8 +1142,10 @@ span.flatpickr-weekday {
 }
 
 /* ========================================
-   Responsive
+   Responsive Breakpoints
    ======================================== */
+
+/* --- Tablet (max-width: 1024px) --- */
 @media (max-width: 1024px) {
     .hero-content {
         flex-direction: column;
@@ -1173,6 +1187,7 @@ span.flatpickr-weekday {
     }
 }
 
+/* --- Mobile (max-width: 768px) --- */
 @media (max-width: 768px) {
     .hero-text h1 {
         font-size: 2.2rem;
@@ -1207,6 +1222,7 @@ span.flatpickr-weekday {
     }
 }
 
+/* --- Small Mobile (max-width: 560px) --- */
 @media (max-width: 560px) {
     .hero-text h1 {
         font-size: 1.8rem;

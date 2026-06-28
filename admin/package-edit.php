@@ -1,18 +1,34 @@
 <?php
+/**
+ * File: admin/package-edit.php
+ * Purpose: Create/edit form for travel packages — handles image upload, tag sync, slug generation, and form validation.
+ * Dependencies: admin/includes/header.php, admin/includes/sidebar.php, admin/includes/footer.php, config/database.php, config/csrf.php
+ * Used By: admin/packages.php (via "Add Package" and "Edit" links)
+ * Parent Files: admin/packages.php
+ * Child Files: admin/includes/header.php, admin/includes/sidebar.php, admin/includes/footer.php
+ * @package GlobeTrek\Admin
+ */
+
 $pageTitle = 'Edit Package';
 require_once __DIR__ . '/includes/header.php';
 
+// === DETERMINE EDIT vs CREATE MODE ===
+// If an 'id' query parameter is provided and > 0, we're editing an existing package.
 $pkgId = (int)($_GET['id'] ?? 0);
 $isEdit = $pkgId > 0;
 $pkg = null;
 
+// === LOAD EXISTING PACKAGE DATA ===
 if ($isEdit) {
     $stmt = $db->prepare("SELECT * FROM packages WHERE id = :id");
     $stmt->execute([':id' => $pkgId]);
     $pkg = $stmt->fetch();
+
+    // If package not found, redirect back to the listing
     if (!$pkg) { header('Location: packages.php'); exit; }
 
-    // Load existing tags
+    // === LOAD EXISTING TAGS ===
+    // Fetch tag names for this package via the many-to-many pivot table.
     $tagStmt = $db->prepare("SELECT t.name FROM tags t JOIN package_tags pt ON t.id = pt.tag_id WHERE pt.package_id = :pid ORDER BY t.name");
     $tagStmt->execute([':pid' => $pkgId]);
     $existingTags = $tagStmt->fetchAll(PDO::FETCH_COLUMN);
@@ -21,10 +37,13 @@ if ($isEdit) {
 $errors = [];
 $success = false;
 
+// === FORM SUBMISSION HANDLER ===
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // CSRF validation — reject if token is invalid
     if (!validateCSRFToken($_POST['csrf_token'] ?? null)) {
         $errors[] = 'Invalid security token. Please try again.';
     } else {
+    // === SANITIZE INPUT ===
     $title = trim($_POST['title'] ?? '');
     $description = trim($_POST['description'] ?? '');
     $shortDescription = trim($_POST['short_description'] ?? '');
@@ -35,25 +54,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $priceRange = trim($_POST['price_range'] ?? '');
     $maxGroupSize = (int)($_POST['max_group_size'] ?? 12);
     $difficultyLevel = trim($_POST['difficulty_level'] ?? 'Moderate');
+    // Checkboxes: present in POST = checked, absent = unchecked
     $isFeatured = isset($_POST['is_featured']) ? 1 : 0;
     $isActive = isset($_POST['is_active']) ? 1 : 0;
 
+    // === VALIDATION ===
     if ($title === '') $errors[] = 'Title is required.';
     if ($durationDays <= 0) $errors[] = 'Duration days must be positive.';
     if ($price <= 0) $errors[] = 'Price must be positive.';
 
-    // Handle image upload
+    // === IMAGE UPLOAD HANDLING ===
+    // Retain the existing image path if no new file is uploaded.
     $imagePath = $pkg['image'] ?? null;
     if (!empty($_FILES['image']['name'])) {
+        // Validate file extension against allowed types
         $allowed = ['jpg', 'jpeg', 'png', 'webp'];
         $ext = strtolower(pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION));
         if (!in_array($ext, $allowed)) {
             $errors[] = 'Image must be JPG, PNG, or WebP.';
         } elseif ($_FILES['image']['size'] > 5 * 1024 * 1024) {
+            // Enforce 5MB file size limit
             $errors[] = 'Image must be under 5MB.';
         } else {
+            // Ensure upload directory exists
             $uploadDir = __DIR__ . '/../images/packages/';
             if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
+
+            // Generate a unique filename with timestamp + random bytes to prevent collisions
             $filename = 'pkg_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $ext;
             if (move_uploaded_file($_FILES['image']['tmp_name'], $uploadDir . $filename)) {
                 $imagePath = 'images/packages/' . $filename;
@@ -63,31 +90,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
+    // === SAVE TO DATABASE ===
     if (empty($errors)) {
+        // Auto-generate slug from title: lowercase, replace non-alphanumeric with hyphens
         $slug = strtolower(preg_replace('/[^a-zA-Z0-9]+/', '-', $title));
         $slug = trim($slug, '-');
 
         if ($isEdit) {
+            // UPDATE existing package
             $stmt = $db->prepare("UPDATE packages SET title=:title, slug=:slug, description=:desc, short_description=:short, duration_days=:days, duration_nights=:nights, price=:price, image=:image, destination_category=:cat, price_range=:pr, max_group_size=:mgs, difficulty_level=:dl, is_featured=:feat, is_active=:act WHERE id=:id");
             $stmt->execute([':title'=>$title, ':slug'=>$slug, ':desc'=>$description, ':short'=>$shortDescription, ':days'=>$durationDays, ':nights'=>$durationNights, ':price'=>$price, ':image'=>$imagePath, ':cat'=>$destinationCategory, ':pr'=>$priceRange, ':mgs'=>$maxGroupSize, ':dl'=>$difficultyLevel, ':feat'=>$isFeatured, ':act'=>$isActive, ':id'=>$pkgId]);
             $entityId = $pkgId;
         } else {
+            // INSERT new package
             $stmt = $db->prepare("INSERT INTO packages (title, slug, description, short_description, duration_days, duration_nights, price, image, destination_category, price_range, max_group_size, difficulty_level, is_featured, is_active) VALUES (:title, :slug, :desc, :short, :days, :nights, :price, :image, :cat, :pr, :mgs, :dl, :feat, :act)");
             $stmt->execute([':title'=>$title, ':slug'=>$slug, ':desc'=>$description, ':short'=>$shortDescription, ':days'=>$durationDays, ':nights'=>$durationNights, ':price'=>$price, ':image'=>$imagePath, ':cat'=>$destinationCategory, ':pr'=>$priceRange, ':mgs'=>$maxGroupSize, ':dl'=>$difficultyLevel, ':feat'=>$isFeatured, ':act'=>$isActive]);
             $entityId = $db->lastInsertId();
         }
 
-        // Sync tags
+        // === TAG SYNC ===
+        // Parse comma-separated tag input, then replace all existing tag associations.
+        // Tags that don't exist yet are created automatically.
         $tagInput = trim($_POST['tags'] ?? '');
         $tagNames = $tagInput !== '' ? array_unique(array_map('trim', explode(',', $tagInput))) : [];
-        // Delete existing associations
+
+        // Remove all existing tag associations for this package
         $delStmt = $db->prepare("DELETE FROM package_tags WHERE package_id = :pid");
         $delStmt->execute([':pid' => $entityId]);
+
         foreach ($tagNames as $tagName) {
             if ($tagName === '') continue;
+            // Generate slug for the tag
             $tagSlug = strtolower(preg_replace('/[^a-zA-Z0-9]+/', '-', $tagName));
             $tagSlug = trim($tagSlug, '-');
-            // Find or create tag
+
+            // Find existing tag or create a new one (find-or-create pattern)
             $findTag = $db->prepare("SELECT id FROM tags WHERE name = :name");
             $findTag->execute([':name' => $tagName]);
             $tagRow = $findTag->fetch();
@@ -98,6 +135,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $insTag->execute([':name' => $tagName, ':slug' => $tagSlug]);
                 $tagIdVal = $db->lastInsertId();
             }
+            // Use INSERT IGNORE to silently skip if the association already exists
             $insLink = $db->prepare("INSERT IGNORE INTO package_tags (package_id, tag_id) VALUES (:pid, :tid)");
             $insLink->execute([':pid' => $entityId, ':tid' => $tagIdVal]);
         }
@@ -110,7 +148,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 include __DIR__ . '/includes/sidebar.php';
 
-// Pre-fill for new
+// === DEFAULT VALUES FOR NEW PACKAGE ===
+// Pre-fill form fields with sensible defaults when creating a new package.
 if (!$pkg) {
     $pkg = ['title'=>'','description'=>'','short_description'=>'','duration_days'=>3,'duration_nights'=>2,'price'=>0,'image'=>'','destination_category'=>'','price_range'=>'','max_group_size'=>12,'difficulty_level'=>'Moderate','is_featured'=>0,'is_active'=>1];
 }
@@ -118,6 +157,7 @@ if (!$pkg) {
 
 <div class="adm-sidebar-overlay" id="sidebarOverlay"></div>
 <main class="adm-main">
+    <!-- === TOP BAR === -->
     <div class="adm-topbar">
         <div class="adm-topbar-left">
             <button class="adm-menu-toggle" onclick="document.getElementById('adminSidebar').classList.toggle('open');document.getElementById('sidebarOverlay').classList.toggle('open');">
@@ -131,12 +171,17 @@ if (!$pkg) {
     </div>
 
     <div class="adm-content">
+        <!-- === VALIDATION ERRORS === -->
         <?php foreach ($errors as $err): ?>
             <div class="adm-alert adm-alert-error"><span class="material-symbols-outlined">error</span> <?= htmlspecialchars($err) ?></div>
         <?php endforeach; ?>
 
+        <!-- === PACKAGE FORM === -->
+        <!-- enctype="multipart/form-data" required for image file upload -->
         <form method="post" enctype="multipart/form-data" novalidate>
             <?php csrf_field(); ?>
+
+            <!-- === BASIC INFORMATION SECTION === -->
             <div class="adm-form-card">
                 <h2>Basic Information</h2>
                 <div class="adm-form-grid">
@@ -155,6 +200,7 @@ if (!$pkg) {
                 </div>
             </div>
 
+            <!-- === TAGS SECTION === -->
             <div class="adm-form-card">
                 <h2>Tags</h2>
                 <div class="adm-form-grid">
@@ -166,6 +212,7 @@ if (!$pkg) {
                 </div>
             </div>
 
+            <!-- === PACKAGE DETAILS SECTION === -->
             <div class="adm-form-card">
                 <h2>Details</h2>
                 <div class="adm-form-grid">
@@ -226,6 +273,7 @@ if (!$pkg) {
                         </div>
                     </div>
                 </div>
+                <!-- === FORM ACTIONS === -->
                 <div class="adm-form-actions">
                     <a href="packages.php" class="adm-btn adm-btn-secondary">Cancel</a>
                     <button type="submit" class="adm-btn adm-btn-primary"><?= $isEdit ? 'Save Changes' : 'Create Package' ?></button>

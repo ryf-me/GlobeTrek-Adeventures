@@ -1,4 +1,10 @@
-/* ---------- Reset & Base ---------- */
+/**
+ * File: css/transportation.css
+ * Purpose: Styles for the Transportation listing page — search bar, sidebar filters, transport cards grid, toolbar, and pagination
+ * Used By: transportation/index.html
+ */
+
+/* === Reset & Base === */
 * {
     margin: 0;
     padding: 0;
@@ -37,7 +43,7 @@ body {
     line-height: 1.6;
 }
 
-/* ---------- Search Bar ---------- */
+/* === Search Bar === */
 .search-bar {
     background: #ffffff;
     border-radius: 16px;
@@ -108,14 +114,14 @@ body {
     transform: translateY(-1px);
 }
 
-/* ---------- Layout: Sidebar + Main ---------- */
+/* === Layout: Sidebar + Main === */
 .transportation-layout {
     display: flex;
     gap: 2rem;
     align-items: flex-start;
 }
 
-/* ---------- Sidebar Filters ---------- */
+/* === Sidebar Filters === */
 .filters-sidebar {
     flex: 0 0 280px;
     background: #ffffff;
@@ -247,7 +253,7 @@ body {
     color: #264653;
 }
 
-/* ---------- Toolbar (sort + count) ---------- */
+/* === Toolbar (Sort + Count) === */
 .results-toolbar {
     display: flex;
     justify-content: space-between;
@@ -277,7 +283,7 @@ body {
     border-color: #e76f51;
 }
 
-/* ---------- Main Content (Cards) ---------- */
+/* === Transport Cards Grid === */
 .transportation-grid {
     flex: 1;
     display: grid;
@@ -472,7 +478,7 @@ body {
     color: #ffffff;
 }
 
-/* ---------- Pagination ---------- */
+/* === Pagination === */
 .pagination {
     display: flex;
     justify-content: center;
@@ -524,7 +530,7 @@ body {
     width: auto;
 }
 
-/* ---------- Responsive ---------- */
+/* === Responsive Breakpoints === */
 @media (max-width: 900px) {
     .transportation-layout {
         flex-direction: column;

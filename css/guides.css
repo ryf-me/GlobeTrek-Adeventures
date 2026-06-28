@@ -1,3 +1,10 @@
+/**
+ * File: css/guides.css
+ * Purpose: Styles for the Travel Guides listing page — hero, search panel, guide cards grid, featured guide spotlight, and join CTA
+ * Used By: guides/index.html
+ */
+
+/* === Design Tokens === */
 :root {
     --guide-ink: #264653;
     --guide-muted: #68645d;
@@ -11,6 +18,7 @@
     --guide-shadow: 0 18px 45px rgba(35, 30, 20, 0.08);
 }
 
+/* === Page Shell === */
 .guides-page {
     background: var(--guide-paper);
     color: var(--guide-ink);
@@ -28,6 +36,7 @@
     margin-right: 0;
 }
 
+/* === Hero Section === */
 .guides-hero {
     max-width: 790px;
     margin: 0 auto;
@@ -47,6 +56,7 @@
     transform: translateX(-50%);
 }
 
+/* === Eyebrow & Badge === */
 .eyebrow,
 .badge,
 .guide-region {
@@ -76,6 +86,7 @@
     margin: 0 auto;
 }
 
+/* === Search Panel === */
 .guide-search-panel {
     margin-bottom: 3rem;
     padding: 1rem;
@@ -122,6 +133,7 @@
     outline-offset: 2px;
 }
 
+/* === Filter Actions === */
 .filter-actions {
     display: flex;
     align-items: center;
@@ -172,6 +184,7 @@
     border-bottom-color: var(--guide-ink);
 }
 
+/* === Guide Grid Section === */
 .guide-grid-section {
     margin-bottom: 4.5rem;
 }
@@ -200,6 +213,7 @@
     white-space: nowrap;
 }
 
+/* === Guide Cards Grid === */
 .guides-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -249,6 +263,7 @@
     background: var(--guide-field);
 }
 
+/* === Guide Card Body === */
 .guide-card-body {
     display: flex;
     flex: 1;
@@ -298,6 +313,7 @@
     color: #fff;
 }
 
+/* === Empty State === */
 .empty-state {
     padding: 3.5rem 2rem;
     background: var(--guide-panel);
@@ -322,6 +338,7 @@
     color: #fff;
 }
 
+/* === Featured Guide Spotlight === */
 .featured-guide {
     margin-bottom: 4rem;
     padding: clamp(1.2rem, 3vw, 2.2rem);
@@ -392,6 +409,7 @@
     color: #fff;
 }
 
+/* === Join Guides CTA === */
 .join-guides {
     margin-bottom: 4.75rem;
     padding: clamp(2rem, 6vw, 4.5rem) 2rem;
@@ -427,10 +445,12 @@
     color: var(--guide-accent-dark);
 }
 
+/* === Footer Override === */
 .guides-page .site-footer {
     margin-top: 0;
 }
 
+/* === Responsive Breakpoints === */
 @media (max-width: 1000px) {
     .guide-filter-form {
         grid-template-columns: 1fr 1fr;

@@ -1,3 +1,10 @@
+/**
+ * File: css/booking-detail.css
+ * Purpose: Styles for the Booking Detail page — header, booking info grid, package summary, price breakdown, and actions sidebar
+ * Used By: booking/show.html
+ */
+
+/* === Page Header === */
 .bd-header {
     margin-bottom: 2rem;
 }
@@ -27,6 +34,7 @@
     margin: 0;
 }
 
+/* === Main Grid === */
 .bd-grid {
     display: grid;
     grid-template-columns: 1fr 350px;
@@ -34,6 +42,7 @@
     align-items: start;
 }
 
+/* === Cards === */
 .bd-card {
     background: var(--card-bg);
     border: 1px solid var(--border);
@@ -64,6 +73,7 @@
     border: none;
 }
 
+/* === Package Info === */
 .bd-package {
     display: flex;
     gap: 1rem;
@@ -95,6 +105,7 @@
     font-size: 1rem;
 }
 
+/* === Details Grid === */
 .bd-details-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -129,6 +140,7 @@
     font-weight: 600;
 }
 
+/* === Summary Sidebar === */
 .bd-summary-card {
     position: sticky;
     top: 100px;
@@ -157,10 +169,12 @@
     border-top: 1px solid var(--border);
 }
 
+/* === Actions Card === */
 .bd-actions-card h2 {
     margin-bottom: 0.75rem;
 }
 
+/* === Responsive Breakpoints === */
 @media (max-width: 768px) {
     .bd-grid {
         grid-template-columns: 1fr;

@@ -1,4 +1,10 @@
-/* ---------- Reset & Base ---------- */
+/**
+ * File: css/packages.css
+ * Purpose: Styles for the Tour Packages listing page — sidebar filters, package cards grid, customize-trip banner, and wishlist button
+ * Used By: packages/index.html
+ */
+
+/* === Reset & Base === */
         * {
             margin: 0;
             padding: 0;
@@ -26,14 +32,14 @@
             color: #264653;
         }
 
-        /* ---------- Layout: Sidebar + Main ---------- */
+        /* === Layout: Sidebar + Main === */
         .packages-layout {
             display: flex;
             gap: 2rem;
             align-items: flex-start;
         }
 
-        /* ---------- Sidebar Filters ---------- */
+        /* === Sidebar Filters === */
         .filters-sidebar {
             flex: 0 0 280px;
             background: #ffffff;
@@ -108,7 +114,7 @@
             color: #264653;
         }
 
-        /* ---------- Main Content (Cards) ---------- */
+        /* === Package Cards Grid === */
         .packages-grid {
             flex: 1;
             display: grid;
@@ -124,6 +130,7 @@
             transition: transform 0.2s ease, box-shadow 0.2s ease;
             display: flex;
             flex-direction: column;
+            position: relative;
         }
 
         .package-card:hover {
@@ -193,7 +200,7 @@
             background: #d4603f;
         }
 
-        /* ---------- Customize Trip Banner ---------- */
+        /* === Customize Trip Banner === */
         .customize-trip-banner {
             display: flex;
             align-items: center;
@@ -245,41 +252,7 @@
             background: #e9edf2;
         }
 
-        /* ---------- Responsive ---------- */
-        @media (max-width: 900px) {
-            .packages-layout {
-                flex-direction: column;
-            }
-
-            .filters-sidebar {
-                flex: 1 1 auto;
-                width: 100%;
-                position: static;
-                padding: 1.5rem;
-            }
-
-            .packages-grid {
-                grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-            }
-        }
-
-        @media (max-width: 600px) {
-            .page-container {
-                padding: 1rem;
-            }
-
-            .packages-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .customize-trip-banner {
-                flex-direction: column;
-                text-align: center;
-                padding: 1.5rem;
-            }
-        }
-
-        /* ---------- Wishlist Button ---------- */
+        /* === Wishlist Button === */
         .wishlist-btn {
             position: absolute;
             top: 12px;
@@ -313,11 +286,7 @@
             font-variation-settings: 'FILL' 1;
         }
 
-        .package-card {
-            position: relative;
-        }
-
-        /* ---------- Filter Button ---------- */
+        /* === Filter Button === */
         .filter-btn {
             display: block;
             width: 100%;
@@ -340,4 +309,38 @@
         .reset-btn[disabled] {
             opacity: 0.4;
             cursor: not-allowed;
+        }
+
+        /* === Responsive Breakpoints === */
+        @media (max-width: 900px) {
+            .packages-layout {
+                flex-direction: column;
+            }
+
+            .filters-sidebar {
+                flex: 1 1 auto;
+                width: 100%;
+                position: static;
+                padding: 1.5rem;
+            }
+
+            .packages-grid {
+                grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            }
+        }
+
+        @media (max-width: 600px) {
+            .page-container {
+                padding: 1rem;
+            }
+
+            .packages-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .customize-trip-banner {
+                flex-direction: column;
+                text-align: center;
+                padding: 1.5rem;
+            }
         }

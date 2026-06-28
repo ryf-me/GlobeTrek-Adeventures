@@ -1,8 +1,23 @@
 {
+    "_comment": "File: composer.json — PHP dependency definitions for GlobeTrek Adventures",
+    "_purpose": "Declares all Composer-managed PHP libraries used by the application",
+    "_usage": "Run 'composer install' to install all dependencies into the vendor/ directory",
+    "_lock_file": "composer.lock locks dependency versions for consistent deployments",
     "require": {
         "dompdf/dompdf": "^3.1",
+        "_dompdf_purpose": "PDF generation library — used for exporting sales reports and customer reports as PDF files",
+        "_dompdf_used_by": "admin/export-sales-pdf.php, admin/export-customers-pdf.php",
+
         "phpmailer/phpmailer": "^6.9",
+        "_phpmailer_purpose": "Email sending library — used for sending HTML emails via Gmail SMTP",
+        "_phpmailer_used_by": "includes/mailer.php (wrapper), config/otp.php, pages/forgot-password.php, pages/resend-verification.php",
+
         "phpoffice/phpspreadsheet": "^1.29",
-        "thecodingmachine/safe": "^2.5"
+        "_phpspreadsheet_purpose": "Excel spreadsheet library — used for exporting sales reports as XLSX files",
+        "_phpspreadsheet_used_by": "admin/export-sales-excel.php",
+
+        "thecodingmachine/safe": "^2.5",
+        "_safe_purpose": "Type-safe PHP function wrappers — provides exceptions instead of null/false returns",
+        "_safe_used_by": "Used throughout the codebase for safer PHP function calls"
     }
 }

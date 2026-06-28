@@ -1,12 +1,26 @@
 <?php
+/**
+ * File: admin/tags.php
+ * Purpose: Lists and manages all tags used for packages, destinations, and guides.
+ * Dependencies: admin/includes/header.php, admin/includes/sidebar.php, admin/includes/footer.php
+ * Used By: Admin/staff users with appropriate permissions
+ * Parent Files: admin/includes/sidebar.php (navigated from sidebar menu)
+ * Child Files: admin/includes/header.php, admin/includes/sidebar.php, admin/includes/footer.php
+ * @package GlobeTrek\Admin
+ */
+
 $pageTitle = 'Manage Tags';
+
+// === INITIALIZATION ===
 require_once __DIR__ . '/includes/header.php';
 
-// Handle delete
+// === TAG DELETION ===
+// Handle delete action via POST request with CSRF validation
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delete') {
     if (!validateCSRFToken($_POST['csrf_token'] ?? null)) {
         $error = 'Invalid security token. Please try again.';
     } else {
+        // Sanitize tag ID to integer to prevent SQL injection
         $delId = (int)($_POST['tag_id'] ?? 0);
         if ($delId > 0) {
             $stmt = $db->prepare("DELETE FROM tags WHERE id = :id");
@@ -17,13 +31,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delet
     }
 }
 
+// === SIDEBAR ===
 include __DIR__ . '/includes/sidebar.php';
 
+// === SEARCH & FILTER ===
+// Read search query from URL, build dynamic WHERE clause
 $search = trim($_GET['q'] ?? '');
 $where = '';
 $params = [];
 if ($search !== '') { $where = "WHERE t.name LIKE :q"; $params[':q'] = "%$search%"; }
 
+// === FETCH TAGS ===
+// Include subquery counts for packages, destinations, and guides associated with each tag
 $stmt = $db->prepare("
     SELECT t.*,
         (SELECT COUNT(*) FROM package_tags WHERE tag_id = t.id) AS pkg_count,
@@ -39,6 +58,7 @@ $tags = $stmt->fetchAll();
 
 <div class="adm-sidebar-overlay" id="sidebarOverlay"></div>
 <main class="adm-main">
+    <!-- === TOP BAR === -->
     <div class="adm-topbar">
         <div class="adm-topbar-left">
             <button class="adm-menu-toggle" onclick="document.getElementById('adminSidebar').classList.toggle('open');document.getElementById('sidebarOverlay').classList.toggle('open');">
@@ -53,6 +73,7 @@ $tags = $stmt->fetchAll();
     </div>
 
     <div class="adm-content">
+        <!-- === SUCCESS / STATUS ALERTS === -->
         <?php if (isset($_GET['deleted'])): ?>
             <div class="adm-alert adm-alert-success"><span class="material-symbols-outlined">check_circle</span> Tag deleted successfully.</div>
         <?php endif; ?>
@@ -60,11 +81,13 @@ $tags = $stmt->fetchAll();
             <div class="adm-alert adm-alert-success"><span class="material-symbols-outlined">check_circle</span> Tag saved successfully.</div>
         <?php endif; ?>
 
+        <!-- === PAGE HEADER === -->
         <div class="adm-page-header">
             <h1>Tags (<?= count($tags) ?>)</h1>
             <a href="tag-edit.php" class="adm-btn adm-btn-primary"><span class="material-symbols-outlined">add</span> Add Tag</a>
         </div>
 
+        <!-- === SEARCH BAR === -->
         <div class="adm-filter-bar">
             <form method="get" class="adm-search" style="display:flex;">
                 <span class="material-symbols-outlined">search</span>
@@ -72,6 +95,7 @@ $tags = $stmt->fetchAll();
             </form>
         </div>
 
+        <!-- === TAGS TABLE === -->
         <?php if (empty($tags)): ?>
             <div class="adm-empty">
                 <span class="material-symbols-outlined adm-empty-icon">label</span>
@@ -96,12 +120,15 @@ $tags = $stmt->fetchAll();
                             <tr>
                                 <td class="cell-mono">#<?= $t['id'] ?></td>
                                 <td class="cell-main"><?= htmlspecialchars($t['name']) ?></td>
+                                <!-- Display usage counts from subqueries -->
                                 <td><?= (int)$t['pkg_count'] ?></td>
                                 <td><?= (int)$t['dest_count'] ?></td>
                                 <td><?= (int)$t['guide_count'] ?></td>
                                 <td>
                                     <div class="cell-actions">
+                                        <!-- Edit link to tag-edit.php with tag ID -->
                                         <a href="tag-edit.php?id=<?= $t['id'] ?>" class="adm-btn-icon" title="Edit"><span class="material-symbols-outlined">edit</span></a>
+                                        <!-- Delete with confirmation — warns about removal from all associated items -->
                                         <form method="post" style="display:inline;" data-confirm="Delete this tag? It will be removed from all associated items.">
                                             <?php csrf_field(); ?>
                                             <input type="hidden" name="action" value="delete">

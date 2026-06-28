@@ -1,11 +1,25 @@
 <?php
+/**
+ * File: pages/my-reviews.php
+ * Purpose: Displays the authenticated user's submitted reviews (both package and guide reviews)
+ *          with tabs for filtering by status (all/approved/pending/rejected), inline edit within
+ *          a 6-hour window, and delete functionality.
+ * Dependencies: config/database.php, config/csrf.php, js/script.js
+ * Used By: User sidebar navigation (user-sidebar.php)
+ * Parent Files: None (standalone page rendered in browser)
+ * Child Files: Includes navbar.php, user-sidebar.php, footer.php
+ * @package GlobeTrek\Pages
+ */
+
 session_start();
 
+// === AUTH GUARD ===
 if (!isset($_SESSION['user_id'])) {
     header('Location: login.php');
     exit;
 }
 
+// === DATABASE & CONFIG ===
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../config/csrf.php';
 $db = getDB();
@@ -14,13 +28,17 @@ $userId = $_SESSION['user_id'];
 $error = '';
 $success = '';
 
-// Handle edit for package/general reviews
+// === HANDLE POST ACTIONS ===
+
+// === ACTION: EDIT REVIEW ===
+// Users can edit reviews within 6 hours of posting; edited reviews revert to 'pending' status
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'edit') {
     $reviewId = (int)($_POST['review_id'] ?? 0);
     $rating = (int)($_POST['rating'] ?? 0);
     $title = trim($_POST['title'] ?? '');
     $content = trim($_POST['content'] ?? '');
 
+    // CSRF validation
     if (!validateCSRFToken($_POST['csrf_token'] ?? null)) {
         $error = 'Invalid security token. Please try again.';
     } elseif ($rating < 1 || $rating > 5) {
@@ -30,7 +48,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'edit'
     } elseif (mb_strlen($content) > 2000) {
         $error = 'Your review must be no more than 2000 characters.';
     } else {
-        // Try package/general review first
+        // Try to find and update a package/general review
+        // The 6-hour edit window is enforced via SQL: created_at >= NOW() - INTERVAL 6 HOUR
         $stmt = $db->prepare(
             "SELECT id FROM testimonials WHERE id = :id AND user_id = :uid AND created_at >= NOW() - INTERVAL 6 HOUR"
         );
@@ -38,6 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'edit'
         $review = $stmt->fetch();
 
         if ($review) {
+            // Update the review and reset status to 'pending' for re-approval
             $stmt = $db->prepare(
                 "UPDATE testimonials SET rating = :rating, title = :title, content = :content, status = 'pending' WHERE id = :id"
             );
@@ -51,7 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'edit'
             exit;
         }
 
-        // Try guide review
+        // If not found in testimonials, try guide_reviews table
         $stmt = $db->prepare(
             "SELECT id FROM guide_reviews WHERE id = :id AND user_id = :uid AND created_at >= NOW() - INTERVAL 6 HOUR"
         );
@@ -72,11 +92,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'edit'
             exit;
         }
 
+        // Review not found or edit window expired
         $error = 'Review not found or the 6-hour edit window has expired.';
     }
 }
 
-// Handle delete
+// === ACTION: DELETE REVIEW ===
+// Permanent deletion — requires CSRF; user can only delete their own reviews
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delete') {
     $reviewId = (int)($_POST['review_id'] ?? 0);
     $reviewType = $_POST['review_type'] ?? 'package';
@@ -84,6 +106,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delet
     if (!validateCSRFToken($_POST['csrf_token'] ?? null)) {
         $error = 'Invalid security token.';
     } elseif ($reviewId > 0) {
+        // Route to correct table based on review type (guide vs package)
         if ($reviewType === 'guide') {
             $stmt = $db->prepare("DELETE FROM guide_reviews WHERE id = :id AND user_id = :uid");
         } else {
@@ -95,13 +118,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delet
     }
 }
 
-// Fetch user's package/general reviews
+// === FETCH PACKAGE/GENERAL REVIEWS ===
+// Build dynamic WHERE clause based on filter tab (all/approved/pending/rejected)
 $filter = $_GET['filter'] ?? 'all';
 $where = 't.user_id = :uid';
 if ($filter === 'approved')   { $where .= " AND t.status = 'approved'"; }
 elseif ($filter === 'pending')   { $where .= " AND t.status = 'pending'"; }
 elseif ($filter === 'rejected')  { $where .= " AND t.status = 'rejected'"; }
 
+// Compute seconds_elapsed in SQL for edit window calculation on the client side
 $stmt = $db->prepare(
     "SELECT t.*, p.title AS package_title, p.slug AS package_slug, 'package' AS review_type,
             TIMESTAMPDIFF(SECOND, t.created_at, NOW()) AS seconds_elapsed
@@ -113,7 +138,8 @@ $stmt = $db->prepare(
 $stmt->execute([':uid' => $userId]);
 $packageReviews = $stmt->fetchAll();
 
-// Fetch user's guide reviews
+// === FETCH GUIDE REVIEWS ===
+// Same filter logic, applied to guide_reviews table
 $guideWhere = 'gr.user_id = :uid';
 if ($filter === 'approved')   { $guideWhere .= " AND gr.status = 'approved'"; }
 elseif ($filter === 'pending')   { $guideWhere .= " AND gr.status = 'pending'"; }
@@ -130,7 +156,8 @@ $guideStmt = $db->prepare(
 $guideStmt->execute([':uid' => $userId]);
 $guideReviews = $guideStmt->fetchAll();
 
-// Merge and sort by date
+// === MERGE AND SORT ===
+// Combine both review types into a single array, sorted by most recent first
 $reviews = array_merge($packageReviews, $guideReviews);
 usort($reviews, function($a, $b) {
     return strtotime($b['created_at']) - strtotime($a['created_at']);
@@ -138,7 +165,9 @@ usort($reviews, function($a, $b) {
 
 $activePage = 'my-reviews';
 
-// Helper: check if review is within edit window (uses seconds_elapsed from DB)
+// === HELPER: CHECK EDIT WINDOW ===
+// Returns true if the review was posted less than 6 hours ago
+// Uses seconds_elapsed computed in the SQL query
 function canEditReview(array $review): bool {
     return (int)($review['seconds_elapsed'] ?? 999999) < 6 * 3600;
 }
@@ -162,13 +191,17 @@ function canEditReview(array $review): bool {
     <link rel="stylesheet" href="../css/footer.css">
 </head>
 <body class="usr-page">
+    <!-- === NAVBAR === -->
     <?php $basePath = '../'; include '../includes/navbar.php'; ?>
 
     <main>
         <div class="usr-layout">
+            <!-- === SIDEBAR === -->
             <?php include '../includes/user-sidebar.php'; ?>
 
+            <!-- === MAIN CONTENT === -->
             <div class="usr-canvas">
+                <!-- === FLASH MESSAGES === -->
                 <?php if (isset($_GET['review_submitted'])): ?>
                     <div class="mb-alert mb-alert-success">
                         <span class="material-symbols-outlined">check_circle</span>
@@ -199,7 +232,7 @@ function canEditReview(array $review): bool {
                     <p>Manage your reviews and testimonials. You can edit a review within 6 hours of posting.</p>
                 </div>
 
-                <!-- Tabs -->
+                <!-- === STATUS FILTER TABS === -->
                 <div class="mb-tabs">
                     <a href="?filter=all" class="mb-tab-btn <?= $filter === 'all' ? 'active' : '' ?>">
                         All Reviews
@@ -216,7 +249,7 @@ function canEditReview(array $review): bool {
                     </a>
                 </div>
 
-                <!-- Reviews List -->
+                <!-- === REVIEWS LIST === -->
                 <?php if (empty($reviews)): ?>
                     <div class="mb-empty">
                         <span class="material-symbols-outlined">rate_review</span>
@@ -233,6 +266,7 @@ function canEditReview(array $review): bool {
                     <div class="mr-list">
                         <?php foreach ($reviews as $review): ?>
                             <?php
+                            // Status color mapping for badges
                             $statusColors = [
                                 'approved' => ['#2a9d8f', '#e0f5f0'],
                                 'pending'  => ['#f4a261', '#fef3e7'],
@@ -241,6 +275,8 @@ function canEditReview(array $review): bool {
                             $statusLabels = ['approved' => 'Approved', 'pending' => 'Pending', 'rejected' => 'Rejected'];
                             $sc = $statusColors[$review['status']] ?? ['#888', '#eee'];
                             $sl = $statusLabels[$review['status']] ?? 'Unknown';
+
+                            // Calculate edit window remaining (6 hours = 21600 seconds)
                             $canEdit = (int)$review['seconds_elapsed'] < 6 * 3600;
                             $editSecondsRemaining = max(0, 6 * 3600 - (int)$review['seconds_elapsed']);
                             $editHoursRemaining = floor($editSecondsRemaining / 3600);
@@ -248,8 +284,10 @@ function canEditReview(array $review): bool {
                             $isGuideReview = ($review['review_type'] ?? '') === 'guide';
                             ?>
                             <div class="mr-card" data-review-id="<?= $review['id'] ?>">
+                                <!-- === REVIEW HEADER === -->
                                 <div class="mr-card-header">
                                     <div class="mr-card-meta">
+                                        <!-- Link to guide or package depending on review type -->
                                         <?php if ($isGuideReview): ?>
                                             <a href="guide-details.php?id=<?= (int)($review['guide_id'] ?? 0) ?>" class="mr-card-package">
                                                 <span class="material-symbols-outlined">person_raised_hand</span>
@@ -271,6 +309,7 @@ function canEditReview(array $review): bool {
                                     <span class="mr-badge" style="background:<?= $sc[1] ?>;color:<?= $sc[0] ?>;"><?= $sl ?></span>
                                 </div>
 
+                                <!-- === STAR RATING === -->
                                 <div class="mr-card-stars">
                                     <?php for ($s = 0; $s < (int)$review['rating']; $s++): ?>
                                         <span class="star-filled">&#9733;</span>
@@ -286,8 +325,10 @@ function canEditReview(array $review): bool {
 
                                 <p class="mr-card-content">"<?= htmlspecialchars($review['content']) ?>"</p>
 
+                                <!-- === REVIEW ACTIONS === -->
                                 <div class="mr-card-actions">
                                     <?php if ($canEdit): ?>
+                                        <!-- Edit button with remaining time display -->
                                         <button class="mr-btn mr-btn-outline" onclick="openEditModal(<?= $review['id'] ?>)">
                                             <span class="material-symbols-outlined">edit</span>
                                             Edit
@@ -308,6 +349,7 @@ function canEditReview(array $review): bool {
                                             </span>
                                         <?php endif; ?>
                                     <?php endif; ?>
+                                    <!-- Delete form with JS confirm dialog -->
                                     <form method="post" style="display:inline;" onsubmit="return confirm('Delete this review permanently?')">
                                         <?php csrf_field(); ?>
                                         <input type="hidden" name="action" value="delete">
@@ -321,7 +363,8 @@ function canEditReview(array $review): bool {
                                 </div>
                             </div>
 
-                            <!-- Edit Modal Data (hidden JSON) -->
+                            <!-- === HIDDEN EDIT DATA === -->
+                            <!-- Stores review data as JSON for the edit modal to consume via JS -->
                             <div id="edit-data-<?= $review['id'] ?>" style="display:none;"><?= json_encode([
                                 'id' => $review['id'],
                                 'rating' => (int)$review['rating'],
@@ -335,7 +378,7 @@ function canEditReview(array $review): bool {
         </div>
     </main>
 
-    <!-- Edit Modal -->
+    <!-- === EDIT REVIEW MODAL === -->
     <div class="inq-modal-overlay" id="editModal">
         <div class="inq-modal" style="max-width:520px;">
             <div class="inq-modal-header">
@@ -352,6 +395,7 @@ function canEditReview(array $review): bool {
                 <div class="inq-modal-body">
                     <div class="form-field">
                         <label>Your Rating</label>
+                        <!-- Interactive star rating selector -->
                         <div class="rating-selector" id="edit-rating-selector">
                             <input type="hidden" name="rating" id="edit-rating-value" value="0">
                             <span class="star" data-value="1">&#9733;</span>
@@ -382,11 +426,13 @@ function canEditReview(array $review): bool {
         </div>
     </div>
 
+    <!-- === FOOTER === -->
     <?php $basePath = '../'; include '../includes/footer.php'; ?>
 
     <script src="../js/script.js"></script>
     <script>
-    // Edit modal state
+    // === EDIT MODAL STATE ===
+    // Build a JS object mapping review IDs to their data for quick modal population
     const editData = {};
     <?php foreach ($reviews as $review): ?>
     editData[<?= $review['id'] ?>] = <?= json_encode([
@@ -397,6 +443,8 @@ function canEditReview(array $review): bool {
     ]) ?>;
     <?php endforeach; ?>
 
+    // === OPEN EDIT MODAL ===
+    // Populates form fields with review data and opens the modal overlay
     function openEditModal(id) {
         const d = editData[id];
         if (!d) return;
@@ -407,6 +455,7 @@ function canEditReview(array $review): bool {
         document.getElementById('edit-content-count').textContent = d.content ? d.content.length : 0;
         document.getElementById('edit-rating-value').value = d.rating;
 
+        // Update star visual state to match current rating
         const stars = document.querySelectorAll('#edit-rating-selector .star');
         stars.forEach((star, i) => {
             star.classList.toggle('selected', i < d.rating);
@@ -415,11 +464,13 @@ function canEditReview(array $review): bool {
         document.getElementById('editModal').classList.add('open');
     }
 
+    // === CLOSE EDIT MODAL ===
     function closeEditModal() {
         document.getElementById('editModal').classList.remove('open');
     }
 
-    // Star rating handler for edit modal
+    // === STAR RATING INTERACTION ===
+    // Supports click, hover, and mouseleave for interactive rating selection
     document.addEventListener('DOMContentLoaded', function() {
         const selectors = document.querySelectorAll('.rating-selector');
         selectors.forEach(function(container) {
@@ -427,6 +478,7 @@ function canEditReview(array $review): bool {
             const hidden = container.querySelector('input[type="hidden"]');
 
             stars.forEach(function(star) {
+                // Click: set rating value
                 star.addEventListener('click', function() {
                     const value = parseInt(this.getAttribute('data-value'));
                     hidden.value = value;
@@ -435,6 +487,7 @@ function canEditReview(array $review): bool {
                     });
                 });
 
+                // Hover: preview rating visually
                 star.addEventListener('mouseenter', function() {
                     const value = parseInt(this.getAttribute('data-value'));
                     stars.forEach(function(s, i) {
@@ -442,6 +495,7 @@ function canEditReview(array $review): bool {
                     });
                 });
 
+                // Mouse leave: revert to saved rating
                 star.addEventListener('mouseleave', function() {
                     const value = parseInt(hidden.value);
                     stars.forEach(function(s, i) {
@@ -451,7 +505,7 @@ function canEditReview(array $review): bool {
             });
         });
 
-        // Character counter for edit content
+        // === CHARACTER COUNTER FOR EDIT MODAL ===
         const editContent = document.getElementById('edit-content');
         if (editContent) {
             editContent.addEventListener('input', function() {
@@ -459,7 +513,7 @@ function canEditReview(array $review): bool {
             });
         }
 
-        // Close edit modal on overlay click
+        // === CLOSE MODAL ON OVERLAY CLICK ===
         const editModal = document.getElementById('editModal');
         if (editModal) {
             editModal.addEventListener('click', function(e) {

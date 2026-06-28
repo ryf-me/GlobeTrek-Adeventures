@@ -1,7 +1,10 @@
-/* ============================================
-   Admin Inquiries Page
-   ============================================ */
+/**
+ * File: css/admin-inquiries.css
+ * Purpose: Styles for the Admin Inquiries management page — layout, header with stats, filter tabs, inquiries table, status badges, empty state, thread modal, and animations
+ * Used By: admin/inquiries.html
+ */
 
+/* === CSS Variables === */
 :root {
     --adm-primary: #264653;
     --adm-on-primary: #ffffff;
@@ -23,6 +26,7 @@
     --adm-success-text: #264653;
 }
 
+/* === Page Base === */
 .adm-page {
     background: var(--adm-surface);
     color: var(--adm-on-surface);
@@ -45,18 +49,14 @@
     letter-spacing: 0;
 }
 
-/* --------------------------------------------
-   Layout
-   -------------------------------------------- */
+/* === Layout === */
 .adm-layout {
     max-width: 1280px;
     margin: 0 auto;
     padding: clamp(2rem, 4vw, 3rem) clamp(1.25rem, 4vw, 3rem) clamp(3rem, 6vw, 5rem);
 }
 
-/* --------------------------------------------
-   Header
-   -------------------------------------------- */
+/* === Header === */
 .adm-header {
     display: flex;
     justify-content: space-between;
@@ -101,9 +101,7 @@
     margin-top: 0.25rem;
 }
 
-/* --------------------------------------------
-   Filter Tabs
-   -------------------------------------------- */
+/* === Filter Tabs === */
 .adm-tabs {
     display: flex;
     border-bottom: 1px solid var(--adm-outline-variant);
@@ -136,9 +134,7 @@
     border-bottom-color: var(--adm-primary);
 }
 
-/* --------------------------------------------
-   Inquiries Table
-   -------------------------------------------- */
+/* === Inquiries Table === */
 .adm-table-wrap {
     border: 1px solid var(--adm-outline-variant);
     background: var(--adm-surface-container-lowest);
@@ -205,7 +201,7 @@
     white-space: nowrap;
 }
 
-/* Status badges in table */
+/* === Status Badges === */
 .adm-status-badge {
     display: inline-flex;
     align-items: center;
@@ -242,9 +238,7 @@
     background: var(--adm-surface-container-low);
 }
 
-/* --------------------------------------------
-   Empty State
-   -------------------------------------------- */
+/* === Empty State === */
 .adm-empty {
     text-align: center;
     padding: clamp(3rem, 6vw, 5rem) 2rem;
@@ -267,9 +261,7 @@
     line-height: 1.7;
 }
 
-/* --------------------------------------------
-   Thread Modal (Admin)
-   -------------------------------------------- */
+/* === Thread Modal === */
 .adm-modal-overlay {
     display: none;
     position: fixed;
@@ -334,7 +326,7 @@
     flex: 1;
 }
 
-/* Inquiry details */
+/* === Inquiry Details (Modal) === */
 .adm-inquiry-details {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -364,7 +356,7 @@
     color: var(--adm-on-surface);
 }
 
-/* Status selector */
+/* === Status Selector === */
 .adm-status-row {
     display: flex;
     align-items: center;
@@ -404,7 +396,7 @@
     box-shadow: 0 0 0 1px var(--adm-primary);
 }
 
-/* Messages */
+/* === Messages === */
 .adm-thread-messages {
     display: flex;
     flex-direction: column;
@@ -461,7 +453,7 @@
     border-left: 3px solid var(--adm-primary);
 }
 
-/* Reply form */
+/* === Reply Form === */
 .adm-reply-form {
     border-top: 1px solid var(--adm-outline-variant);
     padding-top: 1rem;
@@ -538,9 +530,7 @@
     opacity: 0.85;
 }
 
-/* --------------------------------------------
-   Animations
-   -------------------------------------------- */
+/* === Animations === */
 @keyframes admFadeIn {
     from { opacity: 0; }
     to { opacity: 1; }
@@ -557,9 +547,7 @@
     }
 }
 
-/* --------------------------------------------
-   Responsive
-   -------------------------------------------- */
+/* === Responsive: 640px === */
 @media (max-width: 640px) {
     .adm-layout {
         padding-left: 1rem;

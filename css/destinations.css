@@ -1,4 +1,10 @@
-/* ---------- Base ---------- */
+/**
+ * File: css/destinations.css
+ * Purpose: Styles for the Destinations listing and detail pages — hero, filter bar, grid, sidebar, cards, newsletter, and detail hero
+ * Used By: destinations/index.html, destinations/show.html
+ */
+
+/* === Base === */
 .destinations-page {
     font-family: 'Winky Sans', sans-serif;
     background: #f5f7fa;
@@ -6,7 +12,7 @@
     line-height: 1.5;
 }
 
-/* ---------- Hero Section ---------- */
+/* === Hero Section === */
 .dest-hero {
     position: relative;
     width: 100%;
@@ -113,7 +119,7 @@
     color: rgba(255, 255, 255, 0.65);
 }
 
-/* ---------- Breadcrumb ---------- */
+/* === Breadcrumb === */
 .dest-breadcrumb-wrap {
     max-width: 1280px;
     margin: 0 auto;
@@ -149,7 +155,7 @@
     font-weight: 500;
 }
 
-/* ---------- Filter Bar ---------- */
+/* === Filter Bar === */
 .dest-filter-bar {
     max-width: 1280px;
     margin: 0 auto;
@@ -200,7 +206,9 @@
 }
 
 .dest-filter-select select {
+    -webkit-appearance: none;
     appearance: none;
+    width: 100%;
     background: #fff;
     border: 1px solid #e2e8f0;
     border-radius: 10px;
@@ -284,7 +292,7 @@
     background-position: right 0.6rem center;
 }
 
-/* ---------- Content Layout ---------- */
+/* === Content Layout === */
 .dest-content-wrap {
     max-width: 1280px;
     margin: 0 auto;
@@ -299,14 +307,14 @@
     min-width: 0;
 }
 
-/* ---------- Destination Grid ---------- */
+/* === Destination Grid === */
 .dest-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 1.5rem;
 }
 
-/* ---------- Destination Card ---------- */
+/* === Destination Card === */
 .dest-card {
     background: #fff;
     border-radius: 14px;
@@ -466,7 +474,7 @@
     color: #94a3b8;
 }
 
-/* ---------- Pagination ---------- */
+/* === Pagination === */
 .dest-pagination {
     display: flex;
     align-items: center;
@@ -519,7 +527,7 @@
     color: #94a3b8;
 }
 
-/* ---------- Empty State ---------- */
+/* === Empty State === */
 .dest-empty {
     text-align: center;
     padding: 4rem 1rem;
@@ -562,7 +570,7 @@
     background: #d4603f;
 }
 
-/* ---------- Sidebar ---------- */
+/* === Sidebar === */
 .dest-sidebar {
     flex: 0 0 300px;
     display: flex;
@@ -594,7 +602,7 @@
     color: var(--accent, #e76f51);
 }
 
-/* Map Card */
+/* === Map Card === */
 .dest-map-card {
     padding: 1.4rem 1.4rem 0.8rem;
 }
@@ -613,7 +621,7 @@
     filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
 }
 
-/* Category List */
+/* === Category List === */
 .dest-category-list {
     display: flex;
     flex-direction: column;
@@ -653,7 +661,7 @@
     color: rgba(255, 255, 255, 0.75);
 }
 
-/* Help Card */
+/* === Help Card === */
 .dest-help-card {
     background: linear-gradient(135deg, var(--primary, #264653) 0%, #1e3a5f 100%);
     color: #fff;
@@ -696,7 +704,7 @@
     font-size: 18px;
 }
 
-/* ---------- Newsletter Section ---------- */
+/* === Newsletter Section === */
 .dest-newsletter {
     background: var(--dark, #1a2332);
     padding: 3rem 2rem;
@@ -788,7 +796,7 @@
     background: #d4603f;
 }
 
-/* ---------- Detail Page (preserved) ---------- */
+/* === Detail Page Hero === */
 .dest-detail-hero {
     position: relative;
     width: 100%;
@@ -872,7 +880,7 @@
     font-size: 18px;
 }
 
-/* ---------- Responsive ---------- */
+/* === Responsive Breakpoints === */
 @media (max-width: 1200px) {
     .dest-grid {
         grid-template-columns: repeat(3, 1fr);

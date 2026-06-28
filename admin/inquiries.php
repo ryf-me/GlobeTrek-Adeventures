@@ -1,4 +1,14 @@
 <?php
+/**
+ * File: admin/inquiries.php
+ * Purpose: Manages customer inquiries with thread view, reply functionality, status updates, and staff assignment.
+ * Dependencies: admin/includes/header.php (auth, DB, CSRF), admin/includes/sidebar.php, admin/includes/footer.php, config/logger.php (logActivity), config/helpers.php (csrf_field), includes/notifications.php (sendInquiryReplyNotification)
+ * Used By: Admin/staff managing customer inquiries
+ * Parent Files: None (entry-point page)
+ * Child Files: admin/includes/header.php, admin/includes/sidebar.php, admin/includes/footer.php, config/logger.php, includes/notifications.php
+ * @package GlobeTrek\Admin
+ */
+
 $pageTitle = 'Manage Inquiries';
 require_once __DIR__ . '/includes/header.php';
 require_once __DIR__ . '/../config/logger.php';
@@ -7,27 +17,33 @@ $adminId = $_SESSION['user_id'];
 
 $action = $_POST['action'] ?? '';
 
+// === GLOBAL CSRF VALIDATION ===
+// Validate CSRF token once for all POST actions — invalid token cancels all processing.
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !validateCSRFToken($_POST['csrf_token'] ?? null)) {
     $error = 'Invalid security token. Please try again.';
-    $action = '';
+    $action = ''; // Suppress all actions if CSRF fails.
 }
 
+// === ADMIN REPLY HANDLER ===
+// Inserts an admin reply into the inquiry thread and optionally updates the inquiry status.
 if ($action === 'admin_reply') {
     $inquiryId = (int)($_POST['inquiry_id'] ?? 0);
     $replyMsg = trim($_POST['reply_message'] ?? '');
     $newStatus = $_POST['inquiry_status'] ?? '';
 
     if ($replyMsg !== '' && $inquiryId > 0) {
+        // Verify the inquiry exists before inserting a reply.
         $stmt = $db->prepare("SELECT id FROM inquiries WHERE id = :id");
         $stmt->execute([':id' => $inquiryId]);
         if ($stmt->fetch()) {
+            // Insert the reply with sender_role = 'admin' for role-based display in the thread view.
             $stmt = $db->prepare(
                 "INSERT INTO inquiry_replies (inquiry_id, sender_id, sender_role, message) VALUES (:iid, :sid, 'admin', :msg)"
             );
             $stmt->execute([':iid' => $inquiryId, ':sid' => $adminId, ':msg' => $replyMsg]);
             logActivity('inquiry_reply', 'inquiry', $inquiryId, 'Admin reply sent');
 
-            // Send reply notification email
+            // === SEND REPLY NOTIFICATION EMAIL ===
             require_once __DIR__ . '/../includes/notifications.php';
             $inqStmt = $db->prepare("SELECT * FROM inquiries WHERE id = :id");
             $inqStmt->execute([':id' => $inquiryId]);
@@ -37,6 +53,7 @@ if ($action === 'admin_reply') {
                 sendInquiryReplyNotification($inquiryData, $replyData);
             }
 
+            // Optionally update the inquiry status alongside the reply.
             if ($newStatus !== '') {
                 $stmt = $db->prepare("UPDATE inquiries SET status = :status WHERE id = :id");
                 $stmt->execute([':status' => $newStatus, ':id' => $inquiryId]);
@@ -48,6 +65,8 @@ if ($action === 'admin_reply') {
     }
 }
 
+// === STATUS UPDATE HANDLER ===
+// Standalone status update without a reply.
 if ($action === 'update_status') {
     $inquiryId = (int)($_POST['inquiry_id'] ?? 0);
     $newStatus = $_POST['inquiry_status'] ?? '';
@@ -60,10 +79,13 @@ if ($action === 'update_status') {
     }
 }
 
+// === STAFF ASSIGNMENT HANDLER ===
+// Assigns a staff member to an inquiry for operational management.
 if ($action === 'assign_staff') {
     $staffId = (int)($_POST['staff_id'] ?? 0);
     $inquiryId = (int)($_POST['inquiry_id'] ?? 0);
     if ($staffId > 0 && $inquiryId > 0) {
+        // Prevent duplicate assignments by checking existing records.
         $checkStmt = $db->prepare("SELECT id FROM staff_assignments WHERE staff_id = :sid AND entity_type = 'inquiry' AND entity_id = :eid LIMIT 1");
         $checkStmt->execute([':sid' => $staffId, ':eid' => $inquiryId]);
         if (!$checkStmt->fetch()) {
@@ -76,6 +98,8 @@ if ($action === 'assign_staff') {
     }
 }
 
+// === STAFF UNASSIGNMENT HANDLER ===
+// Removes a staff assignment from an inquiry.
 if ($action === 'unassign_staff') {
     $assignmentId = (int)($_POST['assignment_id'] ?? 0);
     if ($assignmentId > 0) {
@@ -87,8 +111,11 @@ if ($action === 'unassign_staff') {
     }
 }
 
+// === SIDEBAR ===
 include __DIR__ . '/includes/sidebar.php';
 
+// === STATUS COUNTS ===
+// Aggregate inquiry counts by status for the tab filter badges.
 $stmt = $db->query("SELECT status, COUNT(*) AS cnt FROM inquiries GROUP BY status");
 $statusCounts = ['open' => 0, 'waiting_for_response' => 0, 'under_review' => 0, 'resolved' => 0];
 foreach ($stmt->fetchAll() as $row) {
@@ -96,14 +123,18 @@ foreach ($stmt->fetchAll() as $row) {
 }
 $totalCount = array_sum($statusCounts);
 
+// === FILTER / SEARCH ===
 $filter = $_GET['filter'] ?? 'all';
 $where = '';
 $params = [];
+// Map URL filter values to database status values.
 if ($filter === 'open') { $where = "WHERE i.status = 'open'"; }
 elseif ($filter === 'waiting') { $where = "WHERE i.status = 'waiting_for_response'"; }
 elseif ($filter === 'review') { $where = "WHERE i.status = 'under_review'"; }
 elseif ($filter === 'resolved') { $where = "WHERE i.status = 'resolved'"; }
 
+// === FETCH INQUIRIES ===
+// Includes a subquery to count replies per inquiry for display in the list.
 $stmt = $db->prepare(
     "SELECT i.*, u.full_name AS user_name, u.email AS user_email, p.title AS package_title,
             (SELECT COUNT(*) FROM inquiry_replies ir WHERE ir.inquiry_id = i.id) AS reply_count
@@ -116,7 +147,8 @@ $stmt = $db->prepare(
 $stmt->execute($params);
 $inquiries = $stmt->fetchAll();
 
-// Load staff assignments for displayed inquiries
+// === LOAD STAFF ASSIGNMENTS ===
+// Eagerly load all staff assignments for the displayed inquiries in a single query.
 $inquiryIds = array_column($inquiries, 'id');
 $staffAssignments = [];
 if (!empty($inquiryIds)) {
@@ -135,7 +167,8 @@ if (!empty($inquiryIds)) {
     }
 }
 
-// Load available staff for assignment dropdown
+// === LOAD AVAILABLE STAFF ===
+// Fetch all available staff members for the assignment dropdown.
 $availableStaff = $db->query(
     "SELECT sp.id, u.full_name, sp.department
      FROM staff_profiles sp
@@ -144,6 +177,7 @@ $availableStaff = $db->query(
      ORDER BY u.full_name ASC"
 )->fetchAll();
 
+// Short department labels for compact display in the staff dropdown.
 $deptLabels = [
     'operations' => 'Ops',
     'customer_service' => 'CS',
@@ -151,11 +185,14 @@ $deptLabels = [
     'marketing' => 'Mkt',
 ];
 
+// === THREAD VIEW ===
+// If a thread ID is provided in the URL, load the full inquiry and its replies.
 $viewThread = null;
 $threadReplies = [];
 $threadId = isset($_GET['thread']) ? (int)$_GET['thread'] : 0;
 
 if ($threadId > 0) {
+    // Fetch the inquiry with JOINs for user, package, and booking reference info.
     $stmt = $db->prepare(
         "SELECT i.*, u.full_name AS user_name, u.email AS user_email, p.title AS package_title, b.booking_reference
          FROM inquiries i
@@ -168,6 +205,7 @@ if ($threadId > 0) {
     $viewThread = $stmt->fetch();
 
     if ($viewThread) {
+        // Fetch all replies for this inquiry, ordered chronologically.
         $stmt = $db->prepare(
             "SELECT ir.*, u.full_name AS sender_name
              FROM inquiry_replies ir
@@ -183,6 +221,7 @@ if ($threadId > 0) {
 
 <div class="adm-sidebar-overlay" id="sidebarOverlay"></div>
 <main class="adm-main">
+    <!-- === TOP BAR === -->
     <div class="adm-topbar">
         <div class="adm-topbar-left">
             <button class="adm-menu-toggle" onclick="document.getElementById('adminSidebar').classList.toggle('open');document.getElementById('sidebarOverlay').classList.toggle('open');">
@@ -197,6 +236,7 @@ if ($threadId > 0) {
     </div>
 
     <div class="adm-content">
+        <!-- === FLASH MESSAGES === -->
         <?php if (isset($_GET['replied'])): ?>
             <div class="adm-alert adm-alert-success"><span class="material-symbols-outlined">check_circle</span> Reply sent successfully.</div>
         <?php endif; ?>
@@ -210,6 +250,7 @@ if ($threadId > 0) {
             <div class="adm-alert adm-alert-success"><span class="material-symbols-outlined">check_circle</span> Staff assignment removed.</div>
         <?php endif; ?>
 
+        <!-- === PAGE HEADER WITH STATS === -->
         <div class="adm-page-header">
             <h1>Manage Inquiries</h1>
             <div class="adm-stats">
@@ -228,6 +269,7 @@ if ($threadId > 0) {
             </div>
         </div>
 
+        <!-- === STATUS FILTER TABS === -->
         <div class="adm-tabs">
             <a href="?filter=all" class="adm-tab <?= $filter === 'all' ? 'active' : '' ?>">All (<?= $totalCount ?>)</a>
             <a href="?filter=open" class="adm-tab <?= $filter === 'open' ? 'active' : '' ?>">Open (<?= $statusCounts['open'] ?>)</a>
@@ -236,6 +278,7 @@ if ($threadId > 0) {
             <a href="?filter=resolved" class="adm-tab <?= $filter === 'resolved' ? 'active' : '' ?>">Resolved (<?= $statusCounts['resolved'] ?>)</a>
         </div>
 
+        <!-- === INQUIRIES TABLE / EMPTY STATE === -->
         <?php if (empty($inquiries)): ?>
             <div class="adm-empty">
                 <span class="material-symbols-outlined adm-empty-icon">chat_bubble</span>
@@ -259,6 +302,7 @@ if ($threadId > 0) {
                     <tbody>
                         <?php foreach ($inquiries as $inq): ?>
                             <?php
+                                // Map database status values to CSS class names and display labels.
                                 $statusClass = 'open';
                                 $statusLabel = 'Open';
                                 if ($inq['status'] === 'waiting_for_response') { $statusClass = 'waiting'; $statusLabel = 'Waiting'; }
@@ -266,10 +310,12 @@ if ($threadId > 0) {
                                 elseif ($inq['status'] === 'resolved') { $statusClass = 'resolved'; $statusLabel = 'Resolved'; }
                             ?>
                             <tr>
+                                <!-- Clickable rows open the thread modal via URL navigation -->
                                 <td class="cell-mono" onclick="openAdminThread(<?= $inq['id'] ?>)"><?= htmlspecialchars($inq['inquiry_id_code']) ?></td>
                                 <td class="cell-main" onclick="openAdminThread(<?= $inq['id'] ?>)"><?= htmlspecialchars($inq['user_name'] ?? 'Unknown') ?></td>
                                 <td onclick="openAdminThread(<?= $inq['id'] ?>)"><?= htmlspecialchars($inq['package_title'] ?? 'General') ?></td>
                                 <td onclick="openAdminThread(<?= $inq['id'] ?>)"><?= htmlspecialchars($inq['subject']) ?></td>
+                                <!-- Staff assignment column with inline unassign and assign controls -->
                                 <td onclick="event.stopPropagation()">
                                     <?php if (!empty($staffAssignments[$inq['id']])): ?>
                                         <?php foreach ($staffAssignments[$inq['id']] as $sa): ?>
@@ -290,6 +336,7 @@ if ($threadId > 0) {
                                     <?php else: ?>
                                         <span class="cell-muted">Unassigned</span>
                                     <?php endif; ?>
+                                    <!-- Staff assignment dropdown -->
                                     <div style="margin-top:0.35rem;">
                                         <select onchange="assignStaffToInquiry(this, <?= $inq['id'] ?>)" style="padding:0.2rem 0.4rem;border:1px solid var(--adm-outline-variant);font-size:0.75rem;font-family:inherit;background:transparent;border-radius:4px;">
                                             <option value="">+ Assign Staff</option>
@@ -312,6 +359,8 @@ if ($threadId > 0) {
     </div>
 </main>
 
+<!-- === THREAD MODAL === -->
+<!-- Displays inquiry details, reply thread, and admin reply form when a thread is selected. -->
 <div class="adm-modal-overlay <?= $viewThread ? 'open' : '' ?>" id="threadModal">
     <div class="adm-modal">
         <div class="adm-modal-header">
@@ -322,6 +371,7 @@ if ($threadId > 0) {
         </div>
         <div class="adm-modal-body">
             <?php if ($viewThread): ?>
+                <!-- === INQUIRY METADATA === -->
                 <div class="adm-inquiry-details">
                     <div class="adm-detail-item">
                         <span class="adm-detail-label">Inquiry ID</span>
@@ -349,6 +399,7 @@ if ($threadId > 0) {
                     </div>
                 </div>
 
+                <!-- === STATUS UPDATE (inline form) === -->
                 <div class="adm-status-row">
                     <label for="status-select">Status:</label>
                     <form method="post" action="inquiries.php" style="display:flex;gap:0.5rem;flex:1;align-items:center;" novalidate>
@@ -364,8 +415,10 @@ if ($threadId > 0) {
                     </form>
                 </div>
 
+                <!-- === REPLY THREAD === -->
                 <div class="adm-thread-messages">
                     <?php foreach ($threadReplies as $reply): ?>
+                        <!-- Messages are styled differently based on sender role (admin vs user). -->
                         <div class="adm-message <?= $reply['sender_role'] === 'admin' ? 'admin-message' : 'user-message' ?>">
                             <div class="adm-message-header">
                                 <span class="adm-message-sender">
@@ -387,6 +440,8 @@ if ($threadId > 0) {
                     <?php endif; ?>
                 </div>
 
+                <!-- === ADMIN REPLY FORM === -->
+                <!-- Only show the reply form if the inquiry is not yet resolved. -->
                 <?php if ($viewThread['status'] !== 'resolved'): ?>
                     <form method="post" action="inquiries.php" class="adm-reply-form" novalidate>
                         <?php csrf_field(); ?>
@@ -412,21 +467,26 @@ if ($threadId > 0) {
 
 <?php require_once __DIR__ . '/includes/footer.php'; ?>
 
+<!-- === JAVASCRIPT: THREAD NAVIGATION AND STAFF ASSIGNMENT === -->
 <script>
+// Navigate to the inquiry thread view (appends thread ID and filter to URL).
 function openAdminThread(id) {
     window.location.href = 'inquiries.php?thread=' + id + '<?= $filter !== 'all' ? '&filter=' . $filter : '' ?>';
 }
 
+// Close the thread modal by navigating back to the list view.
 function closeAdminThread() {
     window.location.href = 'inquiries.php<?= $filter !== 'all' ? '?filter=' . $filter : '' ?>';
 }
 
+// Close the modal when clicking on the overlay background (not the modal content).
 document.getElementById('threadModal').addEventListener('click', function(e) {
     if (e.target === this) {
         closeAdminThread();
     }
 });
 
+// Dynamically builds and submits a hidden form to POST staff assignment data.
 function assignStaffToInquiry(select, inquiryId) {
     var staffId = select.value;
     if (!staffId) return;
@@ -435,6 +495,7 @@ function assignStaffToInquiry(select, inquiryId) {
     form.method = 'POST';
     form.style.display = 'none';
 
+    // Retrieve CSRF token from an existing form on the page.
     var csrfToken = document.querySelector('input[name="csrf_token"]').value;
 
     var csrfInput = document.createElement('input');

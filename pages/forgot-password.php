@@ -1,11 +1,19 @@
 <?php
 /**
- * Forgot Password Page
- *
- * Allows users to request a password reset link.
- * Generates a secure token stored in password_resets table with 30-minute expiry.
+ * File: pages/forgot-password.php
+ * Purpose: Forgot password page - allows users to request a password reset
+ *          link. Generates a secure token stored in password_resets table
+ *          with 30-minute expiry. Prevents email enumeration by always
+ *          showing the same success message.
+ * Dependencies: config/database.php, config/csrf.php, config/rate-limiter.php,
+ *               includes/mailer.php
+ * Used By: login.php (forgot password link)
+ * Parent Files: login.php, navbar.php
+ * Child Files: None (leaf page)
+ * @package GlobeTrek\Pages
  */
 
+// === CONFIGURATION & DEPENDENCIES ===
 session_start();
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../config/csrf.php';
@@ -13,12 +21,16 @@ require_once __DIR__ . '/../config/rate-limiter.php';
 require_once __DIR__ . '/../includes/mailer.php';
 $db = getDB();
 
+// === STATE INITIALIZATION ===
 $message = '';
 $success = false;
 
+// === HANDLE FORM SUBMISSION ===
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // CSRF validation
     if (!validateCSRFToken($_POST['csrf_token'] ?? null)) {
         $message = 'Invalid security token. Please try again.';
+    // Rate limiting — max 3 requests per hour per IP
     } elseif (!checkRateLimit('forgot_password', 3, 3600, true)) {
         $message = 'Too many requests. Please try again later.';
     } else {
@@ -27,7 +39,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $message = 'Please enter a valid email address.';
         } else {
-            // Always show success message to prevent email enumeration
+            // === PREVENT EMAIL ENUMERATION ===
+            // Always show the same success message regardless of whether
+            // the email exists in the database. This prevents attackers
+            // from discovering which emails are registered.
             $success = true;
             $message = 'If an account exists with that email, a password reset link has been sent.';
 
@@ -37,20 +52,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $user = $stmt->fetch();
 
             if ($user) {
-                // Delete any existing reset tokens for this email
+                // === GENERATE RESET TOKEN ===
+                // Delete any existing reset tokens for this email first
                 $del = $db->prepare("DELETE FROM password_resets WHERE email = :email");
                 $del->execute([':email' => $email]);
 
-                // Generate secure token
+                // Generate cryptographically secure token (64-char hex)
                 $token = bin2hex(random_bytes(32));
-                $expiresAt = date('Y-m-d H:i:s', time() + 1800); // 30 minutes
+                // Token expires in 30 minutes
+                $expiresAt = date('Y-m-d H:i:s', time() + 1800);
 
                 $ins = $db->prepare(
                     "INSERT INTO password_resets (user_id, email, token, expires_at) VALUES (:user_id, :email, :token, :expires)"
                 );
                 $ins->execute([':user_id' => $user['id'], ':email' => $email, ':token' => $token, ':expires' => $expiresAt]);
 
-                // Send reset email
+                // === SEND RESET EMAIL ===
                 $resetLink = BASE_URL . '/pages/reset-password.php?token=' . $token;
 
                 $emailContent = '
@@ -85,11 +102,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="stylesheet" href="../css/login.css">
 </head>
 <body class="login-page">
+
+    <!-- === BACKGROUND IMAGE === -->
     <div class="login-bg">
         <img src="../images/login-bg.jpg" alt="" aria-hidden="true">
         <div class="login-bg-overlay"></div>
     </div>
 
+    <!-- === TOP NAVIGATION BAR === -->
     <header class="login-topbar">
         <a class="login-topbar-logo" href="../index.php">
             <img src="../images/logo.png" alt="GlobeTrek Adventures logo" />
@@ -100,6 +120,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </a>
     </header>
 
+    <!-- === FORGOT PASSWORD FORM CARD === -->
     <main class="login-shell">
         <div class="login-card">
             <div class="login-lock">
@@ -111,15 +132,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <p>Enter your email and we'll send you a link to reset your password.</p>
             </div>
 
+            <!-- Display success or error messages -->
             <?php if ($message !== ''): ?>
                 <div class="signup-message <?php echo $success ? 'success' : 'error'; ?>" role="<?php echo $success ? 'status' : 'alert'; ?>">
                     <?php echo $message; ?>
                 </div>
             <?php endif; ?>
 
+            <!-- === PASSWORD RESET REQUEST FORM === -->
             <form class="login-form forgot-form" action="forgot-password.php" method="post">
                 <?php csrf_field(); ?>
 
+                <!-- Email field (pre-filled from GET/POST if available) -->
                 <div class="form-group">
                     <label for="forgot-email">Email Address</label>
                     <div class="input-icon-wrapper">

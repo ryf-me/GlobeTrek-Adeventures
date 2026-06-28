@@ -1,6 +1,17 @@
+/**
+ * File: css/navbar.css
+ * Purpose: Global navigation bar styles — sticky header, logo, nav links,
+ *          Book Now button, login/signup buttons, user profile dropdown,
+ *          and mobile hamburger menu. Includes page-specific overrides
+ *          for homepage, about, contact, and destinations pages.
+ * Used By: All frontend pages (included via PHP layout)
+ */
+
 @import url('https://fonts.googleapis.com/css2?family=Unkempt:wght@400;700&family=Winky+Sans:ital,wght@0,300..900;1,300..900&display=swap');
 
-/* Navigation */
+/* ========================================
+   Navigation Bar — Core
+   ======================================== */
 .navbar {
     background: #1a2332;
     color: #fff;
@@ -17,6 +28,7 @@
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+/* --- Logo --- */
 .navbar .logo {
     display: flex;
     align-items: center;
@@ -51,6 +63,7 @@
     object-fit: contain;
 }
 
+/* --- Navigation Links --- */
 .navbar .nav-links {
     list-style: none;
     display: flex;
@@ -92,6 +105,7 @@
     transform: translateX(-50%) scaleX(1);
 }
 
+/* --- Phone Number --- */
 .nav-phone {
     display: flex;
     align-items: center;
@@ -106,6 +120,7 @@
     font-size: 18px;
 }
 
+/* --- Book Now Button --- */
 .book-now-btn {
     display: inline-flex;
     align-items: center;
@@ -127,6 +142,7 @@
     transform: translateY(-1px);
 }
 
+/* --- Login & Signup Buttons --- */
 .login-btn,
 .signup-btn {
     min-width: 82px;
@@ -175,7 +191,9 @@
     outline-offset: 3px;
 }
 
-/* Mobile Navbar Menu */
+/* ========================================
+   Mobile Navbar Menu
+   ======================================== */
 .menu-toggle {
     display: none;
     border: 0;
@@ -185,6 +203,7 @@
     cursor: pointer;
 }
 
+/* --- Mobile Breakpoint (max-width: 768px) --- */
 @media (max-width: 768px) {
     .navbar {
         padding: 0.75rem 1rem;
@@ -255,9 +274,9 @@
     }
 }
 
-/* --------------------------------------------
+/* ========================================
    User Profile Dropdown
-   -------------------------------------------- */
+   ======================================== */
 .user-profile-trigger {
     position: relative;
     display: flex;
@@ -318,6 +337,7 @@
     transform: rotate(180deg);
 }
 
+/* --- Dropdown Panel --- */
 .profile-dropdown {
     position: absolute;
     top: calc(100% + 6px);
@@ -393,6 +413,7 @@
     white-space: nowrap;
 }
 
+/* --- Dropdown Navigation Items --- */
 .dropdown-nav {
     padding: 0.35rem 0;
 }
@@ -439,6 +460,7 @@
     margin: 0.25rem 0;
 }
 
+/* --- Logout Item --- */
 .navbar .nav-links .profile-dropdown .dropdown-logout {
     display: flex;
     align-items: center;
@@ -466,7 +488,11 @@
     font-size: 20px !important;
 }
 
-/* Homepage — navbar stays dark (no override needed) */
+/* ========================================
+   Page-Specific Navbar Overrides
+   ======================================== */
+
+/* --- Homepage — transparent navbar overlay --- */
 .home-page .navbar {
     position: absolute;
     background: transparent;
@@ -474,7 +500,8 @@
     -webkit-backdrop-filter: none;
     border-bottom: none;
 }
-/* contact page — navbar stays dark (no override needed) */
+
+/* --- Contact page — transparent navbar overlay --- */
 .contact-page .navbar {
     position: absolute;
     background: transparent;
@@ -482,7 +509,8 @@
     -webkit-backdrop-filter: none;
     border-bottom: none;
 }
-/* destinations page — navbar stays dark (no override needed) */
+
+/* --- Destinations page — transparent navbar overlay --- */
 .destinations-page .navbar {
     position: absolute;
     background: transparent;
@@ -491,7 +519,7 @@
     border-bottom: none;
 }
 
-/* About page overlay navbar */
+/* --- About page — transparent navbar overlay with white text --- */
 .about-page .navbar {
     position: absolute;
     background: transparent;
@@ -555,7 +583,7 @@
     color: #ba1a1a;
 }
 
-/* Mobile */
+/* --- About page mobile menu --- */
 @media (max-width: 768px) {
     .about-page .navbar .nav-links {
         background: rgba(0, 0, 0, 0.85);

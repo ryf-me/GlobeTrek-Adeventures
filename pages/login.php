@@ -1,33 +1,43 @@
 <?php
 /**
- * User Login Page
- *
- * Authenticates users via email/password. Implements CSRF protection,
- * rate limiting (5 attempts per 15 min per IP), session fixation
- * prevention via session_regenerate_id(), and persistent "Remember Me"
- * logins via a secure token stored in the remember_tokens table.
+ * File: pages/login.php
+ * Purpose: User login page - authenticates users via email/password with
+ *          CSRF protection, rate limiting, session fixation prevention,
+ *          and persistent "Remember Me" token support.
+ * Dependencies: config/session.php, config/database.php, config/csrf.php,
+ *               config/rate-limiter.php
+ * Used By: navbar.php (login link), signup.php (redirect), forgot-password.php (redirect),
+ *          resend-verification.php (redirect)
+ * Parent Files: index.php (redirects here on auth failure)
+ * Child Files: None (leaf page, no includes beyond config)
+ * @package GlobeTrek\Pages
  */
 
+// === CONFIGURATION & DEPENDENCIES ===
+
+// Start session and load core config files
 require_once __DIR__ . '/../config/session.php';
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../config/csrf.php';
 require_once __DIR__ . '/../config/rate-limiter.php';
 $db = getDB();
 
-/* -------------------------------------------------------
- *  Remember-Me helpers
- * ------------------------------------------------------- */
+// === REMEMBER-ME HELPER FUNCTIONS ===
 
 /**
  * Create a persistent login token for the given user.
  * Stores a SHA-256 hash in the DB and sets a plain-text cookie.
+ * Security: Only the hash is stored; the raw token lives solely in the cookie.
  */
 function setRememberToken(PDO $db, int $userId): void
 {
-    $rawToken  = bin2hex(random_bytes(32));               // 64-char hex string
+    // Generate a cryptographically secure 64-char hex token
+    $rawToken  = bin2hex(random_bytes(32));
     $tokenHash = hash('sha256', $rawToken);
-    $expiresAt = date('Y-m-d H:i:s', time() + 30 * 24 * 3600); // 30 days
+    // Token expires after 30 days
+    $expiresAt = date('Y-m-d H:i:s', time() + 30 * 24 * 3600);
 
+    // Store hash in database — raw token never touches the DB
     $stmt = $db->prepare(
         "INSERT INTO remember_tokens (user_id, token_hash, expires_at)
          VALUES (:uid, :th, :exp)"
@@ -38,31 +48,37 @@ function setRememberToken(PDO $db, int $userId): void
         ':exp' => $expiresAt,
     ]);
 
+    // Set cookie with security flags
     setcookie('remember_me', $rawToken, [
         'expires'  => time() + 30 * 24 * 3600,
         'path'     => '/',
-        'secure'   => !empty($_SERVER['HTTPS']),   // only over HTTPS in production
-        'httponly'  => true,
-        'samesite' => 'Lax',
+        'secure'   => !empty($_SERVER['HTTPS']),   // HTTPS-only in production
+        'httponly'  => true,                        // Not accessible via JavaScript
+        'samesite' => 'Lax',                       // CSRF mitigation
     ]);
 }
 
 /**
  * Attempt to authenticate the visitor from a remember_me cookie.
  * Returns true if a valid session was created.
+ * Security: Rotates token on each use to limit replay window.
  */
 function tryAutoLogin(PDO $db): bool
 {
+    // Skip if already authenticated
     if (session_status() === PHP_SESSION_ACTIVE && !empty($_SESSION['user_id'])) {
-        return false; // already logged in
+        return false;
     }
 
+    // No cookie = no auto-login attempt
     if (empty($_COOKIE['remember_me'])) {
         return false;
     }
 
+    // Hash the cookie value to match against the stored hash
     $tokenHash = hash('sha256', $_COOKIE['remember_me']);
 
+    // Look up the token and join user data in one query
     $stmt = $db->prepare(
         "SELECT rt.*, u.id AS uid, u.full_name, u.email, u.role, u.profile_photo
          FROM remember_tokens rt
@@ -79,7 +95,7 @@ function tryAutoLogin(PDO $db): bool
         return false;
     }
 
-    // Valid token — establish session
+    // Valid token — establish session with fresh ID
     session_regenerate_id(true);
     $_SESSION['user_id']            = $row['uid'];
     $_SESSION['user_name']          = $row['full_name'];
@@ -87,7 +103,7 @@ function tryAutoLogin(PDO $db): bool
     $_SESSION['user_role']          = $row['role'];
     $_SESSION['user_profile_photo'] = $row['profile_photo'] ?? '';
 
-    // Rotate token (delete old, issue new) to limit replay window
+    // Token rotation: delete old token and issue new one
     $del = $db->prepare("DELETE FROM remember_tokens WHERE id = :id");
     $del->execute([':id' => $row['id']]);
     setRememberToken($db, $row['uid']);
@@ -96,7 +112,7 @@ function tryAutoLogin(PDO $db): bool
 }
 
 /**
- * Remove the remember_me cookie.
+ * Remove the remember_me cookie by expiring it.
  */
 function clearRememberCookie(): void
 {
@@ -113,15 +129,16 @@ function clearRememberCookie(): void
 
 /**
  * Purge expired tokens (runs once per request, lightweight).
+ * Prevents unbounded growth of the remember_tokens table.
  */
 function purgeExpiredTokens(PDO $db): void
 {
     $db->exec("DELETE FROM remember_tokens WHERE expires_at < NOW()");
 }
 
-/* -------------------------------------------------------
- *  Auto-login from cookie (before any POST handling)
- * ------------------------------------------------------- */
+// === AUTO-LOGIN FROM COOKIE ===
+// Attempt auto-login before any POST handling so remembered users
+// are silently redirected to the homepage.
 purgeExpiredTokens($db);
 
 if (tryAutoLogin($db)) {
@@ -129,14 +146,12 @@ if (tryAutoLogin($db)) {
     exit;
 }
 
-/* -------------------------------------------------------
- *  Handle form submission
- * ------------------------------------------------------- */
+// === HANDLE FORM SUBMISSION ===
 $errors = [];
 $email  = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // CSRF validation
+    // CSRF validation — reject forged requests
     if (!validateCSRFToken($_POST['csrf_token'] ?? null)) {
         $errors['general'] = 'Invalid security token. Please try again.';
     }
@@ -147,6 +162,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (empty($errors)) {
+        // Sanitize and validate email input
         $email    = filter_var(trim($_POST['email'] ?? ''), FILTER_SANITIZE_EMAIL);
         $password = $_POST['password'] ?? '';
 
@@ -159,28 +175,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (empty($errors)) {
-        // Per-account lockout check (5 attempts per 15 min)
+        // Per-account lockout check — prevents brute-force on specific accounts
         if (!checkAccountLockout($email, 5, 900)) {
             $errors['general'] = 'Too many failed login attempts for this account. Please try again in 15 minutes.';
         }
     }
 
     if (empty($errors)) {
+        // Fetch user record by email
         $stmt = $db->prepare("SELECT * FROM users WHERE email = :email LIMIT 1");
         $stmt->execute([':email' => $email]);
         $user = $stmt->fetch();
 
         if (!$user) {
+            // Generic message prevents email enumeration
             $errors['general'] = 'Invalid email or password.';
             recordLoginAttempt($email, $_SERVER['REMOTE_ADDR'] ?? 'unknown');
         } elseif ($user['is_active'] == 0) {
+            // Account deactivated by admin
             $errors['general'] = 'Your account has been deactivated. Please contact support.';
         } elseif (isset($user['email_verified']) && $user['email_verified'] == 0) {
+            // Email not yet verified — show resend link
             $errors['general'] = 'Please verify your email first. <a href="resend-verification.php?email=' . urlencode($email) . '" style="color:#e76f51;text-decoration:underline;">Resend verification email</a>';
         } elseif ($user && password_verify($password, $user['password'])) {
-            // Regenerate session ID to prevent session fixation
+            // === SUCCESSFUL LOGIN ===
+            // Regenerate session ID to prevent session fixation attacks
             session_regenerate_id(true);
 
+            // Populate session with user data
             $_SESSION['user_id']            = $user['id'];
             $_SESSION['user_name']          = $user['full_name'];
             $_SESSION['user_email']         = $user['email'];
@@ -194,7 +216,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!empty($_POST['remember'])) {
                 setRememberToken($db, $user['id']);
             } else {
-                // Explicitly opt-out: clear any existing token
+                // Explicit opt-out: clear any existing token
                 $del = $db->prepare("DELETE FROM remember_tokens WHERE user_id = :uid");
                 $del->execute([':uid' => $user['id']]);
                 clearRememberCookie();
@@ -203,6 +225,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             header('Location: ../index.php');
             exit;
         } else {
+            // Wrong password — log the attempt
             $errors['general'] = 'Invalid email or password.';
             recordLoginAttempt($email, $_SERVER['REMOTE_ADDR'] ?? 'unknown');
         }
@@ -223,11 +246,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="stylesheet" href="../css/login.css">
 </head>
 <body class="login-page">
+
+    <!-- === BACKGROUND IMAGE === -->
     <div class="login-bg">
         <img src="../images/login-bg.jpg" alt="" aria-hidden="true">
         <div class="login-bg-overlay"></div>
     </div>
 
+    <!-- === TOP NAVIGATION BAR === -->
     <header class="login-topbar">
         <a class="login-topbar-logo" href="../index.php">
             <img src="../images/logo.png" alt="GlobeTrek Adventures logo" />
@@ -238,6 +264,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </a>
     </header>
 
+    <!-- === LOGIN FORM CARD === -->
     <main class="login-shell">
         <div class="login-card">
             <div class="login-lock">
@@ -249,15 +276,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <p>Login to continue your travel journey with GlobeTrek.</p>
             </div>
 
+            <!-- Display general errors (CSRF, rate limit, auth failures) -->
             <?php if (isset($errors['general'])): ?>
                 <div class="signup-message error" role="alert">
                     <?php echo htmlspecialchars($errors['general']); ?>
                 </div>
             <?php endif; ?>
 
+            <!-- === LOGIN FORM === -->
             <form class="login-form" action="login.php" method="post">
                 <?php csrf_field(); ?>
 
+                <!-- Email field -->
                 <div class="form-group<?php echo isset($errors['email']) ? ' has-error' : ''; ?>">
                     <label for="email">Email Address</label>
                     <div class="input-icon-wrapper">
@@ -269,6 +299,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <?php endif; ?>
                 </div>
 
+                <!-- Password field with visibility toggle -->
                 <div class="form-group<?php echo isset($errors['password']) ? ' has-error' : ''; ?>">
                     <label for="password">Password</label>
                     <div class="input-icon-wrapper">
@@ -286,6 +317,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 <a href="forgot-password.php" class="forgot-link">Forgot Password?</a>
 
+                <!-- Remember Me checkbox (checked by default) -->
                 <div class="remember-group">
                     <input id="remember" name="remember" type="checkbox" checked>
                     <label for="remember">Remember Me</label>
@@ -297,12 +329,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </button>
             </form>
 
+            <!-- === SOCIAL LOGIN DIVIDER === -->
             <div class="login-divider" aria-hidden="true">
                 <span></span>
                 <p>or continue with</p>
                 <span></span>
             </div>
 
+            <!-- Social login buttons (not yet functional) -->
             <div class="social-buttons">
                 <button class="social-btn" type="button">
                     <svg class="social-icon" viewBox="0 0 24 24" width="20" height="20">
@@ -331,6 +365,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     </main>
 
+    <!-- === FOOTER STATS BAR === -->
     <footer class="login-stats">
         <div class="login-stats-inner">
             <div class="login-stat">

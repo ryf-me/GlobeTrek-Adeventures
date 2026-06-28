@@ -1,13 +1,17 @@
 <?php
 /**
- * Booking Page (Step 2 — Traveller Details)
- *
- * Collects traveller information, validates input, creates a booking
- * record with 'pending' status, then redirects to payment.
- * Includes CSRF protection on the form.
+ * File: pages/booking.php
+ * Purpose: Booking Step 2 — Collects traveller details (name, email, phone, nationality, special requests), validates input, creates a pending booking record, and redirects to payment.
+ * Dependencies: config/database.php, config/csrf.php, config/currency.php, includes/navbar.php, css/booking.css, js/script.js
+ * Used By: package-details.php (linked from "Book Now" button)
+ * Parent Files: package-details.php
+ * Child Files: payment.php (redirect target after successful booking creation)
+ * @package GlobeTrek\Pages
  */
 session_start();
 
+// === AUTH CHECK ===
+// Only logged-in users can make bookings; redirect guests to login.
 if (!isset($_SESSION['user_id'])) {
     header('Location: login.php');
     exit;
@@ -18,6 +22,8 @@ require_once __DIR__ . '/../config/csrf.php';
 require_once __DIR__ . '/../config/currency.php';
 $db = getDB();
 
+// === PACKAGE LOOKUP ===
+// Fetch the selected package by ID; only active packages are bookable.
 $packageId = isset($_GET['id']) ? (int) $_GET['id'] : 0;
 
 $stmt = $db->prepare("SELECT * FROM packages WHERE id = :id AND is_active = 1");
@@ -29,11 +35,14 @@ if (!$package) {
     exit;
 }
 
+// === PRICE CALCULATION ===
+// Hardcoded guest count (2 adults) with 10% tax.
 $guestCount = 2;
 $subtotal = $package['price'] * $guestCount;
 $taxes = round($subtotal * 0.10);
 $total = $subtotal + $taxes;
 
+// === FORM FIELDS & ERRORS ===
 $fields = [
     'firstName' => '',
     'lastName' => '',
@@ -45,16 +54,19 @@ $fields = [
 $errors = [];
 $submitted = false;
 
+// === FORM HANDLING ===
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // CSRF validation
+    // CSRF token validation — prevents cross-site request forgery attacks
     if (!validateCSRFToken($_POST['csrf_token'] ?? null)) {
         $errors['general'] = 'Invalid security token. Please try again.';
     }
 
+    // Populate fields from POST data (trimmed)
     foreach ($fields as $key => $value) {
         $fields[$key] = trim($_POST[$key] ?? '');
     }
 
+    // === SERVER-SIDE VALIDATION ===
     if ($fields['firstName'] === '') {
         $errors['firstName'] = 'Please enter your first name.';
     }
@@ -76,9 +88,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $submitted = empty($errors);
 
     if ($submitted) {
+        // Generate unique booking reference with GT- prefix
         $bookingRef = 'GT-' . strtoupper(uniqid());
         $userId = $_SESSION['user_id'] ?? null;
 
+        // === INSERT BOOKING RECORD ===
+        // Status is 'pending' until payment is completed.
         $insertStmt = $db->prepare(
             "INSERT INTO bookings (user_id, package_id, booking_reference, first_name, last_name, email, phone, nationality, special_requests, num_travellers, total_price, status)
              VALUES (:user_id, :package_id, :booking_reference, :first_name, :last_name, :email, :phone, :nationality, :special_requests, :num_travellers, :total_price, 'pending')"
@@ -97,17 +112,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ':total_price' => $total,
         ]);
 
+        // Store booking ref in session for payment page to retrieve
         $_SESSION['payment_booking_ref'] = $bookingRef;
         header('Location: payment.php?ref=' . urlencode($bookingRef));
         exit;
     }
 }
 
+// === HELPER: RETAIN FORM VALUES ===
+// Returns escaped value for repopulating form fields after validation failure.
 function old_value(string $field, array $fields): string
 {
     return htmlspecialchars($fields[$field] ?? '', ENT_QUOTES, 'UTF-8');
 }
 
+// === HELPER: DISPLAY FIELD ERRORS ===
 function field_error(string $field, array $errors): string
 {
     return htmlspecialchars($errors[$field] ?? '', ENT_QUOTES, 'UTF-8');
@@ -124,6 +143,7 @@ function field_error(string $field, array $errors): string
 </head>
 <body class="booking-page">
     <main class="booking-shell">
+        <!-- === BREADCRUMBS === -->
         <nav class="breadcrumbs" aria-label="Breadcrumb">
             <a href="../index.php#home">Home</a>
             <span aria-hidden="true">/</span>
@@ -134,6 +154,8 @@ function field_error(string $field, array $errors): string
             <span>Booking</span>
         </nav>
 
+        <!-- === PROGRESS BAR === -->
+        <!-- Visual indicator of booking flow: 1. Select → 2. Details → 3. Review → 4. Payment -->
         <div class="progress-bar" aria-label="Booking progress">
             <div class="progress-step completed">
                 <div class="step-circle">
@@ -161,6 +183,7 @@ function field_error(string $field, array $errors): string
         </div>
 
         <div class="booking-grid">
+            <!-- === TRAVELLER DETAILS FORM === -->
             <div class="form-card">
                 <h2>Traveller Details</h2>
 
@@ -232,6 +255,7 @@ function field_error(string $field, array $errors): string
                 </form>
             </div>
 
+            <!-- === BOOKING SUMMARY SIDEBAR === -->
             <aside class="booking-sidebar" aria-label="Booking summary">
                 <div class="sidebar-card">
                     <h3>Booking Summary</h3>
@@ -280,6 +304,7 @@ function field_error(string $field, array $errors): string
                         <span class="total-label">Total</span>
                         <span class="total-value"><?= formatPrice($total) ?></span>
                     </div>
+                    <!-- Submit button triggers the booking form via form attribute -->
                     <button type="submit" form="booking-form" class="pay-button">
                         Pay now
                         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">

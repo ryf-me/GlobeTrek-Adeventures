@@ -1,8 +1,19 @@
 <?php
+/**
+ * File: pages/accommodations.php
+ * Purpose: Displays a filterable, sortable grid of accommodations (hotels, villas, resorts, etc.) with sidebar filters for property type, amenities, and destination.
+ * Dependencies: config/database.php, config/currency.php, includes/navbar.php, includes/footer.php, css/accommodations.css, js/script.js
+ * Used By: index.php (linked from main navigation)
+ * Parent Files: index.php, navbar.php
+ * Child Files: None
+ * @package GlobeTrek\Pages
+ */
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../config/currency.php';
 $db = getDB();
 
+// === FILTER OPTIONS ===
+// Property type whitelist and amenity column mappings.
 $propertyTypes = ['Hotel', 'Villa', 'Boutique', 'Resort'];
 
 $amenityOptions = [
@@ -20,14 +31,17 @@ $sortOptions = [
     'rating'      => 'Rating'
 ];
 
+// === RETRIEVE FILTER/SORT/PAGE PARAMETERS ===
 $sort = isset($_GET['sort']) && array_key_exists($_GET['sort'], $sortOptions) ? $_GET['sort'] : 'recommended';
 $page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
 $perPage = 6;
 $offset = ($page - 1) * $perPage;
 
+// === BUILD DYNAMIC QUERY ===
 $where = ["a.is_active = 1"];
 $params = [];
 
+// Property type filter: whitelist-validated array of types
 if (!empty($_GET['type']) && is_array($_GET['type'])) {
     $types = array_filter($_GET['type'], fn($v) => in_array($v, $propertyTypes));
     if ($types) {
@@ -37,6 +51,7 @@ if (!empty($_GET['type']) && is_array($_GET['type'])) {
     }
 }
 
+// Amenity filters: each checked amenity must be present (boolean columns)
 $amenityFilters = [];
 foreach ($amenityOptions as $col => $label) {
     if (!empty($_GET[$col])) {
@@ -47,6 +62,7 @@ foreach ($amenityFilters as $col) {
     $where[] = "$col = 1";
 }
 
+// Destination text search (partial match on location)
 if (!empty($_GET['destination'])) {
     $where[] = "a.location LIKE ?";
     $params[] = '%' . $_GET['destination'] . '%';
@@ -54,6 +70,7 @@ if (!empty($_GET['destination'])) {
 
 $whereSQL = implode(' AND ', $where);
 
+// === SORT ORDER MAPPING ===
 $orderMap = [
     'recommended' => 'a.is_featured DESC, a.id ASC',
     'price_asc'   => 'a.price_per_night ASC',
@@ -62,6 +79,7 @@ $orderMap = [
 ];
 $orderSQL = $orderMap[$sort];
 
+// === COUNT TOTAL MATCHING RESULTS ===
 $countStmt = $db->prepare("SELECT COUNT(*) FROM accommodations a WHERE $whereSQL");
 $countStmt->execute($params);
 $totalAccommodations = (int)$countStmt->fetchColumn();
@@ -69,11 +87,14 @@ $totalPages = max(1, ceil($totalAccommodations / $perPage));
 $page = min($page, $totalPages);
 $offset = ($page - 1) * $perPage;
 
+// === FETCH ACCOMMODATIONS ===
 $stmt = $db->prepare("SELECT a.* FROM accommodations a WHERE $whereSQL ORDER BY $orderSQL LIMIT ? OFFSET ?");
 $allParams = array_merge($params, [$perPage, $offset]);
 $stmt->execute($allParams);
 $accommodations = $stmt->fetchAll();
 
+// === HELPER: BUILD QUERY STRING ===
+// Preserves current filters when navigating pages or changing sort.
 function buildQueryString($overrides = []) {
     $params = array_merge($_GET, $overrides);
     $params = array_filter($params, fn($v) => $v !== '' && $v !== null);
@@ -96,11 +117,13 @@ function buildQueryString($overrides = []) {
     <?php $basePath = '../'; include '../includes/navbar.php'; ?>
 
     <div class="page-container">
+        <!-- === PAGE HEADER === -->
         <div class="page-header">
             <h1>Accommodations</h1>
             <p>Discover curated stays across Sri Lanka, from boutique hotels in Galle Fort to eco-lodges in the hill country and beachfront resorts on the southern coast.</p>
         </div>
 
+        <!-- === FILTER FORM === -->
         <form class="accommodations-layout" method="get" action="">
             <!-- Sidebar Filters -->
             <aside class="filters-sidebar">
@@ -135,7 +158,7 @@ function buildQueryString($overrides = []) {
                 <a href="accommodations.php" class="reset-btn" style="text-decoration:none; text-align:center; display:block;">Reset</a>
             </aside>
 
-            <!-- Results -->
+            <!-- === RESULTS GRID === -->
             <main class="flex-grow">
                 <div class="results-toolbar">
                     <span class="results-count">Showing <?= $totalAccommodations ?> <?= $totalAccommodations === 1 ? 'property' : 'properties' ?></span>
@@ -165,6 +188,7 @@ function buildQueryString($overrides = []) {
                                         <span class="icon">&#128205;</span>
                                         <?= htmlspecialchars($acc['location']) ?>
                                     </div>
+                                    <!-- Amenity icons: conditionally rendered based on boolean DB columns -->
                                     <div class="card-amenities">
                                         <?php if ($acc['has_wifi']): ?>
                                             <span class="amenity-icon" title="Wi-Fi">&#128246;</span>
@@ -195,7 +219,7 @@ function buildQueryString($overrides = []) {
                     <?php endif; ?>
                 </div>
 
-                <!-- Pagination -->
+                <!-- === PAGINATION === -->
                 <?php if ($totalPages > 1): ?>
                     <div class="pagination">
                         <?php if ($page > 1): ?>

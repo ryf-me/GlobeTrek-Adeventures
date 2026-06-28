@@ -1,28 +1,43 @@
 <?php
 /**
- * Admin Testimonials / Reviews Management
- *
- * Lists all testimonials with filtering, approve/reject/feature/delete actions.
- * Accessible by admin and staff with manage_testimonials permission.
+ * File: admin/testimonials.php
+ * Purpose: Lists and manages all customer testimonials with filtering, approve/reject/feature/delete actions.
+ * Dependencies: admin/includes/header.php, admin/includes/sidebar.php, admin/includes/footer.php, config/logger.php
+ * Used By: Admin/staff users with manage_testimonials permission
+ * Parent Files: admin/includes/sidebar.php (navigated from sidebar menu)
+ * Child Files: admin/includes/header.php, admin/includes/sidebar.php, admin/includes/footer.php
+ * @package GlobeTrek\Admin
  */
+
 $pageTitle = 'Manage Testimonials';
+
+// === INITIALIZATION ===
+// Load shared admin header (session, DB, CSRF, permissions)
 require_once __DIR__ . '/includes/header.php';
+// Load activity logging utility
 require_once __DIR__ . '/../config/logger.php';
 
+// === ACCESS CONTROL ===
+// Only staff/admins with manage_testimonials permission may access this page
 if (!hasPermission('manage_testimonials', $db)) {
     header('Location: index.php');
     exit;
 }
 
+// Store current admin ID for logging and assignment tracking
 $adminId = $_SESSION['user_id'];
 
+// === CSRF VALIDATION ===
+// Validate CSRF token on POST requests to prevent cross-site request forgery
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !validateCSRFToken($_POST['csrf_token'] ?? null)) {
     $error = 'Invalid security token. Please try again.';
 }
 
 $action = $_POST['action'] ?? '';
 
-// Handle approve
+// === SINGLE TESTIMONIAL ACTIONS ===
+
+// Handle approve — sets testimonial status to 'approved'
 if (empty($error) && $action === 'approve' && ($id = (int)($_POST['testimonial_id'] ?? 0)) > 0) {
     $stmt = $db->prepare("UPDATE testimonials SET status = 'approved' WHERE id = :id");
     $stmt->execute([':id' => $id]);
@@ -31,7 +46,7 @@ if (empty($error) && $action === 'approve' && ($id = (int)($_POST['testimonial_i
     exit;
 }
 
-// Handle reject
+// Handle reject — sets testimonial status to 'rejected'
 if (empty($error) && $action === 'reject' && ($id = (int)($_POST['testimonial_id'] ?? 0)) > 0) {
     $stmt = $db->prepare("UPDATE testimonials SET status = 'rejected' WHERE id = :id");
     $stmt->execute([':id' => $id]);
@@ -40,7 +55,7 @@ if (empty($error) && $action === 'reject' && ($id = (int)($_POST['testimonial_id
     exit;
 }
 
-// Handle toggle featured
+// Handle toggle featured — flips the is_featured boolean flag
 if (empty($error) && $action === 'toggle_feature' && ($id = (int)($_POST['testimonial_id'] ?? 0)) > 0) {
     $stmt = $db->prepare("UPDATE testimonials SET is_featured = NOT is_featured WHERE id = :id");
     $stmt->execute([':id' => $id]);
@@ -49,7 +64,7 @@ if (empty($error) && $action === 'toggle_feature' && ($id = (int)($_POST['testim
     exit;
 }
 
-// Handle delete
+// Handle delete — permanently removes a testimonial from the database
 if (empty($error) && $action === 'delete' && ($id = (int)($_POST['testimonial_id'] ?? 0)) > 0) {
     $stmt = $db->prepare("DELETE FROM testimonials WHERE id = :id");
     $stmt->execute([':id' => $id]);
@@ -58,10 +73,14 @@ if (empty($error) && $action === 'delete' && ($id = (int)($_POST['testimonial_id
     exit;
 }
 
-// Handle bulk approve
+// === BULK ACTIONS ===
+
+// Handle bulk approve — approves multiple testimonials at once
 if (empty($error) && $action === 'bulk_approve' && !empty($_POST['testimonial_ids'])) {
+    // Sanitize all IDs to integers before using in query
     $ids = array_map('intval', $_POST['testimonial_ids']);
     if (!empty($ids)) {
+        // Dynamically build placeholder list for IN clause
         $placeholders = implode(',', array_fill(0, count($ids), '?'));
         $stmt = $db->prepare("UPDATE testimonials SET status = 'approved' WHERE id IN ($placeholders)");
         $stmt->execute($ids);
@@ -71,7 +90,7 @@ if (empty($error) && $action === 'bulk_approve' && !empty($_POST['testimonial_id
     }
 }
 
-// Handle bulk reject
+// Handle bulk reject — rejects multiple testimonials at once
 if (empty($error) && $action === 'bulk_reject' && !empty($_POST['testimonial_ids'])) {
     $ids = array_map('intval', $_POST['testimonial_ids']);
     if (!empty($ids)) {
@@ -84,18 +103,23 @@ if (empty($error) && $action === 'bulk_reject' && !empty($_POST['testimonial_ids
     }
 }
 
+// === SIDEBAR ===
+// Include admin sidebar navigation
 include __DIR__ . '/includes/sidebar.php';
 
-// --- Stats ---
-$countTotal  = $db->query("SELECT COUNT(*) FROM testimonials")->fetchColumn();
+// === STATISTICS ===
+// Fetch counts for each testimonial status to display stat cards
+$countTotal   = $db->query("SELECT COUNT(*) FROM testimonials")->fetchColumn();
 $countPending = $db->query("SELECT COUNT(*) FROM testimonials WHERE status = 'pending'")->fetchColumn();
 $countApproved = $db->query("SELECT COUNT(*) FROM testimonials WHERE status = 'approved'")->fetchColumn();
 $countRejected = $db->query("SELECT COUNT(*) FROM testimonials WHERE status = 'rejected'")->fetchColumn();
 
-// --- Filters ---
+// === FILTERS & SEARCH ===
+// Read filter and search parameters from URL query string
 $filter = $_GET['filter'] ?? 'all';
 $search = trim($_GET['q'] ?? '');
 
+// Build dynamic WHERE clause based on selected filter
 $where = '';
 $params = [];
 
@@ -103,6 +127,7 @@ if ($filter === 'pending')   { $where = "WHERE t.status = 'pending'"; }
 elseif ($filter === 'approved')  { $where = "WHERE t.status = 'approved'"; }
 elseif ($filter === 'rejected')  { $where = "WHERE t.status = 'rejected'"; }
 
+// Append search conditions — searches across reviewer name, title, and content
 if ($search !== '') {
     $where = ($where === '') ? 'WHERE' : $where . ' AND';
     $where .= " (t.reviewer_name LIKE :q OR t.title LIKE :q2 OR t.content LIKE :q3)";
@@ -111,6 +136,9 @@ if ($search !== '') {
     $params[':q3'] = "%$search%";
 }
 
+// === FETCH TESTIMONIALS ===
+// Join with packages and users tables to get related data
+// Order by featured first, then by creation date descending
 $stmt = $db->prepare(
     "SELECT t.*, p.title AS package_title, u.email AS user_email
      FROM testimonials t
@@ -124,6 +152,7 @@ $testimonials = $stmt->fetchAll();
 ?>
 <div class="adm-sidebar-overlay" id="sidebarOverlay"></div>
 <main class="adm-main">
+    <!-- === TOP BAR === -->
     <div class="adm-topbar">
         <div class="adm-topbar-left">
             <button class="adm-menu-toggle" onclick="document.getElementById('adminSidebar').classList.toggle('open');document.getElementById('sidebarOverlay').classList.toggle('open');">
@@ -138,6 +167,8 @@ $testimonials = $stmt->fetchAll();
     </div>
 
     <div class="adm-content">
+        <!-- === SUCCESS / STATUS ALERTS === -->
+        <!-- Display flash messages based on URL query parameters after actions -->
         <?php if (isset($_GET['approved'])): ?>
             <div class="adm-alert adm-alert-success"><span class="material-symbols-outlined">check_circle</span> Testimonial(s) approved successfully.</div>
         <?php endif; ?>
@@ -151,7 +182,8 @@ $testimonials = $stmt->fetchAll();
             <div class="adm-alert adm-alert-success"><span class="material-symbols-outlined">check_circle</span> Featured status updated.</div>
         <?php endif; ?>
 
-        <!-- Stat Cards -->
+        <!-- === STAT CARDS === -->
+        <!-- Summary statistics for total, pending, approved, and rejected testimonials -->
         <div class="adm-stat-grid" style="margin-bottom:1.5rem;">
             <div class="adm-stat-card">
                 <span class="material-symbols-outlined" style="color:#264653;">star</span>
@@ -183,7 +215,8 @@ $testimonials = $stmt->fetchAll();
             </div>
         </div>
 
-        <!-- Filter Bar -->
+        <!-- === FILTER BAR === -->
+        <!-- Search input and status filter tabs — preserve search term across filter changes -->
         <div class="adm-filter-bar">
             <form method="get" class="adm-search" style="display:flex;">
                 <span class="material-symbols-outlined">search</span>
@@ -195,6 +228,7 @@ $testimonials = $stmt->fetchAll();
             <a href="?filter=rejected<?= $search ? '&q=' . urlencode($search) : '' ?>" class="adm-tab <?= $filter === 'rejected' ? 'active' : '' ?>">Rejected (<?= $countRejected ?>)</a>
         </div>
 
+        <!-- === TESTIMONIALS TABLE === -->
         <?php if (empty($testimonials)): ?>
             <div class="adm-empty">
                 <span class="material-symbols-outlined adm-empty-icon">star</span>
@@ -204,7 +238,9 @@ $testimonials = $stmt->fetchAll();
         <?php else: ?>
             <form method="post" id="bulkForm">
                 <?php csrf_field(); ?>
+                <!-- Hidden field dynamically set by JS to indicate bulk action type -->
                 <input type="hidden" name="action" id="bulkAction" value="">
+                <!-- Bulk action buttons -->
                 <div style="display:flex;gap:0.5rem;margin-bottom:0.75rem;">
                     <button type="button" class="adm-btn adm-btn-sm" style="background:#2a9d8f;color:#fff;" onclick="document.getElementById('bulkAction').value='bulk_approve';document.getElementById('bulkForm').submit();">Approve Selected</button>
                     <button type="button" class="adm-btn adm-btn-sm" style="background:#e76f51;color:#fff;" onclick="document.getElementById('bulkAction').value='bulk_reject';document.getElementById('bulkForm').submit();">Reject Selected</button>
@@ -230,12 +266,14 @@ $testimonials = $stmt->fetchAll();
                         <tbody>
                             <?php foreach ($testimonials as $t): ?>
                                 <?php
+                                // Map status to CSS class and display label
                                 $statusClass = 'active';
                                 $statusLabel = 'Approved';
                                 if ($t['status'] === 'pending') { $statusClass = 'inactive'; $statusLabel = 'Pending'; }
                                 elseif ($t['status'] === 'rejected') { $statusClass = 'cancelled'; $statusLabel = 'Rejected'; }
                                 ?>
                                 <tr>
+                                    <!-- Bulk selection checkbox -->
                                     <td><input type="checkbox" name="testimonial_ids[]" value="<?= $t['id'] ?>" class="row-select"></td>
                                     <td class="cell-mono">#<?= $t['id'] ?></td>
                                     <td class="cell-main">
@@ -248,15 +286,18 @@ $testimonials = $stmt->fetchAll();
                                         <?php endif; ?>
                                     </td>
                                     <td><?= htmlspecialchars($t['package_title'] ?? '—') ?></td>
+                                    <!-- Star rating display — filled stars for rating, gray stars for remainder -->
                                     <td>
                                         <span style="color:#f4a261;white-space:nowrap;">
                                             <?php for ($s = 0; $s < (int)$t['rating']; $s++): ?>&#9733;<?php endfor; ?>
                                             <?php for ($s = (int)$t['rating']; $s < 5; $s++): ?><span style="color:#ddd;">&#9733;</span><?php endfor; ?>
                                         </span>
                                     </td>
+                                    <!-- Truncate long titles to 50 chars -->
                                     <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
                                         <?= htmlspecialchars(mb_strimwidth($t['title'] ?? '', 0, 50, '...')) ?>
                                     </td>
+                                    <!-- Truncate long content to 80 chars with "View" link to open detail modal -->
                                     <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
                                         <?= htmlspecialchars(mb_strimwidth($t['content'], 0, 80, '...')) ?>
                                         <button type="button" class="adm-btn-link" onclick="openDetailModal(<?= $t['id'] ?>)" style="font-size:0.75rem;">View</button>
@@ -264,6 +305,7 @@ $testimonials = $stmt->fetchAll();
                                     <td>
                                         <span class="adm-status-badge adm-status-<?= $statusClass ?>"><?= $statusLabel ?></span>
                                     </td>
+                                    <!-- Featured toggle — star icon changes color based on featured state -->
                                     <td>
                                         <form method="post" style="display:inline;">
                                             <?php csrf_field(); ?>
@@ -275,9 +317,12 @@ $testimonials = $stmt->fetchAll();
                                         </form>
                                     </td>
                                     <td class="cell-muted"><?= date('M d, Y', strtotime($t['created_at'])) ?></td>
+                                    <!-- === ROW ACTION BUTTONS === -->
+                                    <!-- Context-sensitive actions based on current status -->
                                     <td>
                                         <div class="cell-actions">
                                             <?php if ($t['status'] === 'pending'): ?>
+                                                <!-- Pending: show both Approve and Reject buttons -->
                                                 <form method="post" style="display:inline;">
                                                     <?php csrf_field(); ?>
                                                     <input type="hidden" name="action" value="approve">
@@ -291,6 +336,7 @@ $testimonials = $stmt->fetchAll();
                                                     <button type="submit" class="adm-btn-icon" title="Reject"><span class="material-symbols-outlined" style="color:#e76f51;">cancel</span></button>
                                                 </form>
                                             <?php elseif ($t['status'] === 'approved'): ?>
+                                                <!-- Approved: only show Reject button -->
                                                 <form method="post" style="display:inline;">
                                                     <?php csrf_field(); ?>
                                                     <input type="hidden" name="action" value="reject">
@@ -298,6 +344,7 @@ $testimonials = $stmt->fetchAll();
                                                     <button type="submit" class="adm-btn-icon" title="Reject"><span class="material-symbols-outlined" style="color:#e76f51;">cancel</span></button>
                                                 </form>
                                             <?php elseif ($t['status'] === 'rejected'): ?>
+                                                <!-- Rejected: only show Approve button -->
                                                 <form method="post" style="display:inline;">
                                                     <?php csrf_field(); ?>
                                                     <input type="hidden" name="action" value="approve">
@@ -305,7 +352,9 @@ $testimonials = $stmt->fetchAll();
                                                     <button type="submit" class="adm-btn-icon" title="Approve"><span class="material-symbols-outlined" style="color:#2a9d8f;">check_circle</span></button>
                                                 </form>
                                             <?php endif; ?>
+                                            <!-- View details in modal -->
                                             <button type="button" class="adm-btn-icon" title="View Details" onclick="openDetailModal(<?= $t['id'] ?>)"><span class="material-symbols-outlined">visibility</span></button>
+                                            <!-- Delete with confirmation prompt -->
                                             <form method="post" style="display:inline;" data-confirm="Delete this testimonial permanently?">
                                                 <?php csrf_field(); ?>
                                                 <input type="hidden" name="action" value="delete">
@@ -316,7 +365,7 @@ $testimonials = $stmt->fetchAll();
                                     </td>
                                 </tr>
 
-                                <!-- Detail Modal Data (hidden JSON) -->
+                                <!-- Hidden JSON data for detail modal — used by JavaScript to populate modal without additional AJAX -->
                                 <div id="detail-data-<?= $t['id'] ?>" style="display:none;" data-json='<?= htmlspecialchars(json_encode([
                                     'id' => $t['id'],
                                     'reviewer_name' => $t['reviewer_name'],
@@ -340,7 +389,8 @@ $testimonials = $stmt->fetchAll();
     </div>
 </main>
 
-<!-- Detail Modal -->
+<!-- === DETAIL MODAL === -->
+<!-- Modal overlay for viewing full testimonial details -->
 <div class="adm-modal-overlay" id="detailModal">
     <div class="adm-modal" style="max-width:600px;">
         <div class="adm-modal-header">
@@ -350,16 +400,17 @@ $testimonials = $stmt->fetchAll();
             </button>
         </div>
         <div class="adm-modal-body" id="detailModalBody">
-            <!-- Populated by JS -->
+            <!-- Populated dynamically by JavaScript -->
         </div>
         <div class="adm-modal-footer" id="detailModalFooter">
-            <!-- Populated by JS -->
+            <!-- Populated dynamically by JavaScript -->
         </div>
     </div>
 </div>
 
 <script>
-// Select all checkbox
+// === SELECT ALL CHECKBOX ===
+// Toggle all row checkboxes when "select all" is checked/unchecked
 document.addEventListener('DOMContentLoaded', function() {
     const selectAll = document.getElementById('selectAll');
     if (selectAll) {
@@ -369,7 +420,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// Detail modal data store
+// === DETAIL MODAL DATA STORE ===
+// JavaScript object mapping testimonial IDs to their full data for modal display
 const testimonialData = {};
 <?php foreach ($testimonials as $t): ?>
 testimonialData[<?= $t['id'] ?>] = <?= json_encode([
@@ -388,10 +440,13 @@ testimonialData[<?= $t['id'] ?>] = <?= json_encode([
 ]) ?>;
 <?php endforeach; ?>
 
+// === OPEN DETAIL MODAL ===
+// Populates modal body with testimonial details and renders context-sensitive action buttons
 function openDetailModal(id) {
     const d = testimonialData[id];
     if (!d) return;
 
+    // Build star rating HTML
     const stars = Array(5).fill('').map((_, i) =>
         i < d.rating ? '<span style="color:#f4a261;">&#9733;</span>' : '<span style="color:#ddd;">&#9733;</span>'
     ).join('');
@@ -399,6 +454,7 @@ function openDetailModal(id) {
     const statusLabels = { pending: 'Pending', approved: 'Approved', rejected: 'Rejected' };
     const statusColors = { pending: '#f4a261', approved: '#2a9d8f', rejected: '#e76f51' };
 
+    // Render modal body content
     document.getElementById('detailModalBody').innerHTML = `
         <div style="display:flex;gap:1rem;margin-bottom:1.5rem;">
             ${d.reviewer_avatar ? `<img src="${htmlEncode(d.reviewer_avatar)}" alt="" style="width:56px;height:56px;border-radius:50%;object-fit:cover;border:2px solid #e9e9e9;">` : ''}
@@ -419,6 +475,7 @@ function openDetailModal(id) {
         <div style="background:#f8f8f8;border-radius:8px;padding:1rem;line-height:1.65;color:#444;margin-top:0.5rem;">"${htmlEncode(d.content)}"</div>
     `;
 
+    // Render modal footer with action buttons based on current status
     document.getElementById('detailModalFooter').innerHTML = `
         <div style="display:flex;gap:0.5rem;justify-content:flex-end;width:100%;">
             ${d.status === 'pending' ? `
@@ -456,20 +513,22 @@ function openDetailModal(id) {
     document.getElementById('detailModal').classList.add('open');
 }
 
+// Close the detail modal by removing the 'open' class
 function closeDetailModal() {
     document.getElementById('detailModal').classList.remove('open');
 }
 
+// XSS-safe HTML encoding for dynamic content in modals
 function htmlEncode(str) {
     if (!str) return '';
     return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
-// CSRF token for modal forms
+// CSRF token injected from PHP for use in dynamically created modal forms
 <?php $tok = getCSRFToken(); ?>
 const csrfToken = '<?= $tok ?>';
 
-// Close modal on overlay click
+// Close modal when clicking on the overlay background (not the modal content)
 document.addEventListener('DOMContentLoaded', function() {
     const modal = document.getElementById('detailModal');
     if (modal) {

@@ -1,8 +1,22 @@
 <?php
+/**
+ * File: admin/destinations.php
+ * Purpose: Lists all travel destinations with search, delete functionality, and tag display.
+ * Dependencies: admin/includes/header.php, admin/includes/sidebar.php, admin/includes/footer.php, config/database.php, config/csrf.php
+ * Used By: Admin staff managing destinations
+ * Parent Files: none (entry point)
+ * Child Files: admin/includes/header.php, admin/includes/sidebar.php, admin/includes/footer.php
+ * @package GlobeTrek\Admin
+ */
+
 $pageTitle = 'Manage Destinations';
 require_once __DIR__ . '/includes/header.php';
 
+// === DELETE HANDLER ===
+// Processes destination deletion via POST form submission.
+// Runs before sidebar include so the redirect happens before any HTML output.
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delete') {
+    // CSRF validation
     if (!validateCSRFToken($_POST['csrf_token'] ?? null)) {
         $error = 'Invalid security token. Please try again.';
     } else {
@@ -18,16 +32,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delet
 
 include __DIR__ . '/includes/sidebar.php';
 
+// === SEARCH ===
+// Simple name-based search — builds a dynamic WHERE clause.
 $search = trim($_GET['q'] ?? '');
 $where = '';
 $params = [];
 if ($search !== '') { $where = "WHERE name LIKE :q"; $params[':q'] = "%$search%"; }
 
+// === FETCH DESTINATIONS ===
+// Ordered by newest first.
 $stmt = $db->prepare("SELECT * FROM destinations $where ORDER BY created_at DESC");
 $stmt->execute($params);
 $destinations = $stmt->fetchAll();
 
-// Fetch all destination tags in one query
+// === BATCH FETCH TAGS ===
+// Efficiently fetch all tags for all displayed destinations in a single query.
+// Builds associative array: [destination_id => [tag_name, ...]]
 $destTags = [];
 if (!empty($destinations)) {
     $destIds = array_column($destinations, 'id');
@@ -42,6 +62,7 @@ if (!empty($destinations)) {
 
 <div class="adm-sidebar-overlay" id="sidebarOverlay"></div>
 <main class="adm-main">
+    <!-- === TOP BAR === -->
     <div class="adm-topbar">
         <div class="adm-topbar-left">
             <button class="adm-menu-toggle" onclick="document.getElementById('adminSidebar').classList.toggle('open');document.getElementById('sidebarOverlay').classList.toggle('open');">
@@ -56,6 +77,7 @@ if (!empty($destinations)) {
     </div>
 
     <div class="adm-content">
+        <!-- === FLASH MESSAGES === -->
         <?php if (isset($_GET['deleted'])): ?>
             <div class="adm-alert adm-alert-success"><span class="material-symbols-outlined">check_circle</span> Destination deleted successfully.</div>
         <?php endif; ?>
@@ -63,11 +85,13 @@ if (!empty($destinations)) {
             <div class="adm-alert adm-alert-success"><span class="material-symbols-outlined">check_circle</span> Destination saved successfully.</div>
         <?php endif; ?>
 
+        <!-- === PAGE HEADER === -->
         <div class="adm-page-header">
             <h1>Destinations (<?= count($destinations) ?>)</h1>
             <a href="destination-edit.php" class="adm-btn adm-btn-primary"><span class="material-symbols-outlined">add</span> Add Destination</a>
         </div>
 
+        <!-- === SEARCH BAR === -->
         <div class="adm-filter-bar">
             <form method="get" class="adm-search" style="display:flex;">
                 <span class="material-symbols-outlined">search</span>
@@ -75,6 +99,7 @@ if (!empty($destinations)) {
             </form>
         </div>
 
+        <!-- === DESTINATIONS TABLE === -->
         <?php if (empty($destinations)): ?>
             <div class="adm-empty">
                 <span class="material-symbols-outlined adm-empty-icon">location_on</span>
@@ -104,6 +129,7 @@ if (!empty($destinations)) {
                                 <td class="cell-muted"><?= htmlspecialchars($d['slug']) ?></td>
                                 <td>
                                     <?php
+                                    // Render destination tags as styled badges
                                     $dTags = $destTags[$d['id']] ?? [];
                                     if (!empty($dTags)):
                                         foreach ($dTags as $dTag):
@@ -130,6 +156,7 @@ if (!empty($destinations)) {
                                 <td>
                                     <div class="cell-actions">
                                         <a href="destination-edit.php?id=<?= $d['id'] ?>" class="adm-btn-icon" title="Edit"><span class="material-symbols-outlined">edit</span></a>
+                                        <!-- Delete form with CSRF protection and JS confirmation -->
                                         <form method="post" style="display:inline;" data-confirm="Delete this destination?">
                                             <?php csrf_field(); ?>
                                             <input type="hidden" name="action" value="delete">

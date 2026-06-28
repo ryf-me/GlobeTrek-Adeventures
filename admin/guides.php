@@ -1,36 +1,58 @@
 <?php
+/**
+ * File: admin/guides.php
+ * Purpose: Lists all tour guides with search, tag display, and delete functionality.
+ * Dependencies: admin/includes/header.php (auth, DB, CSRF), admin/includes/sidebar.php, admin/includes/footer.php, config/helpers.php (csrf_field)
+ * Used By: Admin staff accessing the guides management page
+ * Parent Files: None (entry-point page)
+ * Child Files: admin/includes/header.php, admin/includes/sidebar.php, admin/includes/footer.php
+ * @package GlobeTrek\Admin
+ */
+
 $pageTitle = 'Manage Guides';
 require_once __DIR__ . '/includes/header.php';
 
+// === DELETE HANDLER ===
+// Process guide deletion via POST to prevent accidental GET-based deletions.
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delete') {
+    // CSRF token validation — rejects the request if the token is missing or invalid.
     if (!validateCSRFToken($_POST['csrf_token'] ?? null)) {
         $error = 'Invalid security token. Please try again.';
     } else {
+        // Cast to int to prevent SQL injection via type juggling.
         $delId = (int)($_POST['guide_id'] ?? 0);
         if ($delId > 0) {
             $stmt = $db->prepare("DELETE FROM guides WHERE id = :id");
             $stmt->execute([':id' => $delId]);
+            // PRG pattern: redirect after POST to avoid duplicate submissions on refresh.
             header('Location: guides.php?deleted=1');
             exit;
         }
     }
 }
 
+// === SIDEBAR ===
 include __DIR__ . '/includes/sidebar.php';
 
+// === SEARCH / FILTER ===
+// Build dynamic WHERE clause for name and specialty search.
 $search = trim($_GET['q'] ?? '');
 $where = '';
 $params = [];
 if ($search !== '') { $where = "WHERE name LIKE :q OR specialty LIKE :q2"; $params[':q'] = "%$search%"; $params[':q2'] = "%$search%"; }
 
+// === FETCH GUIDES ===
 $stmt = $db->prepare("SELECT * FROM guides $where ORDER BY created_at DESC");
 $stmt->execute($params);
 $guides = $stmt->fetchAll();
 
-// Fetch all guide tags in one query
+// === FETCH GUIDE TAGS ===
+// Eagerly load all tags for the displayed guides in a single query
+// to avoid N+1 query problems on the tag display column.
 $guideTags = [];
 if (!empty($guides)) {
     $guideIds = array_column($guides, 'id');
+    // Build dynamic placeholder list for the IN clause.
     $placeholders = implode(',', array_fill(0, count($guideIds), '?'));
     $tagStmt = $db->prepare("SELECT gt.guide_id, t.name FROM guide_tags gt JOIN tags t ON gt.tag_id = t.id WHERE gt.guide_id IN ($placeholders) ORDER BY t.name");
     $tagStmt->execute($guideIds);
@@ -42,6 +64,7 @@ if (!empty($guides)) {
 
 <div class="adm-sidebar-overlay" id="sidebarOverlay"></div>
 <main class="adm-main">
+    <!-- === TOP BAR === -->
     <div class="adm-topbar">
         <div class="adm-topbar-left">
             <button class="adm-menu-toggle" onclick="document.getElementById('adminSidebar').classList.toggle('open');document.getElementById('sidebarOverlay').classList.toggle('open');">
@@ -56,6 +79,7 @@ if (!empty($guides)) {
     </div>
 
     <div class="adm-content">
+        <!-- === FLASH MESSAGES === -->
         <?php if (isset($_GET['deleted'])): ?>
             <div class="adm-alert adm-alert-success"><span class="material-symbols-outlined">check_circle</span> Guide deleted successfully.</div>
         <?php endif; ?>
@@ -63,11 +87,13 @@ if (!empty($guides)) {
             <div class="adm-alert adm-alert-success"><span class="material-symbols-outlined">check_circle</span> Guide saved successfully.</div>
         <?php endif; ?>
 
+        <!-- === PAGE HEADER === -->
         <div class="adm-page-header">
             <h1>Guides (<?= count($guides) ?>)</h1>
             <a href="guide-edit.php" class="adm-btn adm-btn-primary"><span class="material-symbols-outlined">add</span> Add Guide</a>
         </div>
 
+        <!-- === SEARCH BAR === -->
         <div class="adm-filter-bar">
             <form method="get" class="adm-search" style="display:flex;">
                 <span class="material-symbols-outlined">search</span>
@@ -75,6 +101,7 @@ if (!empty($guides)) {
             </form>
         </div>
 
+        <!-- === GUIDES TABLE / EMPTY STATE === -->
         <?php if (empty($guides)): ?>
             <div class="adm-empty">
                 <span class="material-symbols-outlined adm-empty-icon">person_raised_hand</span>
@@ -103,6 +130,7 @@ if (!empty($guides)) {
                                 <td class="cell-main"><?= htmlspecialchars($g['name']) ?></td>
                                 <td><?= htmlspecialchars($g['specialty'] ?? '—') ?></td>
                                 <td><?= htmlspecialchars($g['region'] ?? '—') ?></td>
+                                <!-- Tag badges: display each tag or a dash if none exist -->
                                 <td>
                                     <?php
                                     $gTags = $guideTags[$g['id']] ?? [];
@@ -117,6 +145,7 @@ if (!empty($guides)) {
                                         <span class="cell-muted">—</span>
                                     <?php endif; ?>
                                 </td>
+                                <!-- Featured / Active status badges -->
                                 <td>
                                     <span class="adm-status-badge <?= $g['is_featured'] ? 'adm-status-active' : 'adm-status-inactive' ?>">
                                         <?= $g['is_featured'] ? 'Yes' : 'No' ?>
@@ -127,9 +156,11 @@ if (!empty($guides)) {
                                         <?= $g['is_active'] ? 'Yes' : 'No' ?>
                                     </span>
                                 </td>
+                                <!-- === ACTION BUTTONS (Edit / Delete) === -->
                                 <td>
                                     <div class="cell-actions">
                                         <a href="guide-edit.php?id=<?= $g['id'] ?>" class="adm-btn-icon" title="Edit"><span class="material-symbols-outlined">edit</span></a>
+                                        <!-- Delete form with CSRF protection and JS confirmation -->
                                         <form method="post" style="display:inline;" data-confirm="Delete this guide?">
                                             <?php csrf_field(); ?>
                                             <input type="hidden" name="action" value="delete">

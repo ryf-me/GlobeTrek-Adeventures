@@ -1,21 +1,35 @@
+/**
+ * File: pages/privacy.php
+ * Purpose: Privacy Policy page detailing how GlobeTrek collects, uses, and protects user data
+ * Dependencies: css/style.css, css/navbar.css, css/support.css, css/footer.css, includes/navbar.php, includes/footer.php, js/script.js
+ * Used By: Main website navigation, footer links, signup page
+ * Parent Files: index.php (via navigation), navbar.php (via link), signup.php (via link)
+ * Child Files: None
+ * @package GlobeTrek\Pages
+ */
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Privacy Policy - GlobeTrek Adventures</title>
+    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700;9..144,800&family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <!-- Stylesheets -->
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="../css/navbar.css">
     <link rel="stylesheet" href="../css/support.css">
     <link rel="stylesheet" href="../css/footer.css">
 </head>
 <body class="support-page">
+    <!-- Navigation Bar -->
     <?php $basePath = '../'; include '../includes/navbar.php'; ?>
 
     <main>
+        <!-- Hero Section -->
         <section class="support-hero" aria-labelledby="privacy-title">
             <img class="support-hero-bg" src="https://images.unsplash.com/photo-1558618666-fcd25c85f82e?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0" alt="">
             <div class="support-hero-content">
@@ -24,7 +38,9 @@
             </div>
         </section>
 
+        <!-- Privacy Policy Content Section -->
         <section class="support-content" aria-labelledby="privacy-content-title">
+            <!-- Section 1: Information We Collect -->
             <h2 id="privacy-content-title">1. Information We Collect</h2>
             <div class="policy-section">
                 <h3>1.1 Personal Information</h3>
@@ -50,6 +66,7 @@
                 </ul>
             </div>
 
+            <!-- Section 2: How We Use Your Information -->
             <h2>2. How We Use Your Information</h2>
             <div class="policy-section">
                 <p>We use the collected information for the following purposes:</p>
@@ -63,6 +80,7 @@
                 </ul>
             </div>
 
+            <!-- Section 3: Information Sharing -->
             <h2>3. Information Sharing</h2>
             <div class="policy-section">
                 <p>We may share your information with the following third parties:</p>
@@ -75,6 +93,7 @@
                 <p>We do not sell, rent, or trade your personal information to third parties for their independent marketing purposes.</p>
             </div>
 
+            <!-- Section 4: Data Security -->
             <h2>4. Data Security</h2>
             <div class="policy-section">
                 <p>GlobeTrek Adventures implements industry-standard security measures to protect your personal information, including:</p>
@@ -87,6 +106,7 @@
                 <p>While we strive to protect your information, no method of transmission over the Internet is 100% secure. We cannot guarantee absolute security but are committed to maintaining the highest standards possible.</p>
             </div>
 
+            <!-- Section 5: Cookies & Tracking Technologies -->
             <h2>5. Cookies &amp; Tracking Technologies</h2>
             <div class="policy-section">
                 <p>We use cookies and similar technologies to enhance your browsing experience. Types of cookies we use include:</p>
@@ -98,6 +118,7 @@
                 <p>You can control cookie preferences through your browser settings. Disabling certain cookies may affect website functionality.</p>
             </div>
 
+            <!-- Section 6: Your Rights -->
             <h2>6. Your Rights</h2>
             <div class="policy-section">
                 <p>Under applicable data protection laws, you have the following rights regarding your personal information:</p>
@@ -111,6 +132,7 @@
                 <p>To exercise any of these rights, please contact us at <a href="mailto:info@globetrek.lk">info@globetrek.lk</a>.</p>
             </div>
 
+            <!-- Section 7: Data Retention -->
             <h2>7. Data Retention</h2>
             <div class="policy-section">
                 <p>We retain your personal information only for as long as necessary to fulfill the purposes for which it was collected, including:</p>
@@ -122,17 +144,20 @@
                 </ul>
             </div>
 
+            <!-- Section 8: Children's Privacy -->
             <h2>8. Children's Privacy</h2>
             <div class="policy-section">
                 <p>GlobeTrek Adventures does not knowingly collect personal information from children under the age of 16. If we become aware that we have collected personal information from a child without parental consent, we will take steps to delete that information promptly.</p>
             </div>
 
+            <!-- Section 9: Changes to This Policy -->
             <h2>9. Changes to This Policy</h2>
             <div class="policy-section">
                 <p>We may update this Privacy Policy from time to time to reflect changes in our practices or legal requirements. We will notify you of any material changes by posting the updated policy on our website and updating the "Last Updated" date below.</p>
                 <p><strong>Last Updated:</strong> June 2026</p>
             </div>
 
+            <!-- Section 10: Contact Us -->
             <h2>10. Contact Us</h2>
             <div class="policy-section">
                 <p>If you have any questions or concerns about this Privacy Policy, please contact us:</p>
@@ -143,6 +168,7 @@
                 </ul>
             </div>
 
+            <!-- Developer Credit -->
             <div class="developer-credit">
                 <p>
                     This Privacy Policy was developed by <span class="dev-name">Insath Raif</span>, a software engineering student and knowledgeable developer, with a strong commitment to data privacy and user protection. Insath Raif ensures that GlobeTrek Adventures adheres to the highest standards of data security and transparency.
@@ -151,8 +177,10 @@
         </section>
     </main>
 
+    <!-- Footer -->
     <?php $basePath = '../'; include '../includes/footer.php'; ?>
 
+    <!-- JavaScript -->
     <script src="../js/script.js"></script>
 </body>
 </html>

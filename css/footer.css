@@ -1,4 +1,16 @@
-/* Footer — New Design */
+/**
+ * File: css/footer.css
+ * Purpose: Site-wide footer styles — background image with dark overlay,
+ *          4-column grid layout, brand section, link columns, contact info,
+ *          CTA button, bottom bar with copyright, and floating inquiries FAB.
+ * Used By: All frontend pages (included via PHP layout)
+ */
+
+/* ========================================
+   Footer — Core Layout
+   ======================================== */
+
+/* Dark overlay on footer background image for text readability */
 .site-footer-new {
     background: url('https://images.pexels.com/photos/11442148/pexels-photo-11442148.jpeg') center/cover no-repeat;
     position: relative;
@@ -6,7 +18,6 @@
     font-family: 'Segoe UI', Roboto, system-ui, -apple-system, sans-serif;
 }
 
-/* Dark overlay on footer background image for text readability */
 .site-footer-new::before {
     content: '';
     position: absolute;
@@ -26,7 +37,9 @@
     gap: 3rem;
 }
 
-/* Brand */
+/* ========================================
+   Brand Column
+   ======================================== */
 .footer-logo-new {
     display: flex;
     align-items: center;
@@ -62,6 +75,7 @@
     margin-bottom: 1.25rem;
 }
 
+/* --- Social Icons --- */
 .footer-socials-new {
     display: flex;
     gap: 0.6rem;
@@ -88,7 +102,9 @@
     height: 16px;
 }
 
-/* Links columns */
+/* ========================================
+   Links Columns
+   ======================================== */
 .footer-links-new h3,
 .footer-contact-new h3 {
     font-size: 0.95rem;
@@ -116,7 +132,9 @@
     color: #e76f51;
 }
 
-/* Contact */
+/* ========================================
+   Contact Column
+   ======================================== */
 .footer-contact-new li {
     display: flex;
     align-items: flex-start;
@@ -133,6 +151,7 @@
     flex-shrink: 0;
 }
 
+/* --- CTA Button --- */
 .footer-cta-btn {
     display: inline-flex;
     align-items: center;
@@ -157,7 +176,9 @@
     font-size: 18px;
 }
 
-/* Bottom bar */
+/* ========================================
+   Bottom Bar
+   ======================================== */
 .footer-bottom-new {
     position: relative;
     z-index: 1;
@@ -171,7 +192,9 @@
     font-size: 0.8rem;
 }
 
-/* Inquiries Floating Button */
+/* ========================================
+   Inquiries Floating Action Button
+   ======================================== */
 .inquiries-fab {
     position: fixed;
     bottom: 2rem;
@@ -198,7 +221,11 @@
     font-size: 26px;
 }
 
-/* Responsive */
+/* ========================================
+   Responsive Breakpoints
+   ======================================== */
+
+/* --- Tablet (max-width: 900px) --- */
 @media (max-width: 900px) {
     .footer-main-new {
         grid-template-columns: repeat(2, 1fr);
@@ -206,6 +233,7 @@
     }
 }
 
+/* --- Mobile (max-width: 560px) --- */
 @media (max-width: 560px) {
     .footer-main-new {
         grid-template-columns: 1fr;

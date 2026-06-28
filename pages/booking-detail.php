@@ -1,6 +1,17 @@
 <?php
+/**
+ * File: pages/booking-detail.php
+ * Purpose: Displays full details for a single booking including package info, traveller details, payment info, price summary, and available actions (pay/cancel/modify).
+ * Dependencies: config/database.php, config/currency.php, includes/navbar.php, includes/user-sidebar.php, includes/footer.php, css/user-sidebar.css, css/booking-detail.css, js/script.js
+ * Used By: my-bookings.php (linked from booking list)
+ * Parent Files: my-bookings.php
+ * Child Files: None
+ * @package GlobeTrek\Pages
+ */
 session_start();
 
+// === AUTH CHECK ===
+// Redirect unauthenticated users to login page.
 if (!isset($_SESSION['user_id'])) {
     header('Location: login.php');
     exit;
@@ -10,6 +21,9 @@ require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../config/currency.php';
 $db = getDB();
 $userId = $_SESSION['user_id'];
+
+// === BOOKING REFERENCE VALIDATION ===
+// Require a non-empty booking reference; redirect if missing.
 $bookingRef = isset($_GET['ref']) ? trim($_GET['ref']) : '';
 
 if ($bookingRef === '') {
@@ -17,6 +31,9 @@ if ($bookingRef === '') {
     exit;
 }
 
+// === FETCH BOOKING WITH PACKAGE DATA ===
+// JOIN with packages table to get package details in a single query.
+// The user_id condition ensures users can only view their own bookings.
 $stmt = $db->prepare(
     "SELECT b.*, p.title, p.image, p.price, p.description, p.duration_days, p.duration_nights, p.destination_category
      FROM bookings b
@@ -31,16 +48,22 @@ if (!$booking) {
     exit;
 }
 
+// === FETCH LATEST PAYMENT ===
+// Retrieve the most recent payment record for this booking (if any).
 $payStmt = $db->prepare("SELECT * FROM payments WHERE booking_id = :bid ORDER BY created_at DESC LIMIT 1");
 $payStmt->execute([':bid' => $booking['id']]);
 $payment = $payStmt->fetch();
 
+// === PRICE CALCULATION ===
+// Base price + 10% tax + 2.5% service fee.
 $guestCount = $booking['num_travellers'];
 $basePrice = $booking['price'] * $guestCount;
 $taxes = round($basePrice * 0.10);
 $serviceFees = round($basePrice * 0.025);
 $total = $basePrice + $taxes + $serviceFees;
 
+// === STATUS BADGE MAPPING ===
+// Maps booking status to CSS class and display label.
 function bd_status_badge(string $status): array
 {
     $map = [
@@ -75,9 +98,11 @@ $activePage = 'bookings';
 
     <main>
         <div class="usr-layout">
+            <!-- User account sidebar navigation -->
             <?php include '../includes/user-sidebar.php'; ?>
 
             <div class="usr-canvas">
+                <!-- === HEADER === -->
                 <div class="bd-header">
                     <a href="my-bookings.php" class="bd-back">
                         <span class="material-symbols-outlined">arrow_back</span>
@@ -89,7 +114,7 @@ $activePage = 'bookings';
 
                 <div class="bd-grid">
                     <div class="bd-main">
-                        <!-- Package Info -->
+                        <!-- === PACKAGE INFORMATION CARD === -->
                         <div class="bd-card">
                             <div class="bd-card-header">
                                 <h2>Package Information</h2>
@@ -115,7 +140,7 @@ $activePage = 'bookings';
                             </div>
                         </div>
 
-                        <!-- Traveller Details -->
+                        <!-- === TRAVELLER DETAILS CARD === -->
                         <div class="bd-card">
                             <h2>Traveller Details</h2>
                             <div class="bd-details-grid">
@@ -148,7 +173,8 @@ $activePage = 'bookings';
                             </div>
                         </div>
 
-                        <!-- Payment Info -->
+                        <!-- === PAYMENT INFORMATION CARD === -->
+                        <!-- Only displayed if a payment record exists -->
                         <?php if ($payment): ?>
                         <div class="bd-card">
                             <h2>Payment Information</h2>
@@ -186,8 +212,9 @@ $activePage = 'bookings';
                         <?php endif; ?>
                     </div>
 
+                    <!-- === SIDEBAR === -->
                     <div class="bd-sidebar">
-                        <!-- Price Summary -->
+                        <!-- Price summary with breakdown -->
                         <div class="bd-card bd-summary-card">
                             <h2>Price Summary</h2>
                             <div class="bd-price-rows">
@@ -210,13 +237,16 @@ $activePage = 'bookings';
                             </div>
                         </div>
 
-                        <!-- Actions -->
+                        <!-- === ACTIONS CARD === -->
+                        <!-- Context-sensitive actions based on booking status -->
                         <div class="bd-card bd-actions-card">
                             <h2>Actions</h2>
                             <?php if ($booking['status'] === 'pending'): ?>
+                                <!-- Pending bookings can be paid or cancelled -->
                                 <a href="payment.php?ref=<?= urlencode($booking['booking_reference']) ?>" class="settings-btn settings-btn-primary" style="width:100%;text-align:center;display:block;">Complete Payment</a>
                                 <a href="cancel-booking.php?ref=<?= urlencode($booking['booking_reference']) ?>" class="settings-btn settings-btn-danger" style="width:100%;text-align:center;display:block;margin-top:0.5rem;" onclick="return confirm('Are you sure you want to cancel this booking?')">Cancel Booking</a>
                             <?php elseif ($booking['status'] === 'confirmed'): ?>
+                                <!-- Confirmed bookings can be modified (links to payment/edit) -->
                                 <a href="payment.php?ref=<?= urlencode($booking['booking_reference']) ?>" class="settings-btn settings-btn-primary" style="width:100%;text-align:center;display:block;">Modify Booking</a>
                             <?php endif; ?>
                         </div>

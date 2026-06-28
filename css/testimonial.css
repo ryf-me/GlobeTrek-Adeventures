@@ -1,3 +1,10 @@
+/**
+ * File: css/testimonial.css
+ * Purpose: Styles for the Testimonials page — hero, two-column layout with sticky left, carousel with dot navigation, testimonial cards, CTA banner, and responsive
+ * Used By: testimonials/index.html
+ */
+
+/* === CSS Variables === */
 :root {
     --testimonial-ink: #264653;
     --testimonial-muted: #666;
@@ -6,6 +13,7 @@
     --testimonial-line: #e9e9e9;
 }
 
+/* === Page Base === */
 .testimonial-page {
     background: var(--testimonial-paper);
     color: var(--testimonial-ink);
@@ -33,7 +41,7 @@
     text-align: inherit;
 }
 
-/* Hero Section */
+/* === Hero Section === */
 .testimonial-hero {
     position: relative;
     width: 100%;
@@ -86,7 +94,7 @@
     line-height: 1.75;
 }
 
-/* Testimonials Section */
+/* === Testimonials Section === */
 .testimonials-section {
     max-width: none;
     padding: 5rem 2rem;
@@ -103,7 +111,7 @@
     align-items: start;
 }
 
-/* Left Column */
+/* === Left Column (Sticky) === */
 .testimonials-left {
     position: sticky;
     top: 100px;
@@ -141,7 +149,7 @@
     margin-bottom: 2rem;
 }
 
-/* Dots Navigation */
+/* === Dots Navigation === */
 .testimonials-dots {
     display: flex;
     gap: 0.5rem;
@@ -169,13 +177,13 @@
     border-color: var(--testimonial-clay);
 }
 
-/* Right Column - Carousel */
+/* === Right Column - Carousel === */
 .testimonials-right {
     position: relative;
     min-height: 420px;
 }
 
-/* Testimonial Cards */
+/* === Testimonial Cards === */
 .testimonial-card {
     position: absolute;
     top: 0;
@@ -199,7 +207,7 @@
     z-index: 1;
 }
 
-/* Stars */
+/* === Stars === */
 .testimonial-stars {
     display: flex;
     gap: 0.2rem;
@@ -215,7 +223,7 @@
     color: #ddd;
 }
 
-/* Quote */
+/* === Quote === */
 .testimonial-quote {
     position: relative;
     margin-bottom: 1.5rem;
@@ -236,7 +244,7 @@
     font-style: italic;
 }
 
-/* Author */
+/* === Author === */
 .testimonial-author {
     display: flex;
     align-items: center;
@@ -270,7 +278,7 @@
     color: var(--testimonial-muted);
 }
 
-/* Decorative elements */
+/* === Decorative Elements === */
 .testimonial-decor-top,
 .testimonial-decor-bottom {
     position: absolute;
@@ -291,7 +299,7 @@
     left: -20px;
 }
 
-/* CTA Section */
+/* === CTA Section === */
 .testimonial-cta {
     max-width: none;
     background: #264653;
@@ -336,6 +344,7 @@
     color: #fff;
 }
 
+/* === Animations === */
 @keyframes testimonialRise {
     from {
         opacity: 0;
@@ -347,6 +356,7 @@
     }
 }
 
+/* === Responsive: 900px === */
 @media (max-width: 900px) {
     .testimonials-section .testimonials-inner {
         grid-template-columns: 1fr;
@@ -358,6 +368,7 @@
     }
 }
 
+/* === Responsive: 640px === */
 @media (max-width: 640px) {
     .testimonial-hero,
     .testimonials-section,

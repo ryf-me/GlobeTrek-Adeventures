@@ -1,11 +1,18 @@
 <?php
 /**
- * User Registration Page
- *
- * Creates new user accounts with bcrypt password hashing.
- * Includes CSRF protection and rate limiting (3 attempts per hour per IP).
+ * File: pages/signup.php
+ * Purpose: User registration page - creates new user accounts with bcrypt
+ *          password hashing, email verification, CSRF protection, and
+ *          rate limiting (3 attempts per hour per IP).
+ * Dependencies: config/session.php, config/database.php, config/csrf.php,
+ *               config/rate-limiter.php, config/otp.php, includes/mailer.php
+ * Used By: login.php (sign up link), navbar.php (register link)
+ * Parent Files: index.php (redirects here from signup link)
+ * Child Files: None (leaf page, but includes mailer.php dynamically)
+ * @package GlobeTrek\Pages
  */
 
+// === CONFIGURATION & DEPENDENCIES ===
 require_once __DIR__ . '/../config/session.php';
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../config/csrf.php';
@@ -13,17 +20,19 @@ require_once __DIR__ . '/../config/rate-limiter.php';
 require_once __DIR__ . '/../config/otp.php';
 $db = getDB();
 
+// === STATE INITIALIZATION ===
 $errors = [];
 $successMessage = '';
+// Preserved form values for repopulation on validation failure
 $values = [
     'full_name' => '',
     'email' => '',
     'phone' => '',
 ];
 
-// --- Handle form submission ---
+// === HANDLE FORM SUBMISSION ===
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // CSRF validation
+    // CSRF validation — reject forged cross-site requests
     if (!validateCSRFToken($_POST['csrf_token'] ?? null)) {
         $errors['general'] = 'Invalid security token. Please try again.';
     }
@@ -34,6 +43,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (empty($errors)) {
+        // Sanitize and collect form inputs
         $values['full_name'] = trim($_POST['full_name'] ?? '');
         $values['email'] = filter_var(trim($_POST['email'] ?? ''), FILTER_SANITIZE_EMAIL);
         $values['phone'] = trim($_POST['phone'] ?? '');
@@ -41,15 +51,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $confirmPassword = $_POST['confirm_password'] ?? '';
         $acceptedTerms = isset($_POST['terms']);
 
+        // === FIELD VALIDATION ===
+
+        // Full name: required, non-empty
         if ($values['full_name'] === '') {
             $errors['full_name'] = 'Please enter your full name.';
         }
+
+        // Email: must be valid format
         if (!filter_var($values['email'], FILTER_VALIDATE_EMAIL)) {
             $errors['email'] = 'Please enter a valid email address.';
         }
+
+        // Phone: optional, but if provided must match pattern
         if ($values['phone'] !== '' && !preg_match('/^[0-9+\s\-()]{7,20}$/', $values['phone'])) {
             $errors['phone'] = 'Please enter a valid phone number.';
         }
+
+        // === PASSWORD STRENGTH VALIDATION ===
         if ($password === '') {
             $errors['password'] = 'Please enter a password.';
         } elseif (strlen($password) < 8) {
@@ -61,15 +80,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } elseif (!preg_match('/[^A-Za-z0-9]/', $password)) {
             $errors['password'] = 'Password must contain at least one special character.';
         }
+
+        // Confirm password: must match
         if ($confirmPassword === '') {
             $errors['confirm_password'] = 'Please confirm your password.';
         } elseif ($password !== $confirmPassword) {
             $errors['confirm_password'] = 'Passwords must match.';
         }
+
+        // Terms acceptance: required
         if (!$acceptedTerms) {
             $errors['terms'] = 'Please accept the terms before continuing.';
         }
 
+        // === DUPLICATE EMAIL CHECK ===
         if (empty($errors)) {
             $checkStmt = $db->prepare("SELECT id FROM users WHERE email = :email LIMIT 1");
             $checkStmt->execute([':email' => $values['email']]);
@@ -78,8 +102,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
+        // === CREATE USER ACCOUNT ===
         if (empty($errors)) {
+            // Hash password with bcrypt (PASSWORD_DEFAULT = bcrypt)
             $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+
+            // Insert new user record
             $insertStmt = $db->prepare(
                 "INSERT INTO users (full_name, email, phone, password) VALUES (:full_name, :email, :phone, :password)"
             );
@@ -92,9 +120,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $newUserId = $db->lastInsertId();
 
-            // Generate email verification token
+            // === EMAIL VERIFICATION TOKEN ===
+            // Generate a secure token for email verification (valid 24 hours)
             $verifyToken = bin2hex(random_bytes(32));
-            $expiresAt = date('Y-m-d H:i:s', time() + 86400); // 24 hours
+            $expiresAt = date('Y-m-d H:i:s', time() + 86400);
             $stmt = $db->prepare(
                 "INSERT INTO email_verifications (user_id, token, expires_at) VALUES (:uid, :token, :expires)"
             );
@@ -104,7 +133,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ':expires' => $expiresAt,
             ]);
 
-            // Send verification email
+            // === SEND VERIFICATION EMAIL ===
             $verifyLink = BASE_URL . '/pages/verify-email.php?token=' . $verifyToken;
             require_once __DIR__ . '/../includes/mailer.php';
             $emailContent = '
@@ -121,6 +150,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $textBody = "Welcome to GlobeTrek Adventures!\n\nPlease verify your email by visiting:\n$verifyLink\n\nThis link expires in 24 hours.";
             sendMail($values['email'], 'Verify Your Email — GlobeTrek Adventures', $htmlBody, $textBody);
 
+            // Show success and clear form
             $safeEmail = htmlspecialchars($values['email'], ENT_QUOTES, 'UTF-8');
             $successMessage = "Account created for $safeEmail. Please check your email to verify your account.";
             $values = array_fill_keys(array_keys($values), '');
@@ -142,11 +172,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="stylesheet" href="../css/signup.css">
 </head>
 <body class="signup-page">
+
+    <!-- === BACKGROUND IMAGE === -->
     <div class="signup-bg">
         <img src="../images/login-bg.jpg" alt="" aria-hidden="true">
         <div class="signup-bg-overlay"></div>
     </div>
 
+    <!-- === TOP NAVIGATION BAR === -->
     <header class="signup-topbar">
         <a class="signup-topbar-logo" href="../index.php">
             <img src="../images/logo.png" alt="GlobeTrek Adventures logo" />
@@ -157,6 +190,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </a>
     </header>
 
+    <!-- === SIGNUP FORM CARD === -->
     <main class="signup-shell">
         <div class="signup-card">
             <div class="signup-avatar">
@@ -168,6 +202,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <p>Join GlobeTrek and start exploring the best of Sri Lanka.</p>
             </div>
 
+            <!-- Display success or error messages -->
             <?php if ($successMessage !== ''): ?>
                 <div class="signup-message success" role="status">
                     <?php echo $successMessage; ?>
@@ -178,9 +213,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
             <?php endif; ?>
 
+            <!-- === REGISTRATION FORM === -->
             <form class="signup-form" action="signup.php" method="post" novalidate>
                 <?php csrf_field(); ?>
 
+                <!-- Full Name & Email row -->
                 <div class="form-row">
                     <div class="form-group<?php echo isset($errors['full_name']) ? ' has-error' : ''; ?>">
                         <label for="full-name">Full Name</label>
@@ -205,6 +242,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
                 </div>
 
+                <!-- Phone (optional) -->
                 <div class="form-group<?php echo isset($errors['phone']) ? ' has-error' : ''; ?>">
                     <label for="signup-phone">Phone Number</label>
                     <div class="input-icon-wrapper">
@@ -216,6 +254,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <?php endif; ?>
                 </div>
 
+                <!-- Password with strength meter -->
                 <div class="form-group<?php echo isset($errors['password']) ? ' has-error' : ''; ?>">
                     <label for="signup-password">Password</label>
                     <div class="input-icon-wrapper">
@@ -232,6 +271,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <div class="password-strength-meter"></div>
                 </div>
 
+                <!-- Confirm Password -->
                 <div class="form-group<?php echo isset($errors['confirm_password']) ? ' has-error' : ''; ?>">
                     <label for="confirm-password">Confirm Password</label>
                     <div class="input-icon-wrapper">
@@ -247,6 +287,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <?php endif; ?>
                 </div>
 
+                <!-- Terms & Conditions checkbox -->
                 <div class="terms-group<?php echo isset($errors['terms']) ? ' has-error' : ''; ?>">
                     <input id="terms" name="terms" type="checkbox" value="1" aria-invalid="<?php echo isset($errors['terms']) ? 'true' : 'false'; ?>" <?php echo isset($_POST['terms']) ? 'checked' : ''; ?>>
                     <label for="terms">
@@ -263,12 +304,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </button>
             </form>
 
+            <!-- === SOCIAL SIGNUP DIVIDER === -->
             <div class="login-divider" aria-hidden="true">
                 <span></span>
                 <p>or sign up with</p>
                 <span></span>
             </div>
 
+            <!-- Social signup buttons (not yet functional) -->
             <div class="social-buttons">
                 <button class="social-btn" type="button">
                     <svg class="social-icon" viewBox="0 0 24 24" width="20" height="20">
@@ -297,6 +340,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     </main>
 
+    <!-- === FOOTER STATS BAR === -->
     <footer class="signup-stats">
         <div class="signup-stats-inner">
             <div class="signup-stat">

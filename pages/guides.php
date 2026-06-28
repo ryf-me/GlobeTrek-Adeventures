@@ -1,7 +1,19 @@
 <?php
+/**
+ * File: pages/guides.php
+ * Purpose: Displays a filterable list of all active tour guides with specialty/region filters, search, and a "Guide of the Month" featured section.
+ * Dependencies: config/database.php, includes/navbar.php, includes/footer.php, css/guides.css, js/script.js
+ * Used By: index.php, guide-details.php (linked from navigation)
+ * Parent Files: index.php, navbar.php
+ * Child Files: guide-details.php (linked from guide cards)
+ * @package GlobeTrek\Pages
+ */
 require_once __DIR__ . '/../config/database.php';
 $db = getDB();
 
+// === FILTER OPTIONS ===
+// Hardcoded specialty and region lists for the filter dropdowns.
+// These should match the values stored in the guides table.
 $specialties = [
     'All Specialties',
     'Hill Country & Tea Plantations',
@@ -22,10 +34,13 @@ $regions = [
     'Western Province'
 ];
 
+// === RETRIEVE FILTER PARAMETERS ===
 $searchQuery = trim($_GET['q'] ?? '');
 $selectedSpecialty = $_GET['specialty'] ?? 'All Specialties';
 $selectedRegion = $_GET['region'] ?? 'All Regions';
 
+// === WHITELIST VALIDATION ===
+// Ensure filter values are from the allowed list to prevent injection of unexpected values.
 if (!in_array($selectedSpecialty, $specialties, true)) {
     $selectedSpecialty = 'All Specialties';
 }
@@ -33,6 +48,8 @@ if (!in_array($selectedRegion, $regions, true)) {
     $selectedRegion = 'All Regions';
 }
 
+// === BUILD DYNAMIC QUERY ===
+// Start with base WHERE clause and append optional search/filter conditions.
 $sql = "SELECT * FROM guides WHERE is_active = 1";
 $params = [];
 
@@ -49,15 +66,20 @@ if ($selectedRegion !== 'All Regions') {
     $params[':region'] = $selectedRegion;
 }
 
+// Featured guides first, then alphabetical
 $sql .= " ORDER BY is_featured DESC, id ASC";
 $stmt = $db->prepare($sql);
 $stmt->execute($params);
 $filteredGuides = $stmt->fetchAll();
 
+// === GUIDE OF THE MONTH ===
+// Fetch one featured guide for the spotlight section.
 $guideOfMonth = null;
 $stmtGom = $db->query("SELECT * FROM guides WHERE is_featured = 1 LIMIT 1");
 $guideOfMonth = $stmtGom->fetch();
 
+// === HELPER: HTML ESCAPE ===
+// Convenience wrapper for htmlspecialchars with common flags.
 function e($value)
 {
     return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
@@ -78,12 +100,14 @@ function e($value)
     <?php $basePath = '../'; include '../includes/navbar.php'; ?>
 
     <main class="guides-shell">
+        <!-- === HERO SECTION === -->
         <section class="guides-hero" aria-labelledby="guides-title">
             <p class="eyebrow">Local knowledge, island-wide reach</p>
             <h1 id="guides-title">Our Expert Guides</h1>
             <p>Discover the passionate Sri Lankan individuals who make our adventures unforgettable. Search by specialty or region to find your perfect local expert.</p>
         </section>
 
+        <!-- === SEARCH & FILTER PANEL === -->
         <section class="guide-search-panel" aria-label="Find a guide">
             <form class="guide-filter-form" method="get" action="guides.php">
                 <label class="search-field" for="guide-search">
@@ -120,6 +144,7 @@ function e($value)
             </form>
         </section>
 
+        <!-- === GUIDE CARDS GRID === -->
         <section class="guide-grid-section" aria-labelledby="guide-list-title">
             <div class="section-kicker">
                 <h2 id="guide-list-title">Meet the field team</h2>
@@ -136,12 +161,14 @@ function e($value)
                                 <h3><?= e($guide['name']) ?></h3>
                                 <p class="specialty"><?= e($guide['specialty']) ?></p>
                                 <p class="guide-description"><?= e($guide['description']) ?></p>
+                                <!-- Cast id to int for URL safety -->
                                 <a href="guide-details.php?id=<?= (int)$guide['id'] ?>" class="profile-btn">View Profile</a>
                             </div>
                         </article>
                     <?php endforeach; ?>
                 </div>
             <?php else: ?>
+                <!-- Empty state when no guides match filters -->
                 <div class="empty-state">
                     <h3>No guides matched your search</h3>
                     <p>Try a broader keyword, choose all specialties, or reset the region filter.</p>
@@ -150,6 +177,7 @@ function e($value)
             <?php endif; ?>
         </section>
 
+        <!-- === GUIDE OF THE MONTH (FEATURED) === -->
         <?php if ($guideOfMonth): ?>
         <section class="featured-guide" aria-labelledby="featured-guide-title">
             <img src="<?= e($basePath . $guideOfMonth['image']) ?>" alt="<?= e($guideOfMonth['name']) ?>">
@@ -163,6 +191,7 @@ function e($value)
         </section>
         <?php endif; ?>
 
+        <!-- === JOIN CTA === -->
         <section class="join-guides" aria-labelledby="join-title">
             <p class="eyebrow">Join the network</p>
             <h2 id="join-title">Are you an expert explorer?</h2>

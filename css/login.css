@@ -1,5 +1,14 @@
+/**
+ * File: css/login.css
+ * Purpose: Login page styles — full-bleed background design with
+ *          fixed background image, top bar with logo, centered card
+ *          form with icon inputs, password toggle, social login buttons,
+ *          signup prompt, and trust/stats footer bar.
+ * Used By: login.php
+ */
+
 /* ========================================
-   Login Page — Full-bleed background design
+   Login Page — Design Tokens
    ======================================== */
 
 :root {
@@ -14,7 +23,9 @@
     --login-accent: #e76f51;
 }
 
-/* ---- Page shell ---- */
+/* ========================================
+   Page Shell
+   ======================================== */
 .login-page {
     min-height: 100vh;
     background: #1a2332;
@@ -25,7 +36,9 @@
     overflow-x: hidden;
 }
 
-/* ---- Background image ---- */
+/* ========================================
+   Background Image
+   ======================================== */
 .login-bg {
     position: fixed;
     inset: 0;
@@ -49,7 +62,9 @@
     );
 }
 
-/* ---- Top bar (logo) ---- */
+/* ========================================
+   Top Bar (Logo)
+   ======================================== */
 .login-topbar {
     position: relative;
     z-index: 2;
@@ -90,7 +105,9 @@
     letter-spacing: 0.3px;
 }
 
-/* ---- Main area ---- */
+/* ========================================
+   Main Area & Card
+   ======================================== */
 .login-shell {
     position: relative;
     z-index: 1;
@@ -100,7 +117,6 @@
     padding: 0 clamp(1rem, 4vw, 3rem) 2rem;
 }
 
-/* ---- Card ---- */
 .login-card {
     width: min(100%, 460px);
     background: var(--login-cream);
@@ -124,7 +140,9 @@
     }
 }
 
-/* ---- Lock icon ---- */
+/* ========================================
+   Lock Icon
+   ======================================== */
 .login-lock {
     width: 68px;
     height: 68px;
@@ -141,7 +159,9 @@
     color: var(--login-ink);
 }
 
-/* ---- Header ---- */
+/* ========================================
+   Header
+   ======================================== */
 .login-header {
     text-align: center;
     margin-bottom: 0.25rem;
@@ -163,7 +183,9 @@
     line-height: 1.5;
 }
 
-/* ---- Error / success message ---- */
+/* ========================================
+   Error / Success Message
+   ======================================== */
 .signup-message {
     padding: 0.85rem 1rem;
     border-radius: 10px;
@@ -185,7 +207,9 @@
     color: var(--login-success);
 }
 
-/* ---- Form ---- */
+/* ========================================
+   Form
+   ======================================== */
 .login-form {
     display: flex;
     flex-direction: column;
@@ -205,7 +229,7 @@
     line-height: 1.25;
 }
 
-/* ---- Input with icon ---- */
+/* --- Input with Icon --- */
 .input-icon-wrapper {
     position: relative;
     width: 100%;
@@ -259,7 +283,7 @@
     line-height: 1.35;
 }
 
-/* ---- Password toggle ---- */
+/* --- Password Toggle --- */
 .password-toggle {
     position: absolute;
     right: 8px;
@@ -299,7 +323,9 @@
     display: block;
 }
 
-/* ---- Forgot Password link ---- */
+/* ========================================
+   Forgot Password Link
+   ======================================== */
 .forgot-link {
     align-self: flex-end;
     color: var(--login-accent);
@@ -313,7 +339,9 @@
     text-decoration: underline;
 }
 
-/* ---- Remember Me ---- */
+/* ========================================
+   Remember Me
+   ======================================== */
 .remember-group {
     display: flex;
     align-items: center;
@@ -337,7 +365,9 @@
     user-select: none;
 }
 
-/* ---- Login button ---- */
+/* ========================================
+   Login Submit Button
+   ======================================== */
 .login-submit {
     width: 100%;
     height: 50px;
@@ -372,7 +402,9 @@
     font-size: 20px;
 }
 
-/* ---- Divider ---- */
+/* ========================================
+   Divider
+   ======================================== */
 .login-divider {
     display: grid;
     grid-template-columns: 1fr auto 1fr;
@@ -393,7 +425,9 @@
     white-space: nowrap;
 }
 
-/* ---- Social buttons ---- */
+/* ========================================
+   Social Login Buttons
+   ======================================== */
 .social-buttons {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -432,7 +466,9 @@
     flex-shrink: 0;
 }
 
-/* ---- Signup prompt ---- */
+/* ========================================
+   Signup Prompt
+   ======================================== */
 .signup-prompt {
     margin: 0;
     color: var(--login-muted);
@@ -452,7 +488,9 @@
     text-decoration: underline;
 }
 
-/* ---- Stats footer ---- */
+/* ========================================
+   Stats Footer Bar
+   ======================================== */
 .login-stats {
     position: relative;
     z-index: 1;
@@ -508,8 +546,10 @@
 }
 
 /* ========================================
-   Responsive
+   Responsive Breakpoints
    ======================================== */
+
+/* --- Mobile (max-width: 600px) --- */
 @media (max-width: 600px) {
     .login-topbar {
         padding: 1rem 1.25rem;
@@ -539,6 +579,7 @@
     }
 }
 
+/* --- Small Mobile (max-width: 380px) --- */
 @media (max-width: 380px) {
     .login-stat {
         flex: 1 1 100%;

@@ -1,3 +1,13 @@
+/**
+ * File: pages/about.php
+ * Purpose: About us page showcasing company story, team, values, mission, and timeline
+ * Dependencies: css/style.css, css/navbar.css, css/about.css, css/footer.css, includes/navbar.php, includes/footer.php, js/script.js
+ * Used By: Main website navigation, footer links
+ * Parent Files: index.php (via navigation), navbar.php (via link)
+ * Child Files: None
+ * @package GlobeTrek\Pages
+ */
+
 <?php
 session_start();
 $basePath = '../';
@@ -8,16 +18,20 @@ $basePath = '../';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>About Us - GlobeTrek</title>
+    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700;9..144,800&family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <!-- Material Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <!-- Stylesheets -->
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="../css/navbar.css">
     <link rel="stylesheet" href="../css/about.css">
     <link rel="stylesheet" href="../css/footer.css">
 </head>
 <body class="about-page">
+    <!-- Navigation Bar -->
     <?php include '../includes/navbar.php'; ?>
 
     <main>
@@ -25,6 +39,7 @@ $basePath = '../';
         <section class="ab-hero" aria-labelledby="ab-hero-title">
             <img class="ab-hero-bg" src="https://images.pexels.com/photos/29644514/pexels-photo-29644514.jpeg" alt="">
             <div class="ab-hero-content">
+                <!-- Breadcrumb Navigation -->
                 <nav class="ab-breadcrumb" aria-label="Breadcrumb">
                     <a href="<?php echo $basePath; ?>index.php">Home</a>
                     <span class="ab-breadcrumb-sep material-symbols-outlined">chevron_right</span>
@@ -33,6 +48,7 @@ $basePath = '../';
                 <h1 id="ab-hero-title">About GlobeTrek</h1>
                 <p class="ab-hero-subtitle">Your trusted travel partner in Sri Lanka</p>
                 <p class="ab-hero-desc">We are a team of passionate travelers and local experts dedicated to showcasing the beauty, culture, and adventure of Sri Lanka to the world.</p>
+                <!-- Watch Our Story Button (placeholder) -->
                 <a class="ab-watch-btn" href="#" onclick="return false;">
                     <div class="ab-watch-icon">
                         <span class="material-symbols-outlined">play_arrow</span>
@@ -58,6 +74,7 @@ $basePath = '../';
                 </a>
             </div>
 
+            <!-- Video Thumbnail Section -->
             <div class="ab-video-section">
                 <div class="ab-video-thumb" role="button" tabindex="0" aria-label="Play our story video">
                     <img src="https://images.pexels.com/photos/2187605/pexels-photo-2187605.jpeg" alt="GlobeTrek team exploring Sri Lanka">
@@ -67,6 +84,7 @@ $basePath = '../';
                 </div>
             </div>
 
+            <!-- Statistics Sidebar -->
             <div class="ab-stats-sidebar">
                 <div class="ab-stat-card">
                     <div class="ab-stat-icon">
@@ -157,6 +175,7 @@ $basePath = '../';
             <h2 id="ab-team-title" class="ab-section-title">Meet Our Team</h2>
             <div class="ab-section-underline"></div>
             <div class="ab-team-grid">
+                <!-- Team Member 1 -->
                 <div class="ab-team-card">
                     <img class="ab-team-photo" src="https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg" alt="Kasun Bandara">
                     <h3 class="ab-team-name">Kasun Bandara</h3>
@@ -174,6 +193,7 @@ $basePath = '../';
                         </a>
                     </div>
                 </div>
+                <!-- Team Member 2 -->
                 <div class="ab-team-card">
                     <img class="ab-team-photo" src="https://images.pexels.com/photos/3769021/pexels-photo-3769021.jpeg" alt="Nipuni Silva">
                     <h3 class="ab-team-name">Nipuni Silva</h3>
@@ -191,6 +211,7 @@ $basePath = '../';
                         </a>
                     </div>
                 </div>
+                <!-- Team Member 3 -->
                 <div class="ab-team-card">
                     <img class="ab-team-photo" src="https://images.pexels.com/photos/2182970/pexels-photo-2182970.jpeg" alt="Tharindu Perera">
                     <h3 class="ab-team-name">Tharindu Perera</h3>
@@ -208,6 +229,7 @@ $basePath = '../';
                         </a>
                     </div>
                 </div>
+                <!-- Team Member 4 -->
                 <div class="ab-team-card">
                     <img class="ab-team-photo" src="https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg" alt="Chamara Wijesinghe">
                     <h3 class="ab-team-name">Chamara Wijesinghe</h3>
@@ -225,6 +247,7 @@ $basePath = '../';
                         </a>
                     </div>
                 </div>
+                <!-- Team Member 5 -->
                 <div class="ab-team-card">
                     <img class="ab-team-photo" src="https://images.pexels.com/photos/1181519/pexels-photo-1181519.jpeg" alt="Dilini Kottegoda">
                     <h3 class="ab-team-name">Dilini Kottegoda</h3>
@@ -330,8 +353,10 @@ $basePath = '../';
         </section>
     </main>
 
+    <!-- Footer -->
     <?php include '../includes/footer.php'; ?>
 
+    <!-- JavaScript -->
     <script src="../js/script.js"></script>
 </body>
 </html>

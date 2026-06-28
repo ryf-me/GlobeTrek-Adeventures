@@ -1,6 +1,8 @@
-/* ============================================
-   Custom Trips Page – Wireframe-inspired Design
-   ============================================ */
+/**
+ * File: css/custom-trips.css
+ * Purpose: Styles for the Custom Trips request page — hero, multi-section form with travel style chips/interest checkboxes, sidebar steps, and Flatpickr overrides
+ * Used By: custom-trips/index.html
+ */
 
 :root {
     --ct-primary: #264653;

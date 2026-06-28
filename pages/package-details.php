@@ -1,12 +1,33 @@
 <?php if (session_status() === PHP_SESSION_NONE) session_start(); ?>
 <?php
+/**
+ * File: pages/package-details.php
+ * Purpose: Package detail page - displays full information about a single
+ *          tour package including hero image, booking panel, itinerary,
+ *          reviews, wishlist toggle, and tabbed content sections (overview,
+ *          itinerary, inclusions, exclusions, accommodations, reviews).
+ * Dependencies: config/database.php, config/currency.php, css/style.css,
+ *               css/navbar.css, css/package-details.css, css/inquiries.css,
+ *               css/review-modal.css, css/footer.css, js/script.js,
+ *               js/review-modal.js, includes/navbar.php, includes/footer.php,
+ *               includes/review-modal.php
+ * Used By: packages.php (View Details links), ajax-packages.php (detail_url)
+ * Parent Files: packages.php, ajax-packages.php
+ * Child Files: includes/navbar.php, includes/footer.php, includes/review-modal.php
+ * @package GlobeTrek\Pages
+ */
+
+// === CONFIGURATION & DEPENDENCIES ===
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../config/currency.php';
 $db = getDB();
 
+// === PACKAGE ID FROM QUERY STRING ===
+// Cast to int to prevent SQL injection via type juggling
 $packageId = isset($_GET['id']) ? (int) $_GET['id'] : 0;
 
-// Fetch package-specific approved reviews
+// === FETCH PACKAGE-SPECIFIC APPROVED REVIEWS ===
+// Only display reviews that have been moderated and approved
 $reviewStmt = $db->prepare(
     "SELECT t.*, u.full_name AS user_full_name, u.profile_photo AS user_avatar
      FROM testimonials t
@@ -19,11 +40,14 @@ $reviewStmt->execute([':pid' => $packageId]);
 $packageReviews = $reviewStmt->fetchAll();
 $reviewCount = count($packageReviews);
 
+// === FETCH PACKAGE DATA ===
+// Only show active packages
 $stmt = $db->prepare("SELECT * FROM packages WHERE id = :id AND is_active = 1");
 $stmt->execute([':id' => $packageId]);
 $package = $stmt->fetch();
 
-// Check if package is in user's wishlist
+// === CHECK WISHLIST STATUS ===
+// Only check if user is logged in and package exists
 $isWishlisted = false;
 if (isset($_SESSION['user_id']) && $package) {
     $wStmt = $db->prepare("SELECT id FROM wishlist WHERE user_id = :uid AND package_id = :pid");
@@ -31,11 +55,15 @@ if (isset($_SESSION['user_id']) && $package) {
     $isWishlisted = (bool)$wStmt->fetch();
 }
 
+// === PACKAGE NOT FOUND ===
+// Display a minimal error page and exit
 if (!$package) {
     echo '<!DOCTYPE html><html><head><title>Not Found</title></head><body><h1>Package not found.</h1><a href="packages.php">Back to Packages</a></body></html>';
     exit;
 }
 
+// === GENERATE ITINERARY OVERVIEW ===
+// Default 5-day overview; extend dynamically for longer packages
 $overview = [
     'Day 1: Arrival and coastal welcome',
     'Day 2: Jungle trek and waterfall discovery',
@@ -43,6 +71,7 @@ $overview = [
     'Day 4: Free time and sunset cruise',
     'Day 5: Departure',
 ];
+// Add placeholder days for packages longer than 5 days
 if ($package['duration_days'] > 5) {
     for ($i = 6; $i <= $package['duration_days']; $i++) {
         $overview[] = "Day $i: Explore and discover";
@@ -65,9 +94,14 @@ if ($package['duration_days'] > 5) {
     <link rel="stylesheet" href="../css/footer.css">
 </head>
 <body class="package-details-page">
+
+    <!-- === NAVIGATION BAR === -->
     <?php $basePath = '../'; include '../includes/navbar.php'; ?>
 
+    <!-- === MAIN CONTENT === -->
     <main class="details-shell">
+
+        <!-- === BREADCRUMBS === -->
         <nav class="breadcrumbs" aria-label="Breadcrumb">
             <a href="../index.php#home">Home</a>
             <span aria-hidden="true">/</span>
@@ -76,6 +110,8 @@ if ($package['duration_days'] > 5) {
             <span><?= htmlspecialchars($package['title']) ?></span>
         </nav>
 
+        <!-- === HERO SECTION === -->
+        <!-- Package image + booking sidebar panel -->
         <section class="package-hero" aria-label="<?= htmlspecialchars($package['title']) ?> package summary">
             <div class="hero-media">
                 <img src="<?= htmlspecialchars($basePath . $package['image']) ?>" alt="<?= htmlspecialchars($package['title']) ?> package image">
@@ -85,10 +121,12 @@ if ($package['duration_days'] > 5) {
                 </div>
             </div>
 
+            <!-- === BOOKING PANEL SIDEBAR === -->
             <aside class="booking-panel" aria-label="Booking summary">
                 <p class="eyebrow">Signature escape</p>
                 <h1><?= htmlspecialchars($package['title']) ?></h1>
 
+                <!-- Duration and location metadata -->
                 <div class="meta-list">
                     <div>
                         <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -106,6 +144,7 @@ if ($package['duration_days'] > 5) {
                     </div>
                 </div>
 
+                <!-- Category and difficulty badges -->
                 <div class="category-group" aria-label="Categories">
                     <span class="section-label">Categories</span>
                     <div>
@@ -114,11 +153,13 @@ if ($package['duration_days'] > 5) {
                     </div>
                 </div>
 
+                <!-- Wishlist toggle button -->
                 <button class="detail-wishlist-btn<?= $isWishlisted ? ' active' : '' ?>" data-id="<?= $package['id'] ?>" onclick="toggleWishlist(this)">
                     <span class="material-symbols-outlined">favorite</span>
                     <span><?= $isWishlisted ? 'Saved to Wishlist' : 'Save to Wishlist' ?></span>
                 </button>
 
+                <!-- Price and booking actions -->
                 <div class="price-box">
                     <span class="section-label">Starting From</span>
                     <p><?= formatPrice($package['price']) ?><small>/ per person</small></p>
@@ -134,14 +175,21 @@ if ($package['duration_days'] > 5) {
             </aside>
         </section>
 
+        <!-- === DETAILS GRID: MAIN CONTENT + SIDEBAR === -->
         <div class="details-grid">
+
+            <!-- === TOUR CONTENT (LEFT COLUMN) === -->
             <section class="tour-content" aria-label="Tour details">
+
+                <!-- About the Tour intro -->
                 <div class="tour-intro">
                     <p class="eyebrow">About the Tour</p>
                     <h2>Salt air, jungle shade, and a soft landing every night.</h2>
                     <p><?= htmlspecialchars($package['description']) ?></p>
                 </div>
 
+                <!-- === TAB NAVIGATION === -->
+                <!-- Tabs switch visible article sections via JavaScript -->
                 <div class="tabs" role="tablist" aria-label="Package sections">
                     <a class="active" href="#overview">Overview</a>
                     <a href="#itinerary">Itinerary</a>
@@ -151,6 +199,7 @@ if ($package['duration_days'] > 5) {
                     <a href="#reviews">Reviews</a>
                 </div>
 
+                <!-- === OVERVIEW TAB === -->
                 <article id="overview" class="journey-card">
                     <div class="journey-heading">
                         <span class="map-icon" aria-hidden="true">
@@ -166,12 +215,14 @@ if ($package['duration_days'] > 5) {
                         </div>
                     </div>
 
+                    <!-- Day-by-day overview list -->
                     <ol class="day-list">
                         <?php foreach ($overview as $day): ?>
                             <li><?= htmlspecialchars($day) ?></li>
                         <?php endforeach; ?>
                     </ol>
 
+                    <!-- Route visualization -->
                     <div class="route-visual" aria-label="Route visualization">
                         <img src="<?= htmlspecialchars($basePath . $package['image']) ?>" alt="<?= htmlspecialchars($package['title']) ?> route highlight">
                         <div class="route-line" aria-hidden="true">
@@ -182,7 +233,8 @@ if ($package['duration_days'] > 5) {
                     </div>
                 </article>
 
-                <!-- Reviews Tab Content -->
+                <!-- === REVIEWS TAB === -->
+                <!-- Hidden by default, shown via tab switching JavaScript -->
                 <article id="reviews" class="journey-card" style="display:none;">
                     <div class="journey-heading">
                         <span class="map-icon" aria-hidden="true">
@@ -196,6 +248,7 @@ if ($package['duration_days'] > 5) {
                         </div>
                     </div>
 
+                    <!-- Reviews list or empty state -->
                     <?php if (empty($packageReviews)): ?>
                         <div style="text-align:center;padding:2rem 1rem;color:#888;">
                             <span class="material-symbols-outlined" style="font-size:40px;color:#ddd;display:block;margin-bottom:0.75rem;">rate_review</span>
@@ -203,9 +256,11 @@ if ($package['duration_days'] > 5) {
                     <?php else: ?>
                         <div style="display:flex;flex-direction:column;gap:1rem;">
                             <?php foreach ($packageReviews as $pr): ?>
+                                <!-- Individual review card -->
                                 <div style="background:#f8f8f8;border-radius:8px;padding:1.25rem;">
                                     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.5rem;">
                                         <div style="display:flex;align-items:center;gap:0.75rem;">
+                                            <!-- User avatar (if exists) -->
                                             <?php if (!empty($pr['user_avatar'])): ?>
                                                 <img src="<?= htmlspecialchars($pr['user_avatar']) ?>" alt="" style="width:36px;height:36px;border-radius:50%;object-fit:cover;">
                                             <?php endif; ?>
@@ -214,6 +269,7 @@ if ($package['duration_days'] > 5) {
                                                 <span style="font-size:0.75rem;color:#888;display:block;"><?= htmlspecialchars($pr['reviewer_country'] ?? '') ?></span>
                                             </div>
                                         </div>
+                                        <!-- Star rating display -->
                                         <span style="color:#f4a261;white-space:nowrap;">
                                             <?php for ($s = 0; $s < (int)$pr['rating']; $s++): ?>&#9733;<?php endfor; ?>
                                             <?php for ($s = (int)$pr['rating']; $s < 5; $s++): ?><span style="color:#ddd;">&#9733;</span><?php endfor; ?>
@@ -229,6 +285,7 @@ if ($package['duration_days'] > 5) {
                         </div>
                     <?php endif; ?>
 
+                    <!-- Write a Review CTA (only for logged-in users) -->
                     <?php if (isset($_SESSION['user_id'])): ?>
                         <div style="text-align:center;margin-top:1.5rem;padding-top:1.25rem;border-top:1px solid #e9e9e9;">
                             <button onclick="openReviewModal(<?= $packageId ?>)" class="testimonial-cta-btn" style="display:inline-flex;align-items:center;gap:0.4rem;">
@@ -237,6 +294,7 @@ if ($package['duration_days'] > 5) {
                             </button>
                         </div>
                     <?php else: ?>
+                        <!-- Prompt to login for non-authenticated users -->
                         <div style="text-align:center;margin-top:1.5rem;">
                             <a href="login.php" class="testimonial-cta-btn" style="display:inline-flex;align-items:center;gap:0.4rem;text-decoration:none;">
                                 <span class="material-symbols-outlined" style="font-size:1.2rem;">login</span>
@@ -247,7 +305,10 @@ if ($package['duration_days'] > 5) {
                 </article>
             </section>
 
+            <!-- === SIDEBAR (RIGHT COLUMN) === -->
             <aside class="side-stack" aria-label="Package quick information">
+
+                <!-- Quick info panel -->
                 <section class="quick-info">
                     <h2>Quick Info</h2>
                     <div>
@@ -268,6 +329,7 @@ if ($package['duration_days'] > 5) {
                     </div>
                 </section>
 
+                <!-- Support CTA card -->
                 <section class="support-card">
                     <svg viewBox="0 0 48 48" aria-hidden="true">
                         <path d="M10 29v-5a14 14 0 0 1 28 0v5"></path>
@@ -284,13 +346,18 @@ if ($package['duration_days'] > 5) {
         </div>
     </main>
 
+    <!-- === REVIEW MODAL (included from includes) === -->
     <?php include __DIR__ . '/../includes/review-modal.php'; ?>
+
+    <!-- === FOOTER === -->
     <?php $basePath = '../'; include '../includes/footer.php'; ?>
 
+    <!-- === JAVASCRIPT === -->
     <script src="../js/script.js"></script>
     <script src="../js/review-modal.js"></script>
     <script>
-    // Wishlist toggle
+    // === WISHLIST TOGGLE ===
+    // Sends AJAX request to toggle wishlist status for this package
     function toggleWishlist(btn) {
         var pkgId = btn.getAttribute('data-id');
         var label = btn.querySelector('span:last-child');
@@ -319,9 +386,11 @@ if ($package['duration_days'] > 5) {
         });
     }
 
-    // Tab switching for package details
+    // === TAB SWITCHING ===
+    // Handles tab navigation for package detail sections
     document.addEventListener('DOMContentLoaded', function() {
         var tabs = document.querySelectorAll('.tabs a');
+        // Map tab names to their article elements
         var articles = {
             overview: document.getElementById('overview'),
             itinerary: document.getElementById('itinerary'),
@@ -331,7 +400,10 @@ if ($package['duration_days'] > 5) {
             reviews: document.getElementById('reviews'),
         };
 
-        // Hide all articles except the one that matches the URL hash
+        /**
+         * Show the tab matching the given hash, hide all others.
+         * Updates active tab styling.
+         */
         function showTab(hash) {
             var targetId = hash.replace('#', '');
             Object.keys(articles).forEach(function(key) {
@@ -343,10 +415,12 @@ if ($package['duration_days'] > 5) {
             });
         }
 
+        // Attach click handlers to all tabs
         tabs.forEach(function(tab) {
             tab.addEventListener('click', function(e) {
                 e.preventDefault();
                 var href = this.getAttribute('href');
+                // Update URL hash without page reload
                 history.replaceState(null, '', href);
                 showTab(href);
             });

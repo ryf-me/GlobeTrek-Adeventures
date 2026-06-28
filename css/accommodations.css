@@ -1,4 +1,10 @@
-/* ---------- Reset & Base ---------- */
+/**
+ * File: css/accommodations.css
+ * Purpose: Styles for the Accommodations listing page — sidebar filters, accommodation cards grid, toolbar, and pagination
+ * Used By: accommodations/index.html
+ */
+
+/* === Reset & Base === */
 * {
     margin: 0;
     padding: 0;
@@ -37,7 +43,7 @@ body {
     line-height: 1.6;
 }
 
-/* ---------- Layout: Sidebar + Main ---------- */
+/* === Layout: Sidebar + Main === */
 .accommodations-layout {
     display: flex;
     gap: 2rem;
@@ -48,7 +54,7 @@ body {
     flex: 1;
 }
 
-/* ---------- Sidebar Filters ---------- */
+/* === Sidebar Filters === */
 .filters-sidebar {
     flex: 0 0 280px;
     background: #ffffff;
@@ -165,7 +171,7 @@ body {
     color: #264653;
 }
 
-/* ---------- Toolbar (sort + count) ---------- */
+/* === Toolbar (Sort + Count) === */
 .results-toolbar {
     display: flex;
     justify-content: space-between;
@@ -195,7 +201,7 @@ body {
     border-color: #e76f51;
 }
 
-/* ---------- Main Content (Cards) ---------- */
+/* === Accommodation Cards Grid === */
 .accommodations-grid {
     flex: 1;
     display: grid;
@@ -343,7 +349,7 @@ body {
     color: #ffffff;
 }
 
-/* ---------- Pagination ---------- */
+/* === Pagination === */
 .pagination {
     display: flex;
     justify-content: center;
@@ -395,7 +401,7 @@ body {
     width: auto;
 }
 
-/* ---------- Responsive ---------- */
+/* === Responsive Breakpoints === */
 @media (max-width: 900px) {
     .accommodations-layout {
         flex-direction: column;

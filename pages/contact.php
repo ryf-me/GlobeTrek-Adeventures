@@ -1,11 +1,23 @@
+/**
+ * File: pages/contact.php
+ * Purpose: Contact form page for users to send messages to GlobeTrek support
+ * Dependencies: config/database.php, config/csrf.php, config/rate-limiter.php, css/style.css, css/navbar.css, css/contact.css, css/footer.php, includes/navbar.php, includes/footer.php, js/script.js
+ * Used By: Main website navigation, footer links
+ * Parent Files: index.php (via navigation), navbar.php (via link)
+ * Child Files: None
+ * @package GlobeTrek\Pages
+ */
+
 <?php
 session_start();
 
+// === DATABASE AND SECURITY SETUP ===
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../config/csrf.php';
 require_once __DIR__ . '/../config/rate-limiter.php';
 $db = getDB();
 
+// === FORM FIELD INITIALIZATION ===
 $fields = [
     'name' => '',
     'email' => '',
@@ -16,15 +28,19 @@ $fields = [
 $errors = [];
 $submitted = false;
 
+// === FORM PROCESSING ===
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // CSRF token validation for security
     if (!validateCSRFToken($_POST['csrf_token'] ?? null)) {
         $errors['general'] = 'Invalid security token. Please try again.';
     }
 
+    // Rate limiting: 5 submissions per hour per IP to prevent spam
     if (empty($errors) && !checkRateLimit('contact_form', 5, 3600, false)) {
         $errors['general'] = 'Too many requests. Please try again later.';
     }
 
+    // === FIELD VALIDATION ===
     if (empty($errors)) {
         $fields['name'] = trim($_POST['name'] ?? '');
         $fields['email'] = trim($_POST['email'] ?? '');
@@ -32,6 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $fields['subject'] = trim($_POST['subject'] ?? '');
         $fields['message'] = trim($_POST['message'] ?? '');
 
+        // Required field validation
         if ($fields['name'] === '') {
             $errors['name'] = 'Please enter your name.';
         }
@@ -50,12 +67,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $submitted = empty($errors);
 
+    // === DATABASE INSERTION ===
     if ($submitted) {
+        // Prepend phone number to message if provided
         $msg = $fields['message'];
         if ($fields['phone'] !== '') {
             $msg = '[Phone: ' . $fields['phone'] . "]\n\n" . $msg;
         }
 
+        // Insert contact message into database
         $stmt = $db->prepare(
             "INSERT INTO contact_messages (name, email, subject, message)
              VALUES (:name, :email, :subject, :message)"
@@ -66,22 +86,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ':subject' => $fields['subject'],
             ':message' => $msg,
         ]);
+        // Clear form fields after successful submission
         $fields = array_fill_keys(array_keys($fields), '');
     }
 }
 
+// === HELPER FUNCTIONS ===
 function old_value(string $field, array $fields): string
 {
+    // Return escaped old form value for repopulation
     return htmlspecialchars($fields[$field] ?? '', ENT_QUOTES, 'UTF-8');
 }
 
 function field_error(string $field, array $errors): string
 {
+    // Return escaped error message for display
     return htmlspecialchars($errors[$field] ?? '', ENT_QUOTES, 'UTF-8');
 }
 
 function subject_selected(string $value, string $current): string
 {
+    // Return 'selected' attribute if this subject was previously chosen
     return $value === $current ? 'selected' : '';
 }
 ?>
@@ -91,16 +116,20 @@ function subject_selected(string $value, string $current): string
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Contact Us - GlobeTrek</title>
+    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700;9..144,800&family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <!-- Material Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <!-- Stylesheets -->
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="../css/navbar.css">
     <link rel="stylesheet" href="../css/contact.css">
     <link rel="stylesheet" href="../css/footer.css">
 </head>
 <body class="contact-page">
+    <!-- Navigation Bar -->
     <?php $basePath = '../'; include '../includes/navbar.php'; ?>
 
     <main>
@@ -108,6 +137,7 @@ function subject_selected(string $value, string $current): string
         <section class="c-hero" aria-labelledby="c-hero-title">
             <img class="c-hero-bg" src="https://images.pexels.com/photos/29813522/pexels-photo-29813522.jpeg" alt="">
             <div class="c-hero-content">
+                <!-- Breadcrumb Navigation -->
                 <nav class="c-breadcrumb" aria-label="Breadcrumb">
                     <a href="<?php echo $basePath; ?>index.php">Home</a>
                     <span class="c-breadcrumb-sep material-symbols-outlined">chevron_right</span>
@@ -116,6 +146,8 @@ function subject_selected(string $value, string $current): string
                 <h1 id="c-hero-title">Contact Us</h1>
                 <p class="c-hero-subtitle">We'd love to hear from you!</p>
                 <p class="c-hero-desc">Have a question, need travel advice, or ready to plan your next adventure? Our team is here to help you every step of the way.</p>
+                
+                <!-- Trust Badges -->
                 <div class="c-hero-badges">
                     <div class="c-hero-badge">
                         <div class="c-hero-badge-icon">
@@ -174,15 +206,18 @@ function subject_selected(string $value, string $current): string
                     <h2 id="c-form-title">Send Us a Message</h2>
                     <p>Fill out the form below and our travel experts will get back to you shortly.</p>
 
+                    <!-- Error Display -->
                     <?php if (!empty($errors)): ?>
                         <div class="c-form-alert error" role="alert">
                             Please review the highlighted fields and try again.
                         </div>
                     <?php endif; ?>
 
+                    <!-- Contact Form -->
                     <form class="c-form" method="post" action="contact.php" novalidate>
                         <?php csrf_field(); ?>
                         <div class="c-form-row">
+                            <!-- Name Field -->
                             <div class="c-field">
                                 <label for="c-name">Your Name <span class="c-required">*</span></label>
                                 <input id="c-name" name="name" type="text" value="<?= old_value('name', $fields) ?>" placeholder="John Doe" aria-invalid="<?= isset($errors['name']) ? 'true' : 'false' ?>">
@@ -190,6 +225,7 @@ function subject_selected(string $value, string $current): string
                                     <p class="c-field-error"><?= field_error('name', $errors) ?></p>
                                 <?php endif; ?>
                             </div>
+                            <!-- Email Field -->
                             <div class="c-field">
                                 <label for="c-email">Email Address <span class="c-required">*</span></label>
                                 <input id="c-email" name="email" type="email" value="<?= old_value('email', $fields) ?>" placeholder="john@example.com" aria-invalid="<?= isset($errors['email']) ? 'true' : 'false' ?>">
@@ -199,10 +235,12 @@ function subject_selected(string $value, string $current): string
                             </div>
                         </div>
                         <div class="c-form-row">
+                            <!-- Phone Field (Optional) -->
                             <div class="c-field">
                                 <label for="c-phone">Phone Number</label>
                                 <input id="c-phone" name="phone" type="tel" value="<?= old_value('phone', $fields) ?>" placeholder="+94 77 123 4567">
                             </div>
+                            <!-- Subject Field -->
                             <div class="c-field">
                                 <label for="c-subject">Subject <span class="c-required">*</span></label>
                                 <select id="c-subject" name="subject" aria-invalid="<?= isset($errors['subject']) ? 'true' : 'false' ?>">
@@ -219,6 +257,7 @@ function subject_selected(string $value, string $current): string
                                 <?php endif; ?>
                             </div>
                         </div>
+                        <!-- Message Field -->
                         <div class="c-field">
                             <label for="c-message">Your Message <span class="c-required">*</span></label>
                             <textarea id="c-message" name="message" rows="5" placeholder="Tell us how we can help you..." aria-invalid="<?= isset($errors['message']) ? 'true' : 'false' ?>"><?= old_value('message', $fields) ?></textarea>
@@ -226,6 +265,7 @@ function subject_selected(string $value, string $current): string
                                 <p class="c-field-error"><?= field_error('message', $errors) ?></p>
                             <?php endif; ?>
                         </div>
+                        <!-- Submit Button -->
                         <div class="c-submit-row">
                             <button type="submit" class="c-submit-btn">
                                 <span class="material-symbols-outlined" aria-hidden="true">send</span>
@@ -244,6 +284,7 @@ function subject_selected(string $value, string $current): string
                     <h2>Get in Touch</h2>
                     <p>Reach out to us through any of these channels.</p>
 
+                    <!-- Contact Information -->
                     <div class="c-contact-list">
                         <div class="c-contact-item">
                             <div class="c-contact-icon">
@@ -284,6 +325,7 @@ function subject_selected(string $value, string $current): string
                         </div>
                     </div>
 
+                    <!-- Social Media Links -->
                     <div class="c-social-icons">
                         <a href="https://web.facebook.com/" class="c-social-icon" aria-label="Facebook" target="_blank" rel="noopener">
                             <svg viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
@@ -417,15 +459,19 @@ function subject_selected(string $value, string $current): string
         </section>
     </main>
 
+    <!-- Footer -->
     <?php $basePath = '../'; include '../includes/footer.php'; ?>
 
+    <!-- JavaScript -->
     <script src="../js/script.js"></script>
     <script>
+    // FAQ accordion functionality
     document.querySelectorAll('.c-faq-question').forEach(function(btn) {
         btn.addEventListener('click', function() {
             var item = this.closest('.c-faq-item');
             var isActive = item.classList.contains('active');
 
+            // Close other open FAQ items
             item.closest('.c-faq-list').querySelectorAll('.c-faq-item.active').forEach(function(openItem) {
                 if (openItem !== item) {
                     openItem.classList.remove('active');
@@ -433,11 +479,13 @@ function subject_selected(string $value, string $current): string
                 }
             });
 
+            // Toggle current FAQ item
             item.classList.toggle('active');
             this.setAttribute('aria-expanded', !isActive);
         });
     });
 
+    // Smooth scroll to contact form from "Still have questions" link
     document.querySelector('.c-faq-still a')?.addEventListener('click', function(e) {
         e.preventDefault();
         var formSection = document.querySelector('.c-contact-section');

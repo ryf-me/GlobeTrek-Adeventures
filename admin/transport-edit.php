@@ -1,7 +1,18 @@
 <?php
+/**
+ * File: admin/transport-edit.php
+ * Purpose: Create or edit a transportation option. Handles form display, validation, image upload, and slug generation.
+ * Dependencies: admin/includes/header.php (auth, DB, CSRF), admin/includes/sidebar.php, admin/includes/footer.php, config/helpers.php (csrf_field, CURRENCY_CODE)
+ * Used By: Admin staff creating/editing transport via admin/transportation.php
+ * Parent Files: admin/transportation.php (links to this page)
+ * Child Files: admin/includes/header.php, admin/includes/sidebar.php, admin/includes/footer.php
+ * @package GlobeTrek\Admin
+ */
+
 $pageTitle = 'Edit Transport';
 require_once __DIR__ . '/includes/header.php';
 
+// === LOAD EXISTING TRANSPORT (EDIT MODE) ===
 $transportId = (int)($_GET['id'] ?? 0);
 $isEdit = $transportId > 0;
 $transport = null;
@@ -10,22 +21,28 @@ if ($isEdit) {
     $stmt = $db->prepare("SELECT * FROM transportations WHERE id = :id");
     $stmt->execute([':id' => $transportId]);
     $transport = $stmt->fetch();
+    // Redirect if transport not found — prevents accessing edit form for a deleted record.
     if (!$transport) { header('Location: transportation.php'); exit; }
 }
 
 $errors = [];
 
+// === FORM SUBMISSION HANDLER ===
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // CSRF validation first — all subsequent processing depends on a valid token.
     if (!validateCSRFToken($_POST['csrf_token'] ?? null)) {
         $errors[] = 'Invalid security token. Please try again.';
     } else {
+    // Sanitize text inputs via trim().
     $name = trim($_POST['name'] ?? '');
     $description = trim($_POST['description'] ?? '');
     $shortDescription = trim($_POST['short_description'] ?? '');
     $location = trim($_POST['location'] ?? '');
     $vehicleType = $_POST['vehicle_type'] ?? 'Car';
+    // Cast numeric inputs to float for proper price/rating handling.
     $pricePerDay = (float)($_POST['price_per_day'] ?? 0);
     $rating = (float)($_POST['rating'] ?? 0);
+    // Checkbox inputs: present in POST only when checked; default to 0.
     $hasAc = isset($_POST['has_ac']) ? 1 : 0;
     $hasDriver = isset($_POST['has_driver']) ? 1 : 0;
     $hasInsurance = isset($_POST['has_insurance']) ? 1 : 0;
@@ -36,18 +53,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $isFeatured = isset($_POST['is_featured']) ? 1 : 0;
     $isActive = isset($_POST['is_active']) ? 1 : 0;
 
+    // Validation: required fields.
     if ($name === '') $errors[] = 'Name is required.';
     if ($location === '') $errors[] = 'Location is required.';
     if ($pricePerDay <= 0) $errors[] = 'Price per day must be a positive number.';
 
+    // === IMAGE UPLOAD HANDLER ===
+    // Preserve the existing image path unless a new file is uploaded.
     $imagePath = $transport['image'] ?? null;
     if (!empty($_FILES['image']['name'])) {
+        // Whitelist of allowed image extensions — prevents uploading executable files.
         $allowed = ['jpg', 'jpeg', 'png', 'webp'];
         $ext = strtolower(pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION));
         if (!in_array($ext, $allowed)) { $errors[] = 'Image must be JPG, PNG, or WebP.'; }
         else {
             $uploadDir = __DIR__ . '/../images/transport/';
             if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
+            // Generate a unique filename using timestamp + random bytes to prevent collisions and overwrites.
             $filename = 'transport_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $ext;
             if (move_uploaded_file($_FILES['image']['tmp_name'], $uploadDir . $filename)) {
                 $imagePath = 'images/transport/' . $filename;
@@ -55,7 +77,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
+    // === DATABASE INSERT / UPDATE ===
     if (empty($errors)) {
+        // Generate URL-friendly slug from the transport name for SEO-friendly URLs.
         $slug = strtolower(preg_replace('/[^a-zA-Z0-9]+/', '-', $name));
         $slug = trim($slug, '-');
 
@@ -66,19 +90,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt = $db->prepare("INSERT INTO transportations (name, slug, description, short_description, location, vehicle_type, price_per_day, rating, image, has_ac, has_driver, has_insurance, provider_name, provider_email, provider_phone, is_available, is_featured, is_active) VALUES (:name, :slug, :desc, :short, :loc, :type, :price, :rating, :image, :ac, :driver, :insurance, :prov_name, :prov_email, :prov_phone, :avail, :feat, :act)");
             $stmt->execute([':name'=>$name, ':slug'=>$slug, ':desc'=>$description, ':short'=>$shortDescription, ':loc'=>$location, ':type'=>$vehicleType, ':price'=>$pricePerDay, ':rating'=>$rating, ':image'=>$imagePath, ':ac'=>$hasAc, ':driver'=>$hasDriver, ':insurance'=>$hasInsurance, ':prov_name'=>$providerName, ':prov_email'=>$providerEmail, ':prov_phone'=>$providerPhone, ':avail'=>$isAvailable, ':feat'=>$isFeatured, ':act'=>$isActive]);
         }
+        // PRG pattern: redirect after successful save.
         header('Location: transportation.php?saved=1');
         exit;
     }
     }
 }
 
+// === SIDEBAR ===
 include __DIR__ . '/includes/sidebar.php';
 
+// === DEFAULT VALUES FOR NEW TRANSPORT ===
+// If not editing, populate fields with sensible defaults for the form.
 if (!$transport) $transport = ['name'=>'','description'=>'','short_description'=>'','location'=>'','vehicle_type'=>'Car','price_per_day'=>0,'rating'=>0,'image'=>'','has_ac'=>0,'has_driver'=>0,'has_insurance'=>0,'provider_name'=>'','provider_email'=>'','provider_phone'=>'','is_available'=>1,'is_featured'=>0,'is_active'=>1];
 ?>
 
 <div class="adm-sidebar-overlay" id="sidebarOverlay"></div>
 <main class="adm-main">
+    <!-- === TOP BAR === -->
     <div class="adm-topbar">
         <div class="adm-topbar-left">
             <button class="adm-menu-toggle" onclick="document.getElementById('adminSidebar').classList.toggle('open');document.getElementById('sidebarOverlay').classList.toggle('open');">
@@ -92,12 +121,17 @@ if (!$transport) $transport = ['name'=>'','description'=>'','short_description'=
     </div>
 
     <div class="adm-content">
+        <!-- === VALIDATION ERRORS === -->
         <?php foreach ($errors as $err): ?>
             <div class="adm-alert adm-alert-error"><span class="material-symbols-outlined">error</span> <?= htmlspecialchars($err) ?></div>
         <?php endforeach; ?>
 
+        <!-- === TRANSPORT EDIT FORM === -->
+        <!-- enctype="multipart/form-data" is required for file uploads. -->
         <form method="post" enctype="multipart/form-data" novalidate>
             <?php csrf_field(); ?>
+
+            <!-- === TRANSPORT DETAILS SECTION === -->
             <div class="adm-form-card">
                 <h2>Transport Details</h2>
                 <div class="adm-form-grid">
@@ -105,6 +139,7 @@ if (!$transport) $transport = ['name'=>'','description'=>'','short_description'=
                         <label for="name">Name *</label>
                         <input type="text" id="name" name="name" value="<?= htmlspecialchars($transport['name']) ?>" required>
                     </div>
+                    <!-- Vehicle type dropdown with predefined options -->
                     <div class="adm-form-field">
                         <label for="vehicle_type">Vehicle Type *</label>
                         <select id="vehicle_type" name="vehicle_type">
@@ -140,6 +175,7 @@ if (!$transport) $transport = ['name'=>'','description'=>'','short_description'=
                         <label for="description">Description</label>
                         <textarea id="description" name="description" rows="4"><?= htmlspecialchars($transport['description'] ?? '') ?></textarea>
                     </div>
+                    <!-- === FEATURES (Checkboxes) === -->
                     <div class="adm-form-field">
                         <label style="margin-bottom:0.5rem;">Features</label>
                         <div class="adm-form-check">
@@ -155,6 +191,7 @@ if (!$transport) $transport = ['name'=>'','description'=>'','short_description'=
                             <label for="has_insurance">Has Insurance</label>
                         </div>
                     </div>
+                    <!-- === STATUS (Checkboxes) === -->
                     <div class="adm-form-field">
                         <label style="margin-bottom:0.5rem;">Status</label>
                         <div class="adm-form-check">
@@ -172,6 +209,7 @@ if (!$transport) $transport = ['name'=>'','description'=>'','short_description'=
                 </div>
             </div>
 
+            <!-- === PROVIDER INFORMATION SECTION === -->
             <div class="adm-form-card">
                 <h2>Provider Information</h2>
                 <div class="adm-form-grid">
@@ -190,6 +228,7 @@ if (!$transport) $transport = ['name'=>'','description'=>'','short_description'=
                 </div>
             </div>
 
+            <!-- === FORM ACTIONS === -->
             <div class="adm-form-card">
                 <div class="adm-form-actions">
                     <a href="transportation.php" class="adm-btn adm-btn-secondary">Cancel</a>

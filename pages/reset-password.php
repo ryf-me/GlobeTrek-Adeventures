@@ -1,22 +1,30 @@
 <?php
 /**
- * Reset Password Page
- *
- * Validates the reset token from the email link and allows the user
- * to set a new password. Token must exist and not be expired.
+ * File: pages/reset-password.php
+ * Purpose: Reset password page - validates the reset token from the email
+ *          link and allows the user to set a new password. Token must exist
+ *          and not be expired. Uses the same password strength rules as signup.
+ * Dependencies: config/database.php, config/csrf.php
+ * Used By: forgot-password.php (reset link in email)
+ * Parent Files: forgot-password.php
+ * Child Files: None (leaf page)
+ * @package GlobeTrek\Pages
  */
 
+// === CONFIGURATION & DEPENDENCIES ===
 session_start();
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../config/csrf.php';
 $db = getDB();
 
+// === STATE INITIALIZATION ===
 $token = $_GET['token'] ?? '';
 $message = '';
 $success = false;
 $validToken = false;
 
-// Validate token on page load
+// === VALIDATE RESET TOKEN ON PAGE LOAD ===
+// Check if the token exists in the database and has not expired
 if ($token !== '') {
     $stmt = $db->prepare(
         "SELECT id, email, expires_at FROM password_resets WHERE token = :token LIMIT 1"
@@ -25,24 +33,31 @@ if ($token !== '') {
     $row = $stmt->fetch();
 
     if ($row && strtotime($row['expires_at']) > time()) {
+        // Token is valid and not expired
         $validToken = true;
     } elseif ($row) {
+        // Token found but expired
         $message = 'This reset link has expired. Please request a new one.';
     } else {
+        // Token not found in database
         $message = 'Invalid reset link. Please request a new one.';
     }
 } else {
     $message = 'No reset token provided.';
 }
 
-// Handle form submission
+// === HANDLE FORM SUBMISSION ===
+// Only process if token was valid on page load
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $validToken) {
+    // CSRF validation
     if (!validateCSRFToken($_POST['csrf_token'] ?? null)) {
         $message = 'Invalid security token. Please try again.';
     } else {
         $newPassword = $_POST['new_password'] ?? '';
         $confirmPassword = $_POST['confirm_password'] ?? '';
 
+        // === PASSWORD STRENGTH VALIDATION ===
+        // Same rules as signup page for consistency
         if (strlen($newPassword) < 8) {
             $message = 'Password must be at least 8 characters.';
         } elseif (!preg_match('/[A-Z]/', $newPassword)) {
@@ -54,18 +69,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $validToken) {
         } elseif ($newPassword !== $confirmPassword) {
             $message = 'Passwords do not match.';
         } else {
-            // Update password
+            // === UPDATE PASSWORD ===
+            // Hash the new password with bcrypt
             $hashed = password_hash($newPassword, PASSWORD_DEFAULT);
             $upd = $db->prepare("UPDATE users SET password = :pw WHERE email = :email");
             $upd->execute([':pw' => $hashed, ':email' => $row['email']]);
 
-            // Delete the reset token
+            // === DELETE USED TOKEN ===
+            // One-time use: delete the token after successful password reset
             $del = $db->prepare("DELETE FROM password_resets WHERE id = :id");
             $del->execute([':id' => $row['id']]);
 
             $success = true;
             $message = 'Your password has been reset successfully! You can now log in with your new password.';
-            $validToken = false; // Hide the form
+            // Hide the form after successful reset
+            $validToken = false;
         }
     }
 }
@@ -84,11 +102,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $validToken) {
     <link rel="stylesheet" href="../css/login.css">
 </head>
 <body class="login-page">
+
+    <!-- === BACKGROUND IMAGE === -->
     <div class="login-bg">
         <img src="../images/login-bg.jpg" alt="" aria-hidden="true">
         <div class="login-bg-overlay"></div>
     </div>
 
+    <!-- === TOP NAVIGATION BAR === -->
     <header class="login-topbar">
         <a class="login-topbar-logo" href="../index.php">
             <img src="../images/logo.png" alt="GlobeTrek Adventures logo" />
@@ -99,8 +120,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $validToken) {
         </a>
     </header>
 
+    <!-- === RESET PASSWORD FORM CARD === -->
     <main class="login-shell">
         <div class="login-card">
+            <!-- Dynamic icon: lock_open on success, lock otherwise -->
             <div class="login-lock">
                 <span class="material-symbols-outlined"><?php echo $success ? 'lock_open' : 'lock'; ?></span>
             </div>
@@ -112,16 +135,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $validToken) {
                 <?php endif; ?>
             </div>
 
+            <!-- Display success or error messages -->
             <?php if ($message !== ''): ?>
                 <div class="signup-message <?php echo $success ? 'success' : 'error'; ?>" role="<?php echo $success ? 'status' : 'alert'; ?>">
                     <?php echo $message; ?>
                 </div>
             <?php endif; ?>
 
+            <!-- === NEW PASSWORD FORM === -->
+            <!-- Only shown when token is valid and password not yet reset -->
             <?php if ($validToken): ?>
                 <form class="login-form reset-form" action="reset-password.php?token=<?php echo htmlspecialchars($token); ?>" method="post">
                     <?php csrf_field(); ?>
 
+                    <!-- New password field with strength meter -->
                     <div class="form-group">
                         <label for="new-password">New Password</label>
                         <div class="input-icon-wrapper">
@@ -135,6 +162,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $validToken) {
                         <div class="password-strength-meter"></div>
                     </div>
 
+                    <!-- Confirm password field -->
                     <div class="form-group">
                         <label for="confirm-password">Confirm New Password</label>
                         <div class="input-icon-wrapper">
@@ -154,6 +182,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $validToken) {
                 </form>
             <?php endif; ?>
 
+            <!-- === NAVIGATION LINKS === -->
             <p class="signup-prompt" style="margin-top:1rem;">
                 <?php if ($success): ?>
                     <a href="login.php">Go to Login</a>

@@ -1,24 +1,33 @@
 <?php
 /**
- * Email Verification Page
- *
- * Verifies a user's email address using a token link sent after registration.
- * The token is validated against the email_verifications table and must not be expired.
+ * File: pages/verify-email.php
+ * Purpose: Email verification page - verifies a user's email address using
+ *          a token link sent after registration. The token is validated
+ *          against the email_verifications table and must not be expired.
+ *          One-time use: token is deleted after successful verification.
+ * Dependencies: config/database.php
+ * Used By: signup.php (verification link in email), resend-verification.php (link in email)
+ * Parent Files: signup.php, resend-verification.php
+ * Child Files: None (leaf page)
+ * @package GlobeTrek\Pages
  */
 
+// === CONFIGURATION & DEPENDENCIES ===
 session_start();
 require_once __DIR__ . '/../config/database.php';
 $db = getDB();
 
+// === STATE INITIALIZATION ===
 $message = '';
 $success = false;
 
 $token = $_GET['token'] ?? '';
 
+// === VALIDATE VERIFICATION TOKEN ===
 if ($token === '') {
     $message = 'No verification token provided.';
 } else {
-    // Look up the token
+    // Look up the token in the email_verifications table
     $stmt = $db->prepare(
         "SELECT ev.id, ev.user_id, ev.expires_at
          FROM email_verifications ev
@@ -29,15 +38,17 @@ if ($token === '') {
     $row = $stmt->fetch();
 
     if (!$row) {
+        // Token not found (already used or invalid)
         $message = 'Invalid or already used verification link.';
     } elseif (strtotime($row['expires_at']) < time()) {
+        // Token found but expired
         $message = 'This verification link has expired. Please register again or request a new link.';
     } else {
-        // Mark email as verified
+        // === MARK EMAIL AS VERIFIED ===
         $upd = $db->prepare("UPDATE users SET email_verified = 1 WHERE id = :uid");
         $upd->execute([':uid' => $row['user_id']]);
 
-        // Delete the used token
+        // === DELETE USED TOKEN (one-time use) ===
         $del = $db->prepare("DELETE FROM email_verifications WHERE id = :id");
         $del->execute([':id' => $row['id']]);
 
@@ -60,11 +71,14 @@ if ($token === '') {
     <link rel="stylesheet" href="../css/login.css">
 </head>
 <body class="login-page">
+
+    <!-- === BACKGROUND IMAGE === -->
     <div class="login-bg">
         <img src="../images/login-bg.jpg" alt="" aria-hidden="true">
         <div class="login-bg-overlay"></div>
     </div>
 
+    <!-- === TOP NAVIGATION BAR === -->
     <header class="login-topbar">
         <a class="login-topbar-logo" href="../index.php">
             <img src="../images/logo.png" alt="GlobeTrek Adventures logo" />
@@ -75,8 +89,10 @@ if ($token === '') {
         </a>
     </header>
 
+    <!-- === EMAIL VERIFICATION RESULT CARD === -->
     <main class="login-shell">
         <div class="login-card">
+            <!-- Dynamic icon: success or error -->
             <div class="login-lock">
                 <span class="material-symbols-outlined"><?php echo $success ? 'mark_email_read' : 'error'; ?></span>
             </div>
@@ -85,10 +101,12 @@ if ($token === '') {
                 <h1><?php echo $success ? 'Email Verified!' : 'Verification Issue'; ?></h1>
             </div>
 
+            <!-- Display verification result message -->
             <div class="signup-message <?php echo $success ? 'success' : 'error'; ?>" role="<?php echo $success ? 'status' : 'alert'; ?>">
                 <?php echo htmlspecialchars($message); ?>
             </div>
 
+            <!-- Navigation to login -->
             <div style="text-align:center; margin-top:1.5rem;">
                 <a href="login.php" class="login-submit" style="display:inline-flex; text-decoration:none;">
                     <span class="material-symbols-outlined">login</span>

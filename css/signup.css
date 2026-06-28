@@ -1,5 +1,14 @@
+/**
+ * File: css/signup.css
+ * Purpose: Signup/registration page styles — full-bleed background design
+ *          with fixed background image, top bar, centered card form with
+ *          avatar icon, two-column form rows, password strength meter,
+ *          terms checkbox, social login, and trust/stats footer bar.
+ * Used By: signup.php
+ */
+
 /* ========================================
-   Signup Page — Full-bleed background design
+   Signup Page — Design Tokens
    ======================================== */
 
 :root {
@@ -15,7 +24,9 @@
     --signup-accent-hover: #d4603f;
 }
 
-/* ---- Page shell ---- */
+/* ========================================
+   Page Shell
+   ======================================== */
 .signup-page {
     min-height: 100vh;
     background: #1a2332;
@@ -26,7 +37,9 @@
     overflow-x: hidden;
 }
 
-/* ---- Background image ---- */
+/* ========================================
+   Background Image
+   ======================================== */
 .signup-bg {
     position: fixed;
     inset: 0;
@@ -50,7 +63,9 @@
     );
 }
 
-/* ---- Top bar (logo) ---- */
+/* ========================================
+   Top Bar (Logo)
+   ======================================== */
 .signup-topbar {
     position: relative;
     z-index: 2;
@@ -91,7 +106,9 @@
     letter-spacing: 0.3px;
 }
 
-/* ---- Main area ---- */
+/* ========================================
+   Main Area & Card
+   ======================================== */
 .signup-shell {
     position: relative;
     z-index: 1;
@@ -101,7 +118,6 @@
     padding: 0 clamp(1rem, 4vw, 3rem) 2rem;
 }
 
-/* ---- Card ---- */
 .signup-card {
     width: min(100%, 520px);
     background: var(--signup-cream);
@@ -125,7 +141,9 @@
     }
 }
 
-/* ---- Avatar icon ---- */
+/* ========================================
+   Avatar Icon
+   ======================================== */
 .signup-avatar {
     width: 68px;
     height: 68px;
@@ -142,7 +160,9 @@
     color: var(--signup-accent);
 }
 
-/* ---- Header ---- */
+/* ========================================
+   Header
+   ======================================== */
 .signup-header {
     text-align: center;
     margin-bottom: 0.25rem;
@@ -164,7 +184,9 @@
     line-height: 1.5;
 }
 
-/* ---- Error / success message ---- */
+/* ========================================
+   Error / Success Message
+   ======================================== */
 .signup-message {
     padding: 0.85rem 1rem;
     border-radius: 10px;
@@ -186,7 +208,9 @@
     color: var(--signup-error);
 }
 
-/* ---- Form ---- */
+/* ========================================
+   Form
+   ======================================== */
 .signup-form {
     display: flex;
     flex-direction: column;
@@ -206,14 +230,14 @@
     line-height: 1.25;
 }
 
-/* ---- Two-column row ---- */
+/* --- Two-Column Row --- */
 .form-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 0.85rem;
 }
 
-/* ---- Input with icon ---- */
+/* --- Input with Icon --- */
 .input-icon-wrapper {
     position: relative;
     width: 100%;
@@ -267,7 +291,7 @@
     line-height: 1.35;
 }
 
-/* ---- Password toggle ---- */
+/* --- Password Toggle --- */
 .password-toggle {
     position: absolute;
     right: 8px;
@@ -307,7 +331,9 @@
     display: block;
 }
 
-/* ---- Terms group ---- */
+/* ========================================
+   Terms Checkbox Group
+   ======================================== */
 .terms-group {
     display: flex;
     align-items: flex-start;
@@ -353,7 +379,9 @@
     padding-left: 1.5rem;
 }
 
-/* ---- Submit button ---- */
+/* ========================================
+   Submit Button
+   ======================================== */
 .signup-submit {
     width: 100%;
     height: 50px;
@@ -388,7 +416,9 @@
     font-size: 20px;
 }
 
-/* ---- Divider ---- */
+/* ========================================
+   Divider
+   ======================================== */
 .login-divider {
     display: grid;
     grid-template-columns: 1fr auto 1fr;
@@ -409,7 +439,9 @@
     white-space: nowrap;
 }
 
-/* ---- Social buttons ---- */
+/* ========================================
+   Social Login Buttons
+   ======================================== */
 .social-buttons {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -448,7 +480,9 @@
     flex-shrink: 0;
 }
 
-/* ---- Login prompt ---- */
+/* ========================================
+   Login Prompt
+   ======================================== */
 .signup-prompt {
     margin: 0;
     color: var(--signup-muted);
@@ -531,49 +565,8 @@
 }
 
 /* ========================================
-   Responsive
+   Password Strength Meter
    ======================================== */
-@media (max-width: 600px) {
-    .signup-topbar {
-        padding: 1rem 1.25rem;
-    }
-
-    .signup-shell {
-        padding: 0 1rem 1.5rem;
-    }
-
-    .signup-card {
-        border-radius: 16px;
-        padding: 2rem 1.5rem 1.75rem;
-    }
-
-    .form-row {
-        grid-template-columns: 1fr;
-        gap: 0.85rem;
-    }
-
-    .social-buttons {
-        grid-template-columns: 1fr;
-    }
-
-    .signup-stats-inner {
-        flex-wrap: wrap;
-        gap: 0.75rem;
-    }
-
-    .signup-stat {
-        flex: 1 1 45%;
-        justify-content: flex-start;
-    }
-}
-
-@media (max-width: 380px) {
-    .signup-stat {
-        flex: 1 1 100%;
-    }
-}
-
-/* ---- Password Strength Meter ---- */
 .password-strength-meter {
     display: flex;
     align-items: center;
@@ -612,4 +605,50 @@
 
 .has-error input {
     border-color: var(--signup-error) !important;
+}
+
+/* ========================================
+   Responsive Breakpoints
+   ======================================== */
+
+/* --- Mobile (max-width: 600px) --- */
+@media (max-width: 600px) {
+    .signup-topbar {
+        padding: 1rem 1.25rem;
+    }
+
+    .signup-shell {
+        padding: 0 1rem 1.5rem;
+    }
+
+    .signup-card {
+        border-radius: 16px;
+        padding: 2rem 1.5rem 1.75rem;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+        gap: 0.85rem;
+    }
+
+    .social-buttons {
+        grid-template-columns: 1fr;
+    }
+
+    .signup-stats-inner {
+        flex-wrap: wrap;
+        gap: 0.75rem;
+    }
+
+    .signup-stat {
+        flex: 1 1 45%;
+        justify-content: flex-start;
+    }
+}
+
+/* --- Small Mobile (max-width: 380px) --- */
+@media (max-width: 380px) {
+    .signup-stat {
+        flex: 1 1 100%;
+    }
 }

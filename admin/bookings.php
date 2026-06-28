@@ -1,17 +1,30 @@
 <?php
+/**
+ * File: admin/bookings.php
+ * Purpose: Lists all bookings with status filtering, search, staff assignment, and status update functionality. Includes pagination and notification emails.
+ * Dependencies: admin/includes/header.php (auth, DB, CSRF), admin/includes/sidebar.php, admin/includes/footer.php, config/logger.php (logActivity), config/helpers.php (csrf_field, formatPrice), includes/notifications.php (sendBookingStatusUpdate)
+ * Used By: Admin/staff managing bookings
+ * Parent Files: None (entry-point page)
+ * Child Files: admin/includes/header.php, admin/includes/sidebar.php, admin/includes/footer.php, config/logger.php, includes/notifications.php
+ * @package GlobeTrek\Admin
+ */
+
 $pageTitle = 'Manage Bookings';
 require_once __DIR__ . '/includes/header.php';
 require_once __DIR__ . '/../config/logger.php';
 
-// Handle status update
+// === STATUS UPDATE HANDLER ===
+// Allows admin to change a booking's status (pending/confirmed/cancelled).
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'update_status') {
+    // CSRF token validation — rejects the request if the token is missing or invalid.
     if (!validateCSRFToken($_POST['csrf_token'] ?? null)) {
         $error = 'Invalid security token. Please try again.';
     } else {
         $bid = (int)($_POST['booking_id'] ?? 0);
         $newStatus = $_POST['status'] ?? '';
+        // Validate status against allowed values to prevent arbitrary status injection.
         if ($bid > 0 && in_array($newStatus, ['pending', 'confirmed', 'cancelled'])) {
-            // Get old status before updating
+            // Fetch old status before updating for notification comparison.
             $oldStmt = $db->prepare("SELECT status FROM bookings WHERE id = :id");
             $oldStmt->execute([':id' => $bid]);
             $oldStatus = $oldStmt->fetch()['status'] ?? '';
@@ -20,7 +33,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'updat
             $stmt->execute([':status' => $newStatus, ':id' => $bid]);
             logActivity('booking_status_updated', 'booking', $bid, 'Status changed to ' . $newStatus);
 
-            // Send status update notification
+            // === SEND STATUS UPDATE NOTIFICATION ===
+            // Only send email if the status actually changed and the old status was valid.
             if ($oldStatus !== $newStatus && $oldStatus !== '') {
                 require_once __DIR__ . '/../includes/notifications.php';
                 $bStmt = $db->prepare("SELECT * FROM bookings WHERE id = :id");
@@ -32,13 +46,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'updat
                 }
             }
 
+            // PRG pattern: redirect after POST to avoid duplicate submissions on refresh.
             header('Location: bookings.php?updated=1');
             exit;
         }
     }
 }
 
-// Handle staff assignment
+// === STAFF ASSIGNMENT HANDLER ===
+// Assigns a staff member to a booking for operational management.
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'assign_staff') {
     if (!validateCSRFToken($_POST['csrf_token'] ?? null)) {
         $error = 'Invalid security token. Please try again.';
@@ -46,7 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'assig
         $staffId = (int)($_POST['staff_id'] ?? 0);
         $bookingId = (int)($_POST['booking_id'] ?? 0);
         if ($staffId > 0 && $bookingId > 0) {
-            // Check if already assigned
+            // Prevent duplicate assignments by checking if the staff member is already assigned.
             $checkStmt = $db->prepare("SELECT id FROM staff_assignments WHERE staff_id = :sid AND entity_type = 'booking' AND entity_id = :eid LIMIT 1");
             $checkStmt->execute([':sid' => $staffId, ':eid' => $bookingId]);
             if (!$checkStmt->fetch()) {
@@ -60,7 +76,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'assig
     }
 }
 
-// Handle staff unassignment
+// === STAFF UNASSIGNMENT HANDLER ===
+// Removes a staff assignment from a booking.
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'unassign_staff') {
     if (!validateCSRFToken($_POST['csrf_token'] ?? null)) {
         $error = 'Invalid security token. Please try again.';
@@ -76,15 +93,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'unass
     }
 }
 
+// === SIDEBAR ===
 include __DIR__ . '/includes/sidebar.php';
 
+// === FILTER / SEARCH / PAGINATION ===
 $filter = $_GET['filter'] ?? 'all';
 $where = '';
 $params = [];
+// Build WHERE clause based on the active status filter tab.
 if ($filter === 'pending') { $where = "WHERE b.status = 'pending'"; }
 elseif ($filter === 'confirmed') { $where = "WHERE b.status = 'confirmed'"; }
 elseif ($filter === 'cancelled') { $where = "WHERE b.status = 'cancelled'"; }
 
+// Append search conditions for reference, name, and email fields.
 $search = trim($_GET['q'] ?? '');
 if ($search !== '') {
     $where = ($where === '') ? "WHERE" : $where . " AND";
@@ -95,15 +116,18 @@ if ($search !== '') {
     $params[':q4'] = "%$search%";
 }
 
+// Calculate pagination offset.
 $page = max(1, (int)($_GET['page'] ?? 1));
 $perPage = 20;
 $offset = ($page - 1) * $perPage;
 
+// Get total row count for pagination controls.
 $countStmt = $db->prepare("SELECT COUNT(*) AS cnt FROM bookings b $where");
 $countStmt->execute($params);
 $totalRows = (int)$countStmt->fetch()['cnt'];
 $totalPages = max(1, ceil($totalRows / $perPage));
 
+// === FETCH BOOKINGS (with JOINs for user and package info) ===
 $stmt = $db->prepare(
     "SELECT b.*, u.full_name AS user_name, p.title AS package_title
      FROM bookings b
@@ -113,13 +137,16 @@ $stmt = $db->prepare(
      ORDER BY b.created_at DESC
      LIMIT :limit OFFSET :offset"
 );
+// Bind all dynamic LIKE parameters.
 foreach ($params as $k => $v) $stmt->bindValue($k, $v);
+// Bind limit/offset as integers to prevent PDO type issues.
 $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
 $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
 $stmt->execute();
 $bookings = $stmt->fetchAll();
 
-// Load staff assignments for displayed bookings
+// === LOAD STAFF ASSIGNMENTS ===
+// Eagerly load all staff assignments for the displayed bookings in a single query.
 $bookingIds = array_column($bookings, 'id');
 $staffAssignments = [];
 if (!empty($bookingIds)) {
@@ -138,7 +165,8 @@ if (!empty($bookingIds)) {
     }
 }
 
-// Load available staff for assignment dropdown
+// === LOAD AVAILABLE STAFF ===
+// Fetch all available staff members for the assignment dropdown.
 $availableStaff = $db->query(
     "SELECT sp.id, u.full_name, sp.department
      FROM staff_profiles sp
@@ -147,6 +175,7 @@ $availableStaff = $db->query(
      ORDER BY u.full_name ASC"
 )->fetchAll();
 
+// Short department labels for compact display in the staff dropdown.
 $deptLabels = [
     'operations' => 'Ops',
     'customer_service' => 'CS',
@@ -154,7 +183,8 @@ $deptLabels = [
     'marketing' => 'Mkt',
 ];
 
-// Stats
+// === STATUS STATS ===
+// Aggregate booking counts by status for the tab filter badges.
 $stats = [];
 $res = $db->query("SELECT status, COUNT(*) AS cnt FROM bookings GROUP BY status");
 foreach ($res->fetchAll() as $r) $stats[$r['status']] = (int)$r['cnt'];
@@ -163,6 +193,7 @@ $totalBookings = array_sum($stats);
 
 <div class="adm-sidebar-overlay" id="sidebarOverlay"></div>
 <main class="adm-main">
+    <!-- === TOP BAR === -->
     <div class="adm-topbar">
         <div class="adm-topbar-left">
             <button class="adm-menu-toggle" onclick="document.getElementById('adminSidebar').classList.toggle('open');document.getElementById('sidebarOverlay').classList.toggle('open');">
@@ -177,6 +208,7 @@ $totalBookings = array_sum($stats);
     </div>
 
     <div class="adm-content">
+        <!-- === FLASH MESSAGES === -->
         <?php if (isset($_GET['updated'])): ?>
             <div class="adm-alert adm-alert-success"><span class="material-symbols-outlined">check_circle</span> Booking status updated.</div>
         <?php endif; ?>
@@ -187,10 +219,12 @@ $totalBookings = array_sum($stats);
             <div class="adm-alert adm-alert-success"><span class="material-symbols-outlined">check_circle</span> Staff assignment removed.</div>
         <?php endif; ?>
 
+        <!-- === PAGE HEADER === -->
         <div class="adm-page-header">
             <h1>Bookings (<?= $totalBookings ?>)</h1>
         </div>
 
+        <!-- === STATUS FILTER TABS === -->
         <div class="adm-tabs">
             <a href="?filter=all" class="adm-tab <?= $filter === 'all' ? 'active' : '' ?>">All (<?= $totalBookings ?>)</a>
             <a href="?filter=pending" class="adm-tab <?= $filter === 'pending' ? 'active' : '' ?>">Pending (<?= $stats['pending'] ?? 0 ?>)</a>
@@ -198,14 +232,17 @@ $totalBookings = array_sum($stats);
             <a href="?filter=cancelled" class="adm-tab <?= $filter === 'cancelled' ? 'active' : '' ?>">Cancelled (<?= $stats['cancelled'] ?? 0 ?>)</a>
         </div>
 
+        <!-- === SEARCH BAR === -->
         <div class="adm-filter-bar">
             <form method="get" class="adm-search" style="display:flex;">
+                <!-- Preserve the active filter when searching -->
                 <input type="hidden" name="filter" value="<?= htmlspecialchars($filter) ?>">
                 <span class="material-symbols-outlined">search</span>
                 <input type="text" name="q" placeholder="Search by reference, name, email..." value="<?= htmlspecialchars($search) ?>">
             </form>
         </div>
 
+        <!-- === BOOKINGS TABLE / EMPTY STATE === -->
         <?php if (empty($bookings)): ?>
             <div class="adm-empty">
                 <span class="material-symbols-outlined adm-empty-icon">flight_takeoff</span>
@@ -238,6 +275,7 @@ $totalBookings = array_sum($stats);
                                     <div class="cell-sub"><?= htmlspecialchars($b['email']) ?></div>
                                 </td>
                                 <td><?= htmlspecialchars($b['package_title'] ?? 'N/A') ?></td>
+                                <!-- === ASSIGNED STAFF COLUMN === -->
                                 <td>
                                     <?php if (!empty($staffAssignments[$b['id']])): ?>
                                         <?php foreach ($staffAssignments[$b['id']] as $sa): ?>
@@ -245,6 +283,7 @@ $totalBookings = array_sum($stats);
                                                 <span class="adm-status-badge adm-status-active" style="font-size:0.7rem;padding:0.15rem 0.4rem;">
                                                     <?= htmlspecialchars($sa['staff_name']) ?>
                                                 </span>
+                                                <!-- Unassign button with CSRF and confirmation -->
                                                 <form method="post" style="display:inline;" data-confirm="Remove assignment?">
                                                     <?php csrf_field(); ?>
                                                     <input type="hidden" name="action" value="unassign_staff">
@@ -258,6 +297,7 @@ $totalBookings = array_sum($stats);
                                     <?php else: ?>
                                         <span class="cell-muted">Unassigned</span>
                                     <?php endif; ?>
+                                    <!-- Staff assignment dropdown -->
                                     <div style="margin-top:0.35rem;">
                                         <select onchange="assignStaffToBooking(this, <?= $b['id'] ?>)" style="padding:0.2rem 0.4rem;border:1px solid var(--adm-outline-variant);font-size:0.75rem;font-family:inherit;background:transparent;border-radius:4px;">
                                             <option value="">+ Assign Staff</option>
@@ -270,6 +310,7 @@ $totalBookings = array_sum($stats);
                                 <td><?= $b['num_travellers'] ?></td>
                                 <td class="cell-mono"><?= formatPrice($b['total_price'], 2) ?></td>
                                 <td class="cell-muted"><?= $b['travel_date'] ? date('M d, Y', strtotime($b['travel_date'])) : '—' ?></td>
+                                <!-- === STATUS BADGE === -->
                                 <td>
                                     <span class="adm-status-badge adm-status-<?= $b['status'] ?>">
                                         <span class="adm-badge-dot"></span>
@@ -277,12 +318,14 @@ $totalBookings = array_sum($stats);
                                     </span>
                                 </td>
                                 <td class="cell-muted"><?= date('M d, Y', strtotime($b['created_at'])) ?></td>
+                                <!-- === STATUS UPDATE FORM === -->
                                 <td>
                                     <div class="cell-actions">
                                         <form method="post" style="display:flex;gap:0.35rem;">
                                             <?php csrf_field(); ?>
                                             <input type="hidden" name="action" value="update_status">
                                             <input type="hidden" name="booking_id" value="<?= $b['id'] ?>">
+                                            <!-- Status select with JS confirmation on change -->
                                             <select name="status" onchange="if(confirm('Update status?')) this.form.submit();" style="padding:0.3rem 0.5rem;border:1px solid var(--adm-outline-variant);font-size:0.78rem;font-family:inherit;background:transparent;">
                                                 <option value="pending" <?= $b['status'] === 'pending' ? 'selected' : '' ?>>Pending</option>
                                                 <option value="confirmed" <?= $b['status'] === 'confirmed' ? 'selected' : '' ?>>Confirmed</option>
@@ -297,6 +340,7 @@ $totalBookings = array_sum($stats);
                 </table>
             </div>
 
+            <!-- === PAGINATION CONTROLS === -->
             <?php if ($totalPages > 1): ?>
                 <div class="adm-pagination">
                     <a href="?filter=<?= urlencode($filter) ?>&page=<?= max(1, $page - 1) ?>" class="<?= $page <= 1 ? 'disabled' : '' ?>">&laquo;</a>
@@ -310,15 +354,19 @@ $totalBookings = array_sum($stats);
     </div>
 </main>
 
+<!-- === JAVASCRIPT: STAFF ASSIGNMENT (DYNAMIC FORM SUBMISSION) === -->
+<!-- Builds and submits a hidden form to POST staff assignment data via AJAX-like behavior. -->
 <script>
 function assignStaffToBooking(select, bookingId) {
     var staffId = select.value;
     if (!staffId) return;
 
+    // Dynamically create a form element to POST the assignment.
     var form = document.createElement('form');
     form.method = 'POST';
     form.style.display = 'none';
 
+    // Retrieve CSRF token from an existing form on the page.
     var csrfToken = document.querySelector('input[name="csrf_token"]').value;
 
     var csrfInput = document.createElement('input');

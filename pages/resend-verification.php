@@ -1,10 +1,19 @@
 <?php
 /**
- * Resend Verification Email
- *
- * Allows users who haven't verified their email to request a new verification link.
+ * File: pages/resend-verification.php
+ * Purpose: Resend verification email page - allows users who haven't verified
+ *          their email to request a new verification link. Rate-limited to
+ *          3 attempts per hour. Prevents email enumeration by showing the
+ *          same success message regardless of whether the email exists.
+ * Dependencies: config/database.php, config/rate-limiter.php, config/otp.php,
+ *               includes/mailer.php
+ * Used By: login.php (resend verification link), signup.php (after registration)
+ * Parent Files: login.php, signup.php
+ * Child Files: None (leaf page)
+ * @package GlobeTrek\Pages
  */
 
+// === CONFIGURATION & DEPENDENCIES ===
 session_start();
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../config/rate-limiter.php';
@@ -12,33 +21,39 @@ require_once __DIR__ . '/../config/otp.php';
 require_once __DIR__ . '/../includes/mailer.php';
 $db = getDB();
 
+// === STATE INITIALIZATION ===
 $message = '';
 $success = false;
+// Pre-fill email from query string or previous POST submission
 $email = $_GET['email'] ?? $_POST['email'] ?? '';
 
+// === HANDLE FORM SUBMISSION ===
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = filter_var(trim($_POST['email'] ?? ''), FILTER_SANITIZE_EMAIL);
 
     if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $message = 'Please enter a valid email address.';
+    // Rate limiting — max 3 resend attempts per hour per IP
     } elseif (!checkRateLimit('resend_verify', 3, 3600, true)) {
         $message = 'Too many resend attempts. Please try again later.';
     } else {
-        // Find user
+        // Look up user by email
         $stmt = $db->prepare("SELECT id, email_verified FROM users WHERE email = :email LIMIT 1");
         $stmt->execute([':email' => $email]);
         $user = $stmt->fetch();
 
         if (!$user || $user['email_verified'] == 1) {
-            // Show same message to prevent email enumeration
+            // === PREVENT EMAIL ENUMERATION ===
+            // Show the same success message whether user exists, is verified, or not found
             $success = true;
             $message = 'If an unverified account exists with that email, a new verification link has been sent.';
         } else {
-            // Delete old verification tokens
+            // === GENERATE NEW VERIFICATION TOKEN ===
+            // Delete old verification tokens for this user first
             $del = $db->prepare("DELETE FROM email_verifications WHERE user_id = :uid");
             $del->execute([':uid' => $user['id']]);
 
-            // Generate new token
+            // Generate new 64-char hex token (valid 24 hours)
             $verifyToken = bin2hex(random_bytes(32));
             $expiresAt = date('Y-m-d H:i:s', time() + 86400);
             $stmt = $db->prepare(
@@ -46,7 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             );
             $stmt->execute([':uid' => $user['id'], ':token' => $verifyToken, ':expires' => $expiresAt]);
 
-            // Send email
+            // === SEND VERIFICATION EMAIL ===
             $verifyLink = BASE_URL . '/pages/verify-email.php?token=' . $verifyToken;
             $emailContent = '
                 <h2 style="margin:0 0 16px;color:#264653;">Email Verification</h2>
@@ -80,11 +95,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="stylesheet" href="../css/login.css">
 </head>
 <body class="login-page">
+
+    <!-- === BACKGROUND IMAGE === -->
     <div class="login-bg">
         <img src="../images/login-bg.jpg" alt="" aria-hidden="true">
         <div class="login-bg-overlay"></div>
     </div>
 
+    <!-- === TOP NAVIGATION BAR === -->
     <header class="login-topbar">
         <a class="login-topbar-logo" href="../index.php">
             <img src="../images/logo.png" alt="GlobeTrek Adventures logo" />
@@ -95,6 +113,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </a>
     </header>
 
+    <!-- === RESEND VERIFICATION FORM CARD === -->
     <main class="login-shell">
         <div class="login-card">
             <div class="login-lock">
@@ -106,15 +125,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <p>Enter your email to receive a new verification link.</p>
             </div>
 
+            <!-- Display success or error messages -->
             <?php if ($message !== ''): ?>
                 <div class="signup-message <?php echo $success ? 'success' : 'error'; ?>" role="<?php echo $success ? 'status' : 'alert'; ?>">
                     <?php echo $message; ?>
                 </div>
             <?php endif; ?>
 
+            <!-- === RESEND FORM === -->
             <form class="login-form forgot-form" action="resend-verification.php" method="post">
                 <?php csrf_field(); ?>
 
+                <!-- Email field (pre-filled from GET/POST if available) -->
                 <div class="form-group">
                     <label for="forgot-email">Email Address</label>
                     <div class="input-icon-wrapper">
