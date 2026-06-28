@@ -189,6 +189,10 @@ $currentPage = ($currentPage === 'index.php') ? 'home' : str_replace('.php', '',
                                 <span class="material-symbols-outlined">chat_bubble</span>
                                 Inquiries
                             </a>
+                            <a class="dropdown-nav-item" href="<?php echo $basePath; ?>pages/my-reviews.php" role="menuitem">
+                                <span class="material-symbols-outlined">rate_review</span>
+                                My Reviews
+                            </a>
                             <a class="dropdown-nav-item" href="<?php echo $basePath; ?>pages/settings.php" role="menuitem">
                                 <span class="material-symbols-outlined">settings</span>
                                 Settings

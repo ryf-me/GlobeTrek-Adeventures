@@ -100,6 +100,9 @@ if (function_exists('getDB')) {
 
             <div class="inq-modal-body">
 
+                <!-- === VALIDATION ERROR DISPLAY === -->
+                <div id="rv-error" class="rv-error" style="display:none;background:#fff0f0;border:1px solid #e76f51;color:#c44;padding:0.6rem 1rem;border-radius:6px;margin-bottom:1rem;font-size:0.9rem;"></div>
+
                 <!-- === REVIEW TYPE SELECTOR === -->
                 <!-- Determines which entity selectors to show -->
                 <!-- onchange calls JavaScript onReviewTypeChange() to toggle visibility -->

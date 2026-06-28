@@ -8,7 +8,7 @@
  * Child Files: None
  * @package GlobeTrek\Pages
  */
-session_start();
+require_once __DIR__ . '/../config/session.php';
 
 // === AUTH CHECK ===
 // Redirect unauthenticated users to login, preserving the payment URL for redirect-back.

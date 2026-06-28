@@ -9,7 +9,7 @@
  * @package GlobeTrek\Pages
  */
 
-session_start();
+require_once __DIR__ . '/../config/session.php';
 
 // === DATABASE AND SECURITY SETUP ===
 require_once __DIR__ . '/../config/database.php';

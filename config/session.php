@@ -44,6 +44,12 @@ if (session_status() === PHP_SESSION_NONE) {
     // Prevent JavaScript from accessing the session cookie (XSS protection)
     ini_set('session.cookie_httponly', 1);
 
+    // Send cookie only over HTTPS connections when available
+    ini_set('session.cookie_secure', $isSecure ? 1 : 0);
+
+    // Prevent session ID from being passed via URL query string
+    ini_set('session.use_only_cookies', 1);
+
     // Mitigate CSRF attacks by only sending the cookie with same-site requests
     // 'Lax' allows the cookie on top-level navigations (e.g., clicking a link)
     ini_set('session.cookie_samesite', 'Lax');

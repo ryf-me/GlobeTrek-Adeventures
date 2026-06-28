@@ -3,27 +3,34 @@
 # Purpose: Apache web server configuration for GlobeTrek Adventures
 #
 # This file configures:
-#   1. mod_rewrite engine for URL rewriting
-#   2. Custom error documents (404 and 500)
+#   1. Custom error documents (404, 403, 500)
+#   2. Security headers
+#   3. Directory protection
 #
 # Dependencies: None
 # Used By: Apache web server (auto-loaded for all requests)
-#
-# Notes:
-#   - mod_rewrite must be enabled in Apache for RewriteEngine to work
-#   - Error documents point to custom PHP pages in the /pages directory
-#   - The paths are absolute from the web root (not filesystem root)
 # =============================================================================
 
-# Enable the rewrite engine for clean URLs and redirects
-RewriteEngine On
+# =============================================================================
+# SECURITY HEADERS
+# =============================================================================
+# Protect against common web vulnerabilities
+Header set X-Content-Type-Options "nosniff"
+Header set X-Frame-Options "DENY"
+Header set X-XSS-Protection "1; mode=block"
+Header set Referrer-Policy "strict-origin-when-cross-origin"
+
+# Prevent directory listing browsing
+Options -Indexes
 
 # =============================================================================
 # CUSTOM ERROR DOCUMENTS
 # =============================================================================
-# When a 404 (Not Found) or 500 (Server Error) occurs,
+# When a 403, 404, or 500 error occurs,
 # Apache serves these custom PHP pages instead of the default error page.
-# The paths are relative to the web root (e.g., http://localhost/GlobeTrek-Adeventures/)
+
+# 403 Error → Custom "Access Denied" page
+ErrorDocument 403 /GlobeTrek-Adeventures/pages/403.php
 
 # 404 Error → Custom "Page Not Found" page
 ErrorDocument 404 /GlobeTrek-Adeventures/pages/404.php

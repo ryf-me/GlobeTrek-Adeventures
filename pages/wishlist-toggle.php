@@ -10,7 +10,7 @@
  * @package GlobeTrek\Pages
  */
 
-session_start();
+require_once __DIR__ . '/../config/session.php';
 
 // All responses are JSON — set header early for consistent output
 header('Content-Type: application/json');

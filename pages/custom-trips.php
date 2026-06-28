@@ -9,7 +9,7 @@
  * @package GlobeTrek\Pages
  */
 
-session_start();
+require_once __DIR__ . '/../config/session.php';
 
 // === AUTHENTICATION CHECK ===
 // Only logged-in users can submit custom trip requests

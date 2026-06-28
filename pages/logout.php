@@ -12,7 +12,7 @@
  */
 
 // === SESSION INITIALIZATION ===
-session_start();
+require_once __DIR__ . '/../config/session.php';
 
 // === DELETE REMEMBER-ME TOKENS ===
 // Remove all persistent login tokens for this user to prevent future auto-login

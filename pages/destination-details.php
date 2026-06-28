@@ -8,7 +8,7 @@
  * Child Files: None
  * @package GlobeTrek\Pages
  */
-session_start();
+require_once __DIR__ . '/../config/session.php';
 require_once __DIR__ . '/../config/database.php';
 $db = getDB();
 

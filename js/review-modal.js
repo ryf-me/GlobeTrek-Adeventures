@@ -257,20 +257,33 @@
       var btn = document.getElementById('rv-submit-btn');
       var typeSelect = document.getElementById('rv-review-type');
       var type = typeSelect ? typeSelect.value : 'general';
+      var errorEl = document.getElementById('rv-error');
 
       if (!rating || !content) return;
 
+      // Helper to show inline error and re-enable button
+      function showError(msg) {
+        e.preventDefault();
+        if (errorEl) {
+          errorEl.textContent = msg;
+          errorEl.style.display = 'block';
+        }
+        if (btn) btn.disabled = false;
+        return;
+      }
+
+      // Hide previous error
+      if (errorEl) errorEl.style.display = 'none';
+
       // Require at least one star
       if (parseInt(rating.value, 10) < 1) {
-        e.preventDefault();
-        alert('Please select a star rating.');
+        showError('Please select a star rating.');
         return;
       }
 
       // Require minimum review length
       if (content.value.trim().length < 10) {
-        e.preventDefault();
-        alert('Your review must be at least 10 characters long.');
+        showError('Your review must be at least 10 characters long.');
         return;
       }
 
@@ -278,16 +291,14 @@
       if (type === 'package') {
         var pkgSelect = document.getElementById('rv-package-select');
         if (pkgSelect && parseInt(pkgSelect.value, 10) < 1) {
-          e.preventDefault();
-          alert('Please select a package to review.');
+          showError('Please select a package to review.');
           return;
         }
       // For guide reviews: require a guide selection
       } else if (type === 'guide') {
         var guideSelect = document.getElementById('rv-guide-select');
         if (guideSelect && parseInt(guideSelect.value, 10) < 1) {
-          e.preventDefault();
-          alert('Please select a guide to review.');
+          showError('Please select a guide to review.');
           return;
         }
         // Ensure the hidden guide_id is synced before submission

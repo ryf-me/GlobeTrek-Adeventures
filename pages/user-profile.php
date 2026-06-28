@@ -10,7 +10,7 @@
  * @package GlobeTrek\Pages
  */
 
-session_start();
+require_once __DIR__ . '/../config/session.php';
 
 // === AUTH GUARD ===
 if (!isset($_SESSION['user_id'])) {

@@ -10,7 +10,7 @@
  * @package GlobeTrek\Pages
  */
 
-session_start();
+require_once __DIR__ . '/../config/session.php';
 
 // === AUTH GUARD ===
 // Redirect unauthenticated users to login page

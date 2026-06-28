@@ -103,8 +103,8 @@ function checkFileRateLimit(string $rateKey, int $maxAttempts, int $windowSecond
     // sys_get_temp_dir() returns the system temp directory (e.g., /tmp on Linux, C:\Windows\Temp on Windows)
     $cacheDir = sys_get_temp_dir() . '/globetrek_rate';
     if (!is_dir($cacheDir)) {
-        // 0733 permissions: owner read/write/execute, group read/execute, others read/execute
-        mkdir($cacheDir, 0733, true);
+        // 0700 permissions: owner read/write/execute only
+        mkdir($cacheDir, 0700, true);
     }
 
     // Use MD5 hash of the rate key as the filename
@@ -223,7 +223,7 @@ function recordLoginAttempt(string $email, string $ip): void
             "INSERT INTO login_attempts (email, ip_address) VALUES (:email, :ip)"
         );
         $stmt->execute([':email' => $email, ':ip' => $ip]);
-    } catch (Exception$e) {
+    } catch (Exception $e) {
         // Log the error but don't break the application
         error_log('Failed to record login attempt: ' . $e->getMessage());
     }

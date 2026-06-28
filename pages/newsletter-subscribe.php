@@ -9,7 +9,7 @@
  * @package GlobeTrek\Pages
  */
 
-session_start();
+require_once __DIR__ . '/../config/session.php';
 // Set JSON response header for AJAX requests
 header('Content-Type: application/json');
 

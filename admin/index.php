@@ -125,8 +125,7 @@ $userGrowth = $db->query(
 $userGrowth = array_reverse($userGrowth);
 ?>
 
-<!-- === SIDEBAR OVERLAY (mobile) === -->
-<div class="adm-sidebar-overlay" id="sidebarOverlay"></div>
+<!-- === SIDEBAR OVERLAY (mobile — defined in sidebar.php) === -->
 <main class="adm-main">
     <!-- === TOP BAR === -->
     <div class="adm-topbar">

@@ -8,7 +8,7 @@
  * Child Files: payment.php (redirect target after successful booking creation)
  * @package GlobeTrek\Pages
  */
-session_start();
+require_once __DIR__ . '/../config/session.php';
 
 // === AUTH CHECK ===
 // Only logged-in users can make bookings; redirect guests to login.
@@ -21,6 +21,8 @@ require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../config/csrf.php';
 require_once __DIR__ . '/../config/currency.php';
 $db = getDB();
+
+$basePath = '../';
 
 // === PACKAGE LOOKUP ===
 // Fetch the selected package by ID; only active packages are bookable.
@@ -36,8 +38,8 @@ if (!$package) {
 }
 
 // === PRICE CALCULATION ===
-// Hardcoded guest count (2 adults) with 10% tax.
-$guestCount = 2;
+// Read guest count from URL parameter, default to 2 adults with 10% tax.
+$guestCount = isset($_GET['travelers']) ? max(1, (int)$_GET['travelers']) : 2;
 $subtotal = $package['price'] * $guestCount;
 $taxes = round($subtotal * 0.10);
 $total = $subtotal + $taxes;
