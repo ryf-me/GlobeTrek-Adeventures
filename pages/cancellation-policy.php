@@ -1,3 +1,4 @@
+<?php
 /**
  * File: pages/cancellation-policy.php
  * Purpose: Cancellation Policy page detailing terms for cancelling bookings and refund eligibility

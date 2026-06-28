@@ -1,3 +1,4 @@
+<?php
 /**
  * File: pages/userprofiledropdown.php
  * Purpose: Demo/documentation page for the user profile dropdown component used in navigation bar
@@ -8,7 +9,6 @@
  * @package GlobeTrek\Pages
  */
 
-<?php
 session_start();
 
 // === AUTHENTICATION CHECK ===

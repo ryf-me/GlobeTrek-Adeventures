@@ -1,3 +1,4 @@
+<?php
 /**
  * File: pages/payment-policy.php
  * Purpose: Payment Policy page detailing payment terms, accepted methods, and refund procedures

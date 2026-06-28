@@ -10,6 +10,9 @@
  * @package GlobeTrek\Pages
  */
 
+require_once __DIR__ . '/../config/database.php';
+$db = getDB();
+
 // === GUIDE ID EXTRACTION ===
 // Cast to int to ensure only numeric IDs are used in queries.
 $guideId = isset($_GET['id']) ? (int) $_GET['id'] : 0;

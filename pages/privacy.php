@@ -1,3 +1,4 @@
+<?php
 /**
  * File: pages/privacy.php
  * Purpose: Privacy Policy page detailing how GlobeTrek collects, uses, and protects user data

@@ -1,3 +1,4 @@
+<?php
 /**
  * File: pages/faq.php
  * Purpose: Frequently Asked Questions page with categorized questions and answers about GlobeTrek services

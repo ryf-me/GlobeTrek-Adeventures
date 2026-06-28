@@ -1,3 +1,4 @@
+<?php
 /**
  * File: pages/newsletter-subscribe.php
  * Purpose: AJAX endpoint for newsletter subscription - handles email subscription via POST request
@@ -8,7 +9,6 @@
  * @package GlobeTrek\Pages
  */
 
-<?php
 session_start();
 // Set JSON response header for AJAX requests
 header('Content-Type: application/json');

@@ -1,3 +1,4 @@
+<?php
 /**
  * File: pages/contact.php
  * Purpose: Contact form page for users to send messages to GlobeTrek support
@@ -8,7 +9,6 @@
  * @package GlobeTrek\Pages
  */
 
-<?php
 session_start();
 
 // === DATABASE AND SECURITY SETUP ===

@@ -1,3 +1,4 @@
+<?php
 /**
  * File: pages/404.php
  * Purpose: Custom 404 error page displayed when a requested page is not found
@@ -8,7 +9,6 @@
  * @package GlobeTrek\Pages
  */
 
-<?php
 // Set HTTP response code to 404 (Not Found)
 http_response_code(404);
 $basePath = '../';

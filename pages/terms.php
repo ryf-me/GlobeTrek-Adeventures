@@ -1,3 +1,4 @@
+<?php
 /**
  * File: pages/terms.php
  * Purpose: Terms and Conditions page outlining legal agreements for using GlobeTrek services

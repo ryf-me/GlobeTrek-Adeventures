@@ -1,3 +1,4 @@
+<?php
 /**
  * File: pages/500.php
  * Purpose: Custom 500 error page displayed when a server error occurs
@@ -8,7 +9,6 @@
  * @package GlobeTrek\Pages
  */
 
-<?php
 // Set HTTP response code to 500 (Internal Server Error)
 http_response_code(500);
 $basePath = '../';

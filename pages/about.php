@@ -1,3 +1,4 @@
+<?php
 /**
  * File: pages/about.php
  * Purpose: About us page showcasing company story, team, values, mission, and timeline
@@ -8,7 +9,6 @@
  * @package GlobeTrek\Pages
  */
 
-<?php
 session_start();
 $basePath = '../';
 ?>

@@ -1,3 +1,4 @@
+<?php
 /**
  * File: pages/custom-trips.php
  * Purpose: Custom trip request form for logged-in users to submit personalized travel plans
@@ -8,7 +9,6 @@
  * @package GlobeTrek\Pages
  */
 
-<?php
 session_start();
 
 // === AUTHENTICATION CHECK ===
