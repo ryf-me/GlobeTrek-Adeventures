@@ -247,9 +247,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 <body class="login-page">
 
-    <!-- === BACKGROUND IMAGE === -->
+    <!-- === BACKGROUND VIDEO === -->
     <div class="login-bg">
-        <img src="../images/login-bg.jpg" alt="" aria-hidden="true">
+        <video autoplay muted loop playsinline>
+            <source src="https://videos.pexels.com/video-files/32504501/13860754_1280_720_30fps.mp4" type="video/mp4">
+        </video>
         <div class="login-bg-overlay"></div>
     </div>
 

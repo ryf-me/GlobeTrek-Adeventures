@@ -8,7 +8,7 @@
  *   2. Automatic BASE_URL detection for subdirectory installations
  *   3. A singleton PDO database connection via getDB()
  *
- * Dependencies: None (this is a root-level config file)
+ * Dependencies: vlucas/phpdotenv (loaded via vendor/autoload.php)
  *
  * Used By:
  *   - ~70 files across the entire application
@@ -19,21 +19,32 @@
  *
  * Security Notes:
  *   - PDO uses real prepared statements (EMULATE_PREPARES = false) to prevent SQL injection
- *   - Database credentials should be in environment variables in production
+ *   - Database credentials are loaded from .env file (never committed to git)
  *
  * @package GlobeTrek\Config
  */
 
 // =============================================================================
+// LOAD ENVIRONMENT VARIABLES
+// =============================================================================
+// Load .env file from the project root directory.
+// .env contains sensitive config (DB credentials, API keys) and is excluded from git.
+
+$dotenvPath = dirname(__DIR__) . '/.env';
+if (file_exists($dotenvPath)) {
+    $dotenv = Dotenv\Dotenv::createImmutable(dirname(__DIR__));
+    $dotenv->load();
+}
+
+// =============================================================================
 // DATABASE CONNECTION CONSTANTS
 // =============================================================================
-// These constants define the MySQL connection parameters.
-// In production, these should be loaded from environment variables or a .env file.
+// Loaded from .env file. Copy .env.example to .env and fill in your values.
 
-define('DB_HOST', 'localhost');      // Database server address (XAMPP default: localhost)
-define('DB_NAME', 'globetrek');      // Database name (must match your MySQL database)
-define('DB_USER', 'root');           // Database username (XAMPP default: root)
-define('DB_PASS', '');               // Database password (empty for XAMPP default)
+define('DB_HOST', $_ENV['DB_HOST'] ?? 'localhost');
+define('DB_NAME', $_ENV['DB_NAME'] ?? 'globetrek');
+define('DB_USER', $_ENV['DB_USER'] ?? 'root');
+define('DB_PASS', $_ENV['DB_PASS'] ?? '');
 
 // =============================================================================
 // BASE URL AUTO-DETECTION

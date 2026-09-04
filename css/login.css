@@ -1,7 +1,7 @@
 /**
  * File: css/login.css
  * Purpose: Login page styles — full-bleed background design with
- *          fixed background image, top bar with logo, centered card
+ *          fixed background video, top bar with logo, centered card
  *          form with icon inputs, password toggle, social login buttons,
  *          signup prompt, and trust/stats footer bar.
  * Used By: login.php
@@ -37,7 +37,7 @@
 }
 
 /* ========================================
-   Background Image
+   Background Video
    ======================================== */
 .login-bg {
     position: fixed;
@@ -45,7 +45,7 @@
     z-index: 0;
 }
 
-.login-bg img {
+.login-bg video {
     width: 100%;
     height: 100%;
     object-fit: cover;

@@ -1,0 +1,42 @@
+# =============================================================================
+# GlobeTrek Adventures — .gitignore
+# =============================================================================
+
+# --- Environment & Secrets ---
+.env
+.env.*
+!.env.example
+
+# --- PHP Dependencies (install via: composer install) ---
+vendor/
+composer.phar
+
+# --- Database Backups ---
+backups/
+
+# --- IDE / Editor ---
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# --- Logs ---
+*.log
+logs/
+
+# --- OS Files ---
+.DS_Store
+Desktop.ini
+Thumbs.db
+
+# --- Uploads & Temp ---
+uploads/
+tmp/
+cache/
+
+# --- Node (if used for frontend build) ---
+node_modules/
+package-lock.json

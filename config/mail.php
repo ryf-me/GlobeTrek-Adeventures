@@ -6,7 +6,7 @@
  * This file defines the SMTP credentials and settings used by PHPMailer
  * to send emails through Gmail's SMTP server.
  *
- * Dependencies: None (constants-only file)
+ * Dependencies: vlucas/phpdotenv (loaded via config/database.php)
  *
  * Used By:
  *   - includes/mailer.php (loads these constants for PHPMailer configuration)
@@ -14,16 +14,14 @@
  * Parent Files: None (loaded via require_once)
  * Child Files: None (no includes)
  *
- * SECURITY WARNING:
- *   This file contains hardcoded credentials (email and app password).
- *   In production, these should be stored in environment variables or a .env file
- *   that is NOT committed to version control.
+ * SECURITY: Credentials are loaded from .env file (never committed to git).
+ *   Copy .env.example to .env and fill in your Gmail app password.
  *
  * Setup Instructions:
  *   1. Enable 2-Step Verification on your Google account
  *   2. Go to https://myaccount.google.com/apppasswords
  *   3. Generate an app password for "Mail"
- *   4. Use that 16-character password below (NOT your regular Gmail password)
+ *   4. Use that 16-character password in your .env file
  *
  * @package GlobeTrek\Config
  */
@@ -31,26 +29,12 @@
 // =============================================================================
 // SMTP SERVER CONFIGURATION
 // =============================================================================
+// All values loaded from .env file.
 
-// Gmail SMTP server address
-define('MAIL_HOST', 'smtp.gmail.com');
-
-// Port 587 for TLS-encrypted SMTP (STARTTLS)
-// Alternative: Port 465 for SSL encryption
-define('MAIL_PORT', 587);
-
-// Gmail address used for SMTP authentication
-define('MAIL_USERNAME', 'insathraifyk3@gmail.com');
-
-// Google App Password (16-character code, NOT the regular Gmail password)
-// Generated from: https://myaccount.google.com/apppasswords
-define('MAIL_PASSWORD', 'yuxdxdanxuwwkkjk');
-
-// Encryption type: TLS (STARTTLS on port 587)
-define('MAIL_ENCRYPTION', 'tls');
-
-// Sender address displayed in email headers
-define('MAIL_FROM_ADDRESS', 'insathraifyk3@gmail.com');
-
-// Sender name displayed in email headers
-define('MAIL_FROM_NAME', 'GlobeTrek Adventures');
+define('MAIL_HOST', $_ENV['MAIL_HOST'] ?? 'smtp.gmail.com');
+define('MAIL_PORT', (int)($_ENV['MAIL_PORT'] ?? 587));
+define('MAIL_USERNAME', $_ENV['MAIL_USERNAME'] ?? '');
+define('MAIL_PASSWORD', $_ENV['MAIL_PASSWORD'] ?? '');
+define('MAIL_ENCRYPTION', $_ENV['MAIL_ENCRYPTION'] ?? 'tls');
+define('MAIL_FROM_ADDRESS', $_ENV['MAIL_FROM_ADDRESS'] ?? '');
+define('MAIL_FROM_NAME', $_ENV['MAIL_FROM_NAME'] ?? 'GlobeTrek Adventures');

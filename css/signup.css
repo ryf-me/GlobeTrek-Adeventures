@@ -1,7 +1,7 @@
 /**
  * File: css/signup.css
  * Purpose: Signup/registration page styles — full-bleed background design
- *          with fixed background image, top bar, centered card form with
+ *          with fixed background video, top bar, centered card form with
  *          avatar icon, two-column form rows, password strength meter,
  *          terms checkbox, social login, and trust/stats footer bar.
  * Used By: signup.php
@@ -38,7 +38,7 @@
 }
 
 /* ========================================
-   Background Image
+   Background Video
    ======================================== */
 .signup-bg {
     position: fixed;
@@ -46,7 +46,7 @@
     z-index: 0;
 }
 
-.signup-bg img {
+.signup-bg video {
     width: 100%;
     height: 100%;
     object-fit: cover;
